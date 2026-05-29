@@ -3,7 +3,7 @@ const userProfileSchema = new mongoose.Schema(
     {
         userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref:'User',
+            ref:'users',
             required: true
         },
         gender:{
@@ -17,10 +17,6 @@ const userProfileSchema = new mongoose.Schema(
         address: {
             type: String,
             required: true
-        },
-        role:{
-            type: String,
-            default: "user"
         },
         bvn: {
             type: String,
@@ -38,4 +34,4 @@ const userProfileSchema = new mongoose.Schema(
     },{timestamps: true}
 )
 
-module.exports = mongoose.model('UserProfile', userProfileSchema)
+module.exports = mongoose.model('userProfiles', userProfileSchema)

@@ -22,11 +22,6 @@ const schema = joi.object({
         'string.empty':'Phone number cannot be empty',
         'string.pattern.base':'Phone number must contain only 11 digits'
     }),
-    transactionPin: joi.string().pattern(/^\d{6}$/).required().messages({
-        'any required':'Transaction Pin is required',
-        'string.empty':'Transaction Pin cannot be empty',
-        'string.pattern.base':'Transaction Pin must contain only 6 digits'
-    }),
     password:joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z]).{8,}$/).required().messages({
         'any required':'Password is required',
         'string.empty':'Password cannot be Empty',

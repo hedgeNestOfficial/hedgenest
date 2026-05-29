@@ -7,7 +7,7 @@ const cors = require('cors')
 const swaggerUi = require('swagger-ui-express')
 const swagger = require ('./documentation')
 const expressSession = require ('express-session')
-const {passport} = require('./middleware/passport')
+// const {passport} = require('./middleware/passport')
 
 const userRouter = require('./routes/userRouter')
 const userProfile = require('./routes/userprofile')
@@ -24,11 +24,11 @@ app.use(expressSession({
   resave:false,
   saveUninitialized:false
 }))
-app.use(passport.initialize())
-app.use(passport.session())
+// app.use(passport.initialize())
+// app.use(passport.session())
 
-app.use('/api/v1/', userRouter)
-app.use('/api/v1/', userProfile)
+app.use('/api/v1', userRouter)
+app.use('/api/v1', userProfile)
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
 
