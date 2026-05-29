@@ -18,7 +18,6 @@ exports.createUser = async (req, res)=>{
        
         const otp = otpGenerator.generate(6, {upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false})
 
-
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, salt)
         const hashTransactionPin = await bcrypt.hash(transactionPin, salt)
@@ -87,6 +86,13 @@ exports.verifyEmail = async(req,res)=>{
 exports.login = async (req, res)=> {
     try {
         const {email, password} = req.body
+
+        if(!email || !password){
+            return res.status(400).json({
+                message:'Email and password are required'
+            })
+        }
+
         const user = await userModel.findOne({email: email.toLowerCase()})
         if(!user){
             return res.status(400).json({
@@ -126,6 +132,13 @@ exports.login = async (req, res)=> {
 exports.forgotPassword = async (req, res)=>{
     try {
         const {email} = req.body
+
+        if(!email){
+            return res.status(400).json({
+                message:'Email is required'
+            })
+        }
+
         const user = await userModel.findOne({email:email.toLowerCase()})
         if(!user){
             return res.status(400).json({
@@ -158,6 +171,13 @@ exports.forgotPassword = async (req, res)=>{
 exports.resetPassword = async (req, res)=>{
     try {
         const {email, otp, newPassword} = req.body
+
+        if(!email || !otp || !newPassword){
+            return res.status(400).json({
+                message:'Email, OTP and new password are required'
+            })
+        }
+
         const user = await userModel.findOne({email:email.toLowerCase()})
         if(user == null){
             return res.status(404).json({
@@ -189,7 +209,14 @@ exports.resetPassword = async (req, res)=>{
 exports.changePassword = async (req, res)=>{
    try {
      const {id} = req.user
-     const {oldPassword, newPassword} = req.body
+     const {oldPassword, currentPassword, newPassword} = req.body
+     const currentUserPassword = oldPassword || currentPassword
+
+     if(!currentUserPassword || !newPassword){
+        return res.status(400).json({
+            message:'Old password and new password are required'
+        })
+     }
      
      const user = await userModel.findById(id)
         if(!user){
@@ -197,7 +224,7 @@ exports.changePassword = async (req, res)=>{
                 message:'User not found'
             })
         }
-        const correctPassword = await bcrypt.compare(oldPassword, user.password)
+        const correctPassword = await bcrypt.compare(currentUserPassword, user.password)
         if(!correctPassword){
             return res.status(400).json({
                 message:'Invalid Credentials'
