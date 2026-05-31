@@ -1,4 +1,4 @@
-exports.emailTemplate = (firstName, otp)=>{
+exports.emailTemplate = (name, otp)=>{
 return `
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +11,7 @@ return `
         <div class="upper-div">
             <div class="upper-div-1">
                 <h1>Email OTP Verification</h1>
-                <h3>Hello, ${firstName}</h3>
+                <h3>Hello, ${name}</h3>
                 <p>Below is your one time passcode that you need to use to complete your authentication. The verification code will be valid for 30 minutes. Please do not share this code with anyone.</p>
             </div>
             <div class="upper-div-2">
@@ -30,7 +30,9 @@ return `
 </body>
 </html>`
 }
-exports.resetPasswordTemplate = (data)=> {
+
+
+exports.resetPasswordTemplate = (name, otp)=> {
     return `
     <!DOCTYPE html>
 <html lang="en">
@@ -67,13 +69,13 @@ exports.resetPasswordTemplate = (data)=> {
                             <td class="content" style="padding: 40px; text-align: center; color: #333333;">
                                 <h2 style="margin: 0 0 15px; font-size: 22px; font-weight: 700; color: #1a1a1a;">Password Reset</h2>
                                 <p style="font-size: 16px; line-height: 1.5; margin: 0 0 25px; color: #666666;">
-                                    Hi ${data.name}, we received a request to reset your password. Use the code below to proceed:
+                                    Hi ${name}, we received a request to reset your password. Use the code below to proceed:
                                 </p>
                                 
                                 <!-- OTP Box -->
                                 <div style="background-color: #f8fafc; border: 2px dashed #bebb11; border-radius: 12px; padding: 25px; margin: 20px 0;">
                                     <span class="otp-code" style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: bold; letter-spacing: 10px; color: #1a1a1a; display: block;">
-                                        ${data.otp}
+                                        ${otp}
                                     </span>
                                 </div>
 
@@ -104,7 +106,9 @@ exports.resetPasswordTemplate = (data)=> {
 
     `
 }
-exports.resetPasswordSuccessfulTemplate = (firstName)=> {
+
+
+exports.resetPasswordSuccessfulTemplate = (name)=> {
     return `
         <!DOCTYPE html>
 <html lang="en">
@@ -142,7 +146,7 @@ exports.resetPasswordSuccessfulTemplate = (firstName)=> {
                                 
                                 <h2 style="margin: 0 0 15px; font-size: 22px; font-weight: 700; color: #1a1a1a;">Password Reset Successful</h2>
                                 <p style="font-size: 16px; line-height: 1.5; margin: 0 0 30px; color: #666666;">
-                                    Hi ${firstName}, your password for <strong>HEDGENEST</strong> has been successfully updated. You can now log back into your account using your new credentials.
+                                    Hi ${name}, your password for <strong>HEDGENEST</strong> has been successfully updated. You can now log back into your account using your new credentials.
                                 </p>
                                 
                                 <!-- CTA Button -->
@@ -177,4 +181,3 @@ exports.resetPasswordSuccessfulTemplate = (firstName)=> {
 
     `
 }
-
