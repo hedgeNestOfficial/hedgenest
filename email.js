@@ -32,6 +32,35 @@ return `
 }
 
 
+exports.transactionPin = (name, otp)=>{
+return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>your otp?</title>
+<body>
+    <div class="main-section">
+        <div class="upper-div">
+            <div class="upper-div-1">
+                <h1>OTP Verification</h1>
+                <h3>Hello, ${name}</h3>
+                <p>Below is your one time passcode that you need to verify your email. The verification code will be valid for 30 minutes. Please do not share this code with anyone.</p>
+            </div>
+            <div class="upper-div-2">
+                <h2> ${otp} </h2>
+            </div>
+            <div class="upper-div-3">
+                <p>Please ignore if you didn't request for it, and cheange your password for more security.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+}
+
+
 exports.resetPasswordTemplate = (name, otp)=> {
     return `
     <!DOCTYPE html>

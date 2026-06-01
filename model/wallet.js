@@ -17,6 +17,14 @@ const walletSchema = new mongoose.Schema({
     type:  Number,
     default: 0
    },
+   smartVaults: {
+    type:  Number,
+    default: 0
+   },
+   investments: {
+    type:  Number,
+    default: 0
+   },
 }, {timestamps: true})
 
 const walletModel = mongoose.model('wallets', walletSchema)

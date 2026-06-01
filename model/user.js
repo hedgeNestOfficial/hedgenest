@@ -1,55 +1,73 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    firstName:{
+    firstName: {
         type: String,
         required: true,
         trim: true
     },
-    lastName:{
+    lastName: {
         type: String,
         required: true,
         trim: true
     },
-    phoneNumber:{
-        type:String,
+    phoneNumber: {
+        type: String,
         required: true,
         trim: true
     },
-    email:{
+    email: {
         type: String,
         required: true,
         trim: true,
         lowercase: true,
         unique: true
     },
-    password:{
+    password: {
         type: String,
         required: true,
     },
-    transactionPin:{
+    transactionPin: {
         type: String,
         default: null
     },
-     isVerified: {
-      type: Boolean,
-      default: false,
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    isActivated: {
+        type: Boolean,
+        default: false,
+    },
+    tier: {
+        type: Number,
+        default: 0
     },
     role: {
-      type: String,
-      default: "user",
+        type: String,
+        default: "user",
     },
     otp: {
-    type: String,
-    trim: true
+        type: String,
+        trim: true
     },
-    otpExpires:{
-      type:Date,
-      default:()=>{
-        return Date.now() + ( 1000 * 60 * 5 )
-      }
+    otpExpires: {
+        type: Date,
+        default: () => {
+            return Date.now() + (1000 * 60 * 5)
+        }
     },
-}, {timestamps: true})
+    profilePicture: {
+        url: {
+            type: String,
+            default: ''
+        },
+        publicId: {
+            type: String,
+            default: ''
+        }
+    }
+}, { timestamps: true })
 
 const userModel = mongoose.model('users', userSchema)
 

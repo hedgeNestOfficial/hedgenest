@@ -9,8 +9,8 @@ const swagger = require ('./documentation')
 const expressSession = require ('express-session')
 // const {passport} = require('./middleware/passport')
 
-const userRouter = require('./routes/userRouter')
-const userProfile = require('./routes/userprofile')
+const userRouter = require('./routes/user')
+const bankRouter = require('./routes/bank')
 
 const express = require('express')
 const PORT = process.env.PORT || 3333
@@ -28,7 +28,7 @@ app.use(expressSession({
 // app.use(passport.session())
 
 app.use('/api/v1', userRouter)
-app.use('/api/v1', userProfile)
+app.use('/api/v1', bankRouter)
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
 
