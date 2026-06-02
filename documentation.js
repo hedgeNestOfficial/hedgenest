@@ -25,7 +25,7 @@ const options = {
 
     },
     apis: [
-        "./docs/user.yaml"
+        "./docs/users.yaml","./docs/bank.yaml","./docs/kyc.yaml"
     ],
 }
 

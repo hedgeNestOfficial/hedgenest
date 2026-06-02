@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info: 
+  title: Documentation for HedgeNest KYC
+  version: 1.0.0
+  description: HedgeNest for KYC
+paths: 
+  /api/v1/uploadId:
+    post:
+      summary: this end point is for uploading KYC for tier 1
+      tags: [kyc]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - idType
+                - idNumber
+              properties:
+                idType: 
+                  type: string
+                  enum: [nin, bvn]
+                  example: nin
+                  description: Use nin when uploading an ID photo. BVN does not require idPhoto.
+                idNumber: 
+                  type: string
+                  example: "98900865437"
+                idPhoto:
+                  type: string
+                  format: binary
+                  description: Required only when idType is nin
+      responses: 
+        "200":
+          description: KYC uploaded successfully
+        "400":
+          description: something went wrong
+           
+  /api/v1/uploadUtilityBill:
+    put:
+      summary: this end point is for uploading KYC for tier 2
+      tags: [kyc]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - utilityBill
+              properties:
+                utilityBill: 
+                  type: string
+                  format: binary
+      responses: 
+        "200":
+          description: KYC uploaded successfully
+        "400":
+          description: something went wrong
