@@ -154,12 +154,12 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 }
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
-        idType: Joi.string().valid('nin', 'bvn') .required().messages({
+        idType: joi.string().valid('nin', 'bvn') .required().messages({
            'any.required': 'ID type is required',
            'string.empty': 'ID type cannot be empty',
             'any.only': 'ID type must be either nin or bvn'
         }),
-        idNumber: Joi.string().pattern(/^\d{11}$/) .required().messages({
+        idNumber: joi.string().pattern(/^\d{11}$/) .required().messages({
             'string.pattern.base': 'NIN/BVN must be exactly 11 digits',
             'string.empty': 'ID number cannot be empty',
             'any.required': 'ID number is required'
@@ -176,21 +176,21 @@ exports.kycValidator = (req, res, next) => {
     next();
 }
 exports.bankDetailsValidator = (req, res, next) => {
-    const schema = Joi.object({
+    const schema = joi.object({
         accountNumber: Joi.string() .pattern(/^\d{10}$/) .required() .messages({
             'string.pattern.base': 'Account number must be exactly 10 digits',
             'string.empty': 'Account number cannot be empty',
             'any.required': 'Account number is required'
        }),
-        bankName: Joi.string() .required().messages({
+        bankName: joi.string() .required().messages({
             'string.empty': 'Bank name is required',
             'any.required': 'Bank name is required'
        }),
-       accountName: Joi.string().required().messages({
+       accountName: joi.string().required().messages({
             'string.empty': 'Account name is required',
              'any.required': 'Account name is required'
         }),
-        idNumber: Joi.string().pattern(/^\d{11}$/) .required() .messages({
+        idNumber: joi.string().pattern(/^\d{11}$/) .required() .messages({
              'string.pattern.base': 'ID number must be exactly 11 digits',
              'string.empty': 'ID number is required',
              'any.required': 'ID number is required'
@@ -215,5 +215,31 @@ exports.resendOtpValidator = (req, res, next) => {
     
    });
 }
+exports.updateValidator = (req,res,next)=>{
+    const schema = joi.object({
+        firstName: joi.string().trim().pattern(/^[A-Za-z]{4,}$/).required().messages({
+            'any.required': 'FirstName is required',
+            'string.empty':'FirstName cannot be Empty',
+            'string.pattern.base': 'FirstName cannot contain numbers, spaces and must be atleast 4 characters'
+        }),
+        lastName: joi.string().trim().pattern(/^[A-Za-z]{4,}$/).required().messages({
+            'any.required': 'LastName is required',
+            'string.empty':'LastName cannot be Empty',
+            'string.pattern.base': 'LastName cannot contain numbers, spaces and must be atleast 4 characters'
+        }),
+        phoneNumber: joi.string().pattern(/^\d{11}$/).required().messages({
+			'any required':'Phone number is required',
+			'string.empty':'Phone number cannot be empty',
+			'string.pattern.base':'Phone number must contain only 11 digits'
+		}),
+    })
+    const { error } = schema.validate(req.body);
 
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}
     

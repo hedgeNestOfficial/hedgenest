@@ -18,12 +18,9 @@ const PORT = process.env.PORT || 3333
 const app = express()
 
 app.use(cors());
-<<<<<<< HEAD
 app.use(express.json())
-=======
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
->>>>>>> 04edbb4876f245b7ccbc5f987e2b1cc21c16c2a2
 
 app.use(expressSession({
   secret:'michael',
