@@ -6,7 +6,7 @@ info:
   description: HedgeNest for user authentication and management
 
 servers:
-  - url: http://localhost:8228/api
+  - url: https://localhost:8228/api
 
 components:
   securitySchemes:
@@ -25,7 +25,6 @@ components:
         - phoneNumber
         - email
         - password
-        - transactionPin
       properties:
         firstName:
           type: string
@@ -39,9 +38,6 @@ components:
         password:
           type: string
           example: Password123
-        transactionPin:
-          type: string
-          example: "123456"
 
     Login:
       type: object
@@ -83,6 +79,7 @@ components:
         - email
         - otp
         - newPassword
+        - confirmPassword
       properties:
         email:
           type: string
@@ -92,17 +89,24 @@ components:
         newPassword:
           type: string
           example: NewPassword123
+        confirmPassword:
+          type: string
+          example: NewPassword123
 
     ChangePassword:
       type: object
       required:
         - oldPassword
         - newPassword
+        - confirmPassword
       properties:
         oldPassword:
           type: string
           example: Password123
         newPassword:
+          type: string
+          example: NewPassword456
+        confirmPassword:
           type: string
           example: NewPassword456
 
