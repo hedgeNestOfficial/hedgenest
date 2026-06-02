@@ -57,7 +57,8 @@ exports.createUser = async (req, res) => {
 
     res.status(200).json({
       status: true,
-      message: 'User created successfully, otp has been sent to email'
+      message: 'User created successfully, otp has been sent to email',
+      data: user
     });
 
     (async () => {
@@ -112,7 +113,7 @@ exports.verifyEmail = async (req, res) => {
     await user.save()
     return res.status(200).json({
       status: true,
-      message: 'OTP Verified successfully'
+      message: 'OTP Verified successfully',
     })
   } catch (error) {
     console.log(error.message)
@@ -223,7 +224,7 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, newPassword } = req.body
+    const { email, newPassword, otp } = req.body
 
     if (!email || !newPassword) {
       return res.status(400).json({
@@ -331,7 +332,7 @@ exports.loginWithGoogle = async (req, res) => {
 
 exports.createTransactionPin = async (req, res) => {
   try {
-    const { transactionPin, email } = req.body;
+    const { transactionPin, email, otp } = req.body;
     const user = await userModel.findOne({ email: email.toLowerCase() });
 
     if (!user) {
@@ -348,7 +349,7 @@ exports.createTransactionPin = async (req, res) => {
     const token = await jwt.sign({ id: user._id }, process.env.SECRET, { expiresIn: '1d' })
     res.status(200).json({
       status: true,
-      message: 'Transaction created successfully',
+      message: 'Transaction pin created successfully',
       user,
       token
     })
@@ -369,8 +370,8 @@ exports.update = async (req, res) => {
     const { id } = req.user;
     const user = await userModel.findById(id)
 
-    if (user) {
-      fs.unlinkSync(file.path)
+    if (!user) {
+      if (file?.path) fs.unlinkSync(file.path)
       return res.status(400).json({
         status: false,
         message: "User not found"
@@ -378,7 +379,9 @@ exports.update = async (req, res) => {
     };
 
     if (file && file.path) {
-      await cloudinary.uploader.destroy(user.profilePicture.publicId);
+      if (user.profilePicture?.publicId) {
+        await cloudinary.uploader.destroy(user.profilePicture.publicId);
+      }
 
       uploadResult = await cloudinary.uploader.upload(file.path, {
         folder: 'profile-picture'
@@ -391,7 +394,10 @@ exports.update = async (req, res) => {
       firstName: firstName ?? user.firstName,
       lastName: lastName ?? user.lastName,
       phoneNumber: phoneNumber ?? user.phoneNumber,
-      profilePicture: profilePicture ?? user.profilePicture
+      profilePicture: uploadResult ? {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id
+      } : user.profilePicture
     };
 
     Object.assign(user, data);
@@ -401,9 +407,9 @@ exports.update = async (req, res) => {
       message: 'User account updated successfully.'
     });
   } catch (error) {
-    fs.unlinkSync(file.path)
+    if (file?.path) fs.unlinkSync(file.path)
     res.status(500).json({
-      message: 'Error creating user',
+      message: 'Error updating user',
       error: error.message
     })
   }
@@ -415,7 +421,7 @@ exports.resend = async (req, res) => {
     const { email } = req.body;
     const user = await userModel.findOne({ email: email.toLowerCase() });
 
-    if (user) {
+    if (!user) {
       return res.status(400).json({
         status: false,
         message: "User not found"
@@ -453,7 +459,7 @@ exports.resend = async (req, res) => {
 exports.changePin = async (req, res) => {
   try {
     const { id } = req.user
-    const { transactionPin } = req.body
+    const { oldTransactionPin, newTransactionPin, confirmTransactionPin } = req.body
     const user = await userModel.findById(id)
 
     if (!user) {

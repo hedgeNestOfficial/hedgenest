@@ -19,11 +19,11 @@ const kycSchema = new mongoose.Schema(
     idPhoto: {
       url: {
         type: String,
-        required: true
+        default: null
       },
       publicId: {
         type: String,
-        required: true
+        default: null
       }
     },
     utilityBill: {

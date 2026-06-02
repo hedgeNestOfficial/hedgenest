@@ -8,7 +8,7 @@ exports.linkBank = async (req, res) => {
     const { bankName, accountName, accountNumber } = req.body;
     const user = await userModel.findById(id)
 
-    if (user) {
+    if (!user) {
       return res.status(400).json({
         status: false,
         message: "User not found"
@@ -21,7 +21,7 @@ exports.linkBank = async (req, res) => {
       accountName,
       accountNumber
     });
-    
+
     res.status(200).json({
       status: true,
       message: 'Account linked successfully'

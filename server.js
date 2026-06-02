@@ -11,6 +11,7 @@ const expressSession = require ('express-session')
 
 const userRouter = require('./routes/user')
 const bankRouter = require('./routes/bank')
+const kycRouter = require('./routes/kyc')
 
 const express = require('express')
 const PORT = process.env.PORT || 3333
@@ -29,6 +30,7 @@ app.use(expressSession({
 
 app.use('/api/v1', userRouter)
 app.use('/api/v1', bankRouter)
+app.use('/api/v1', kycRouter)
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
 
