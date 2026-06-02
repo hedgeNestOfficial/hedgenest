@@ -1,0 +1,311 @@
+openapi: 3.0.0
+info: 
+  title: Documentation for HedgeNest User
+  version: 1.0.0
+  description: HedgeNest for user authentication and management
+paths: 
+  /api/v1/create-user:
+    post:
+      summary: this end point is to create a user
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - phoneNumber
+                - email
+                - password
+              properties:
+                firstName:
+                  type: string
+                  example: John
+                lastName: 
+                  type: string
+                  example: Divine
+                phoneNumber: 
+                  type: string
+                  example: 09183748577
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+                password:
+                  type: string
+                  example: Password123
+      responses: 
+        "201":
+          description: user successfully created
+        "400":
+          description: something went wrong
+
+
+  /api/v1/login:
+    post:
+      summary: this end point is to login a user 
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+                password: 
+                  type: string
+                  example: Password123
+      responses: 
+        "201":
+          description: login successful
+        "400":
+          description: something went wrong
+
+  /api/v1/verify/check:
+    post:
+      summary: this end point is to verify users 
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+                otp: 
+                  type: string
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+  /api/v1/forgot-password:
+    post:
+      summary: this end point is for forgotten password 
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+  /api/v1/reset-password:
+    post:
+      summary: this end point is for resetting password 
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - newPassword
+                - confirmPassword
+                - otp
+              properties:
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+                newPassword: 
+                  type: string
+                  example: NewPassword123
+                confirmPassword: 
+                  type: string
+                  example: NewPassword123
+                otp:
+                  type: string
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+  /api/v1/change-password:
+    post:
+      summary: this end point is for changing password 
+      tags: [users]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newPassword
+                - oldPassword
+                - confirmPassword
+              properties:
+                newPassword: 
+                  type: string
+                  example: NewPassword456
+                oldPassword: 
+                  type: string
+                  example: Password123
+                confirmPassword:
+                  type: string
+                  example: NewPassword456
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+
+  /api/v1/create-pin:
+    patch:
+      summary: this end point is for changing password 
+      tags: [users]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+                - transactionPin
+                - confirmTransactionPin
+              properties:
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+                otp: 
+                  type: string
+                  example: "123456"
+                transactionPin:
+                  type: string
+                  example: "123456"
+                confirmTransactionPin:
+                  type: string
+                  example: "123456"
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+
+  /api/v1/update:
+    put:
+      summary: this end point is for updating user
+      tags: [users]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - phoneNumber
+              properties:
+                firstName: 
+                  type: string
+                  example: Adele
+                lastName: 
+                  type: string
+                  example: "King"
+                phoneNumber:
+                  type: string
+                  example: "09090123456"
+                profilePicture: 
+                  type: string
+                  format: binary
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+
+  /api/v1/resend:
+    post:
+      summary: this end point is to verify users 
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email: 
+                  type: string
+                  example: johndoe@gmail.com
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+          
+  /api/v1/changePin:
+    put:
+      summary: this end point is for changing password 
+      tags: [users]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldTransactionPin
+                - newTransactionPin
+                - confirmTransactionPin
+              properties:
+                oldTransactionPin: 
+                  type: string
+                  example: "123456"
+                newTransactionPin: 
+                  type: string
+                  example: "123456"
+                confirmTransactionPin:
+                  type: string
+                  example: "123456"
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong

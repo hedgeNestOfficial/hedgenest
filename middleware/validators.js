@@ -122,22 +122,22 @@ exports.changeTransactionPinValidator = (req,res,next)=>{
 }
 exports.createTransactionPinValidator = (req,res,next)=>{
     const schema = joi.object({
-        email: Joi.string().email() .required() .messages({
-            'string.email': 'Please enter a valid email address',
-            'string.empty': 'Email is required',
-            'any.required': 'Email is required'
-       }),
-       otp: Joi.string().pattern(/^\d{6}$/).required()  .messages({
-            'string.empty': 'OTP is required',
-            'string.pattern.base': 'OTP must be a 6-digit number',
-            'any.required': 'OTP is required'
-       }),
-        TransactionPin:joi.string().pattern(/^\d{6}$/).messages({
+			email:joi.string().email().required().messages({
+            'any.required': 'Email is required',
+            'string.empty': 'Email cannot be empty',
+            'string.email': 'Email must be a valid email'
+            }),
+            otp:joi.string().pattern(/^\d{6}$/).required().messages({
+                'any.required': 'OTP is required',
+                'string.empty': 'OTP cannot be empty',
+               'string.pattern.base': 'OTP must only contain digits and must be 6 digits'
+            }),
+        transactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
                 'string.empty': 'New Pin cannot be empty',
                'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
         }),
-        confirmTransactionPin:joi.string().required().valid(joi.ref('newTransactionPin')).messages({
+        confirmTransactionPin:joi.string().required().valid(joi.ref('transactionPin')).messages({
                 'any.only':'Confirm pin must match new pin',
                 'any.required':'Confirm pin is required'
         }),
@@ -153,12 +153,12 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 }
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
-        idType: Joi.string().valid('nin', 'bvn') .required().messages({
-           'any.required': 'ID type is required',
+			idType:joi.string().valid('nin', 'bvn') .required().messages({
+				'any.required': 'ID type is required',
            'string.empty': 'ID type cannot be empty',
             'any.only': 'ID type must be either nin or bvn'
         }),
-        idNumber: Joi.string().pattern(/^\d{11}$/) .required().messages({
+        idNumber:joi.string().pattern(/^\d{11}$/) .required().messages({
             'string.pattern.base': 'NIN/BVN must be exactly 11 digits',
             'string.empty': 'ID number is required',
             'any.required': 'ID number is required'
@@ -175,25 +175,20 @@ exports.kycValidator = (req, res, next) => {
     next();
 }
 exports.bankDetailsValidator = (req, res, next) => {
-    const schema = Joi.object({
-        accountNumber: Joi.string() .pattern(/^\d{10}$/) .required() .messages({
+    const schema = joi.object({
+			accountNumber:joi.string().pattern(/^\d{10}$/).required().messages({
             'string.pattern.base': 'Account number must be exactly 10 digits',
             'string.empty': 'Account number is required',
             'any.required': 'Account number is required'
        }),
-        bankName: Joi.string() .required().messages({
+        bankName: joi.string() .required().messages({
             'string.empty': 'Bank name is required',
             'any.required': 'Bank name is required'
        }),
-       accountName: Joi.string().required().messages({
+       accountName: joi.string().required().messages({
             'string.empty': 'Account name is required',
              'any.required': 'Account name is required'
         }),
-        idNumber: Joi.string().pattern(/^\d{11}$/) .required() .messages({
-             'string.pattern.base': 'ID number must be exactly 11 digits',
-             'string.empty': 'ID number is required',
-             'any.required': 'ID number is required'
-       }),
   });
     const { error } = schema.validate(req.body);
 
@@ -205,14 +200,15 @@ exports.bankDetailsValidator = (req, res, next) => {
     next();
 }
 exports.resendOtpValidator = (req, res, next) => {
-    const schema = Joi.object({
-        email: Joi.string().email() .required().messages({
+    const schema = joi.object({
+        email: joi.string().email() .required().messages({
             'string.email': 'Please enter a valid email address',
             'string.empty': 'Email is required',
             'any.required': 'Email is required'
        }) 
     
    });
+	 
 }
 
     

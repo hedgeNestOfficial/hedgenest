@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info: 
+  title: Documentation for HedgeNest bank linking
+  version: 1.0.0
+  description: HedgeNest for linking of bank
+paths: 
+  /api/v1/link:
+    post:
+      summary: this end point is for linking withdrawal bank
+      tags: [bank]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bankName
+                - accountName
+                - accountNumber
+              properties:
+                bankName: 
+                  type: string
+                  example: sterling
+                accountName: 
+                  type: string
+                  example: John Doe
+                accountNumber:
+                  type: string
+                  example: 9123458632
+      responses: 
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
