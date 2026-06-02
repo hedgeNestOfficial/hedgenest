@@ -21,5 +21,4 @@ router.post('/resend', resend)
 router.get('/auth/google', profile)
 router.get('/auth/google/callback', loginProfile,loginWithGoogle)
 
-
 module.exports = router

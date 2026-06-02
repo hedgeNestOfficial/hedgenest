@@ -96,20 +96,20 @@ exports.changePasswordValidator = (req,res,next)=>{
 }
 exports.changeTransactionPinValidator = (req,res,next)=>{
     const schema = joi.object({
-        oldTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
-                'any.required': 'Old pin is required',
-                'string.empty': 'Old Pin cannot be empty',
-               'string.pattern.base': 'Old Pin must be at least 6 characters and must Include only digits'
-            }),
-            newTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
-                'any.required': 'New pin is required',
-                'string.empty': 'New Pin cannot be empty',
-               'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
-            }),
-            confirmTransactionPin:joi.string().required().valid(joi.ref('newTransactionPin')).messages({
-                'any.only':'Confirm pin must match new pin',
-                'any.required':'Confirm pin is required'
-            }),
+    oldTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
+            'any.required': 'Old pin is required',
+            'string.empty': 'Old Pin cannot be empty',
+        'string.pattern.base': 'Old Pin must be at least 6 characters and must Include only digits'
+    }),
+    newTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
+            'any.required': 'New pin is required',
+            'string.empty': 'New Pin cannot be empty',
+            'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
+    }),
+    confirmTransactionPin:joi.string().required().valid(joi.ref('newTransactionPin')).messages({
+            'any.only':'Confirm pin must match new pin',
+            'any.required':'Confirm pin is required'
+        }),
     })
     const { error } = schema.validate(req.body);
 
@@ -122,15 +122,25 @@ exports.changeTransactionPinValidator = (req,res,next)=>{
 }
 exports.createTransactionPinValidator = (req,res,next)=>{
     const schema = joi.object({
-            newTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
+        email: Joi.string().email() .required() .messages({
+            'string.email': 'Please enter a valid email address',
+            'string.empty': 'Email is required',
+            'any.required': 'Email is required'
+       }),
+       otp: Joi.string().pattern(/^\d{6}$/).required()  .messages({
+            'string.empty': 'OTP is required',
+            'string.pattern.base': 'OTP must be a 6-digit number',
+            'any.required': 'OTP is required'
+       }),
+        TransactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
                 'string.empty': 'New Pin cannot be empty',
                'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
-            }),
-            confirmTransactionPin:joi.string().required().valid(joi.ref('newTransactionPin')).messages({
+        }),
+        confirmTransactionPin:joi.string().required().valid(joi.ref('newTransactionPin')).messages({
                 'any.only':'Confirm pin must match new pin',
                 'any.required':'Confirm pin is required'
-            }),
+        }),
     })
     const { error } = schema.validate(req.body);
 
@@ -184,11 +194,6 @@ exports.bankDetailsValidator = (req, res, next) => {
              'string.empty': 'ID number is required',
              'any.required': 'ID number is required'
        }),
-       idType: Joi.string() .valid('nin', 'bvn') .required() .messages({
-           'any.only': 'ID type must be either NIN or BVN',
-           'string.empty': 'ID type is required',
-           'any.required': 'ID type is required'
-      })
   });
     const { error } = schema.validate(req.body);
 

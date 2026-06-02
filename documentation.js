@@ -9,12 +9,8 @@ const options = {
         },
         servers:[
             {
-                url:"http://localhost:8228/api/v1",
-                description: 'production'
-            },
-            {
-                url:"http://localhost:8228/api/v1",
-                description: 'development'
+                url: "http://localhost:8228",
+                description: 'documentation'
             },
         ],
         components: {

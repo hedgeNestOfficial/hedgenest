@@ -1,4 +1,5 @@
 const passport = require('passport');
+const crypto = require('crypto');
 const userModel = require('../model/user');
 const GoogleStrategy = require ('passport-google-oauth20').Strategy
 passport.use(new GoogleStrategy({
@@ -17,8 +18,11 @@ passport.use(new GoogleStrategy({
                 lastName:profile._json.family_name,
                 phoneNumber:`${Math.floor(Math.random() * 1E11)}`,
                 email:profile._json.email,
+                password: crypto.randomBytes(32).toString('hex'),
                 isVerified:profile._json.email_verified,
-                profilePicture:profile._json.picture
+                profilePicture: {
+                  url: profile._json.picture
+                }
             })
 
             await user.save()
@@ -27,7 +31,7 @@ passport.use(new GoogleStrategy({
 
     } catch (error) {
         console.log(error)
-        return cb(null, error)
+        return cb(error)
     }
   }
 ));
@@ -39,7 +43,7 @@ passport.serializeUser((user, done)=> {
 passport.deserializeUser(async(id, done)=> {
   const user = await userModel.findById(id)
     if(!user){
-        return cb(new Error('User not found'),null)
+        return done(new Error('User not found'), null)
     }
     done(null, user);
   });
