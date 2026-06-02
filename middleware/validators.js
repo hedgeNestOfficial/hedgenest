@@ -90,9 +90,33 @@ exports.changePasswordValidator = (req,res,next)=>{
             confirmPassword:joi.string().required().valid(joi.ref('newPassword')).messages({
                 'any.only':'Confirm password must match new password',
                 'any.required':'Confirm password is required'
-            })
-    }).or('oldPassword', 'currentPassword').messages({
-        'object.missing': 'Old password is required'
+            }),
+    })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}
+exports.transactionPinValidator = (req,res,next)=>{
+    const schema = joi.object({
+        oldPin:joi.string().pattern(/^\d{6}$/).messages({
+                'any.required': 'Old pin is required',
+                'string.empty': 'Old Pin cannot be empty',
+               'string.pattern.base': 'Old Pin must be at least 6 characters and must Include only digits'
+            }),
+            newPin:joi.string().pattern(/^\d{6}$/).messages({
+                'any.required': 'New pin is required',
+                'string.empty': 'New Pin cannot be empty',
+               'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
+            }),
+            confirmPin:joi.string().required().valid(joi.ref('newPin')).messages({
+                'any.only':'Confirm pin must match new pin',
+                'any.required':'Confirm pin is required'
+            }),
     })
     const { error } = schema.validate(req.body);
 

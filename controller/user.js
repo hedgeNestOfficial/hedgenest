@@ -332,7 +332,7 @@ exports.loginWithGoogle = async (req, res) => {
 exports.createTransactionPin = async (req, res) => {
   try {
     const { transactionPin, email } = req.body;
-    const user = await userModel.findOne({ email: email.toLowerCase() });
+    const user = await userModel.findOne({ email: email.toLowerCase()});
 
     if (!user) {
       return res.status(404).json({
