@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
     otpExpires: {
         type: Date,
         default: () => {
-            return Date.now() + (1000 * 60 * 5)
+            return Date.now() + (1000 * 60 * 7)
         }
     },
     profilePicture: {
