@@ -132,7 +132,7 @@ exports.createTransactionPinValidator = (req,res,next)=>{
             'string.pattern.base': 'OTP must be a 6-digit number',
             'any.required': 'OTP is required'
        }),
-        TransactionPin:joi.string().pattern(/^\d{6}$/).messages({
+        transactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
                 'string.empty': 'New Pin cannot be empty',
                'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
