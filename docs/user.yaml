@@ -110,6 +110,25 @@ components:
           type: string
           example: NewPassword456
 
+    CreateTransactionPin:
+      type: object
+      required:
+        - email
+        - otp
+        - transactionPin
+      properties:
+        email:
+          type: string
+          example: johndoe@gmail.com
+        otp:
+          type: string
+          example: "123456"
+          description: Six digit OTP sent to the user
+        transactionPin:
+          type: string
+          example: "123456"
+          description: Six digit transaction PIN
+
 paths:
 
   /create-user:
@@ -236,23 +255,24 @@ paths:
         500:
           description: Server error
 
-  /auth/google:
-    get:
+  /create-pin:
+    patch:
       tags:
-        - Google Authentication
-      summary: Login with Google
-      description: Swagger Try it out returns a URL because Google OAuth must be opened as a browser navigation, not as a fetch request.
+        - email
+        - otp
+        - transactionPin
+        - confirmTransactionPin
+      summary: Create transaction PIN for authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionPin'
       responses:
         200:
-          description: Redirect to Google authentication, or a JSON login URL for Swagger/API clients
-
-  /auth/google/callback:
-    get:
-      tags:
-        - Google Authentication
-      summary: Google authentication callback
-      responses:
-        200:
-          description: Google login successful
-        500:
-          description: Server error
+          description: Transaction PIN created successfully
+        400:
+          description: Validation error
