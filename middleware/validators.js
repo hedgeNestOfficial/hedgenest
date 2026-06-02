@@ -96,10 +96,10 @@ exports.changePasswordValidator = (req,res,next)=>{
 }
 exports.changeTransactionPinValidator = (req,res,next)=>{
     const schema = joi.object({
-        oldTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
-                'any.required': 'Old pin is required',
-                'string.empty': 'Old Pin cannot be empty',
-               'string.pattern.base': 'Old Pin must be at least 6 characters and must Include only digits'
+			oldTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
+				'any.required': 'Old pin is required',
+				'string.empty': 'Old Pin cannot be empty',
+				'string.pattern.base': 'Old Pin must be at least 6 characters and must Include only digits'
             }),
             newTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
@@ -122,6 +122,16 @@ exports.changeTransactionPinValidator = (req,res,next)=>{
 }
 exports.createTransactionPinValidator = (req,res,next)=>{
     const schema = joi.object({
+			email:joi.string().email().required().messages({
+						'any required':'Email is required',
+						'string.empty':'Email cannot be Empty',
+						'string.email':'Email must be a valid email',
+					}),
+					otp:joi.string().pattern(/^\d{6}$/).required().messages({
+                'any.required': 'OTP is required',
+                'string.empty': 'OTP cannot be empty',
+               'string.pattern.base': 'OTP must only contain digits and must be 6 digits'
+            }),
             newTransactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
                 'string.empty': 'New Pin cannot be empty',
