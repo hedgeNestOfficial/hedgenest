@@ -5,9 +5,6 @@ info:
   version: 1.0.0
   description: HedgeNest for user authentication and management
 
-servers:
-  - url: http://localhost:8228/api
-
 components:
   securitySchemes:
     bearerAuth:
@@ -237,9 +234,10 @@ paths:
       tags:
         - Google Authentication
       summary: Login with Google
+      description: Swagger Try it out returns a URL because Google OAuth must be opened as a browser navigation, not as a fetch request.
       responses:
         200:
-          description: Redirect to Google authentication
+          description: Redirect to Google authentication, or a JSON login URL for Swagger/API clients
 
   /auth/google/callback:
     get:
