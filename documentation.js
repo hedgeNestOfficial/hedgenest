@@ -3,7 +3,7 @@ const options = {
     definition : {
         openapi:'3.0.0',
         info:{
-            title:'Splita App',
+            title:'hedgeNest App',
             version:'1.0.0',
             description:'swagger documentaion'
         },
