@@ -12,7 +12,7 @@ return `
             <div class="upper-div-1">
                 <h1>Email OTP Verification</h1>
                 <h3>Hello, ${name}</h3>
-                <p>Below is your one time passcode that you need to use to complete your authentication. The verification code will be valid for 30 minutes. Please do not share this code with anyone.</p>
+                <p>Below is your one time passcode that you need to use to complete your authentication. The verification code will be valid for 7 minutes. Please do not share this code with anyone.</p>
             </div>
             <div class="upper-div-2">
                 <h2> ${otp} </h2>
@@ -46,7 +46,7 @@ return `
             <div class="upper-div-1">
                 <h1>OTP Verification</h1>
                 <h3>Hello, ${name}</h3>
-                <p>Below is your one time passcode that you need to verify your email. The verification code will be valid for 30 minutes. Please do not share this code with anyone.</p>
+                <p>Below is your one time passcode that you need to verify your email. The verification code will be valid for 7 minutes. Please do not share this code with anyone.</p>
             </div>
             <div class="upper-div-2">
                 <h2> ${otp} </h2>
@@ -109,7 +109,7 @@ exports.resetPasswordTemplate = (name, otp)=> {
                                 </div>
 
                                 <p style="font-size: 14px; color: #999999; margin-top: 25px; line-height: 1.4;">
-                                    This code is valid for <strong>15 minutes</strong>. <br>
+                                    This code is valid for <strong>7 minutes</strong>. <br>
                                     If you didn't request this, please ignore this email or contact support if you're concerned about your account security.
                                 </p>
                             </td>

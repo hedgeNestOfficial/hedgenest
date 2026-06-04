@@ -196,16 +196,12 @@ paths:
               type: object
               required:
                 - email
-                - otp
                 - transactionPin
                 - confirmTransactionPin
               properties:
                 email: 
                   type: string
                   example: johndoe@gmail.com
-                otp: 
-                  type: string
-                  example: "123456"
                 transactionPin:
                   type: string
                   example: "123456"
@@ -255,7 +251,7 @@ paths:
           description: something went wrong
 
 
-  /api/v1/resend:
+  /api/v1/resendOtp:
     post:
       summary: this end point is to verify users 
       tags: [users]

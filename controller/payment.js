@@ -7,11 +7,11 @@ const otpGenerator = require('otp-generator')
 exports.initiatePayment = async(req, res) =>{
     try {
         const userId = req.user.id
-        const { amount } = req.body
+        const { amount } = req.body || {}
         
         if(!amount || Number(amount) <= 1499 || amount == undefined || amount == null){
             return res.status(400).json({
-                message: "Enter a valid deposit amount"
+                message: "Enter a valid deposit amount, the minimum amount to deposit is 1500"
             });
         }
         const depositAmount = Number(amount)

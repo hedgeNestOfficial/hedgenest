@@ -128,11 +128,11 @@ exports.createTransactionPinValidator = (req,res,next)=>{
             'string.empty': 'Email cannot be empty',
             'string.email': 'Email must be a valid email'
             }),
-            otp:joi.string().pattern(/^\d{6}$/).required().messages({
-                'any.required': 'OTP is required',
-                'string.empty': 'OTP cannot be empty',
-               'string.pattern.base': 'OTP must only contain digits and must be 6 digits'
-            }),
+            // otp:joi.string().pattern(/^\d{6}$/).required().messages({
+            //     'any.required': 'OTP is required',
+            //     'string.empty': 'OTP cannot be empty',
+            //    'string.pattern.base': 'OTP must only contain digits and must be 6 digits'
+            // }),
         transactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
                 'string.empty': 'New Pin cannot be empty',
@@ -154,7 +154,7 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 }
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
-        idType: joi.string().valid('nin', 'bvn') .required().messages({
+        idType: joi.string().valid('nin', 'bvn').required().messages({
            'any.required': 'ID type is required',
            'string.empty': 'ID type cannot be empty',
             'any.only': 'ID type must be either nin or bvn'
@@ -177,7 +177,7 @@ exports.kycValidator = (req, res, next) => {
 }
 exports.bankDetailsValidator = (req, res, next) => {
     const schema = joi.object({
-        accountNumber: Joi.string() .pattern(/^\d{10}$/) .required() .messages({
+        accountNumber: joi.string() .pattern(/^\d{10}$/) .required() .messages({
             'string.pattern.base': 'Account number must be exactly 10 digits',
             'string.empty': 'Account number cannot be empty',
             'any.required': 'Account number is required'
@@ -190,11 +190,6 @@ exports.bankDetailsValidator = (req, res, next) => {
             'string.empty': 'Account name is required',
              'any.required': 'Account name is required'
         }),
-        idNumber: joi.string().pattern(/^\d{11}$/) .required() .messages({
-             'string.pattern.base': 'ID number must be exactly 11 digits',
-             'string.empty': 'ID number is required',
-             'any.required': 'ID number is required'
-       }),
   });
     const { error } = schema.validate(req.body);
 
@@ -223,18 +218,9 @@ exports.resendOtpValidator = (req, res, next) => {
     }
     next();
 }
+
 exports.updateValidator = (req,res,next)=>{
     const schema = joi.object({
-        firstName: joi.string().trim().pattern(/^[A-Za-z]{4,}$/).required().messages({
-            'any.required': 'FirstName is required',
-            'string.empty':'FirstName cannot be Empty',
-            'string.pattern.base': 'FirstName cannot contain numbers, spaces and must be atleast 4 characters'
-        }),
-        lastName: joi.string().trim().pattern(/^[A-Za-z]{4,}$/).required().messages({
-            'any.required': 'LastName is required',
-            'string.empty':'LastName cannot be Empty',
-            'string.pattern.base': 'LastName cannot contain numbers, spaces and must be atleast 4 characters'
-        }),
         phoneNumber: joi.string().pattern(/^\d{11}$/).required().messages({
 			'any required':'Phone number is required',
 			'string.empty':'Phone number cannot be empty',
@@ -251,3 +237,21 @@ exports.updateValidator = (req,res,next)=>{
     next();
 }
     
+exports.initiatePaymentValidator = (req, res, next) => {
+    const schema = joi.object({
+        amount: joi.number().integer().min(1500).required().messages({
+            "number.base": "Amount must be a number",
+            "number.integer": "Amount must be a whole Naira value",
+            "number.min": "Minimum deposit amount is ₦1500",
+            "any.required": "Amount is required"
+        })
+    })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}

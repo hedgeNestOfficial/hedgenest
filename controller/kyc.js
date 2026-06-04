@@ -4,13 +4,6 @@ const cloudinary = require('../middleware/cloudinary');
 const fs = require('fs');
 const bcrypt = require('bcrypt')
 
-const deleteTempFile = (file) => {
-  if (file?.path && fs.existsSync(file.path)) {
-    fs.unlinkSync(file.path);
-  }
-}
-
-
 exports.uploadKYC = async (req, res) => {
   const file = req.file;
   let uploadResult;
@@ -29,17 +22,8 @@ exports.uploadKYC = async (req, res) => {
       })
     };
 
-    if (!['nin', 'bvn'].includes(idType)) {
-      deleteTempFile(file);
-      return res.status(400).json({
-        status: false,
-        message: "ID type must be either nin or bvn"
-      })
-    }
-
     if (idType === 'nin' && !file?.path) {
       return res.status(400).json({
-        status: false,
         message: "ID photo is required for NIN"
       })
     }
