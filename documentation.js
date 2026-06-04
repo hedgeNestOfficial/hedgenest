@@ -9,8 +9,12 @@ const options = {
         },
         servers:[
             {
+                url: "https://hedgenest.onrender.com",
+                description: 'The hosted route'
+            },
+            {
                 url: "http://localhost:8228",
-                description: 'documentation'
+                description: 'Localhost route '
             },
         ],
         components: {
