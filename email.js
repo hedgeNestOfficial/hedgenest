@@ -32,7 +32,7 @@ return `
 }
 
 
-exports.transactionPin = (name, otp)=>{
+exports.transactionPinTemplate = (name, otp)=>{
 return `
 <!DOCTYPE html>
 <html lang="en">

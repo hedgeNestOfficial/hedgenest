@@ -213,7 +213,15 @@ exports.resendOtpValidator = (req, res, next) => {
             'any.required': 'Email is required'
        }) 
     
-   });
+   })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
 }
 exports.updateValidator = (req,res,next)=>{
     const schema = joi.object({
