@@ -1,5 +1,5 @@
 const router = require ('express').Router()
-const {createUser, verifyEmail, login, forgotPassword, resetPassword, changePassword, loginWithGoogle, createTransactionPin, update, resend, changePin} = require('../controller/user')
+const {createUser, verifyEmail, login, forgotPassword, resetPassword, changePassword, loginWithGoogle, createTransactionPin, update, changePin, resendOtp} = require('../controller/user')
 const {Authentication} = require('../middleware/auth')
 const {profile, loginProfile} = require('../middleware/passport')
 const {resetPasswordValidator, changePasswordValidator,signUpValidator, changeTransactionPinValidator, createTransactionPinValidator, resendOtpValidator, updateValidator} = require('../middleware/validators')
@@ -15,8 +15,6 @@ router.post('/change-password', Authentication, changePasswordValidator, changeP
 router.post('/verify/check', verifyEmail)
 router.put('/update', Authentication, updateValidator, upload.single('profilePicture'), update)
 router.put('/changePin', Authentication, changeTransactionPinValidator, changePin)
-router.post('/resend', resendOtpValidator, resend)
-
 
 router.get('/auth/google', profile)
 router.get('/auth/google/callback', loginProfile,loginWithGoogle)

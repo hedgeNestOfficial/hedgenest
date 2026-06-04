@@ -77,7 +77,6 @@ exports.createUser = async (req, res) => {
   }
 };
 
-
 exports.verifyEmail = async (req, res) => {
   try {
     const { email, otp } = req.body
@@ -122,7 +121,6 @@ exports.verifyEmail = async (req, res) => {
     })
   }
 };
-
 
 exports.login = async (req, res) => {
   try {
@@ -174,7 +172,6 @@ exports.login = async (req, res) => {
   }
 }
 
-
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
@@ -221,7 +218,6 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-
 exports.resetPassword = async (req, res) => {
   try {
     const { email, newPassword, otp } = req.body
@@ -263,7 +259,6 @@ exports.resetPassword = async (req, res) => {
     })
   }
 }
-
 
 exports.changePassword = async (req, res) => {
   try {
@@ -309,7 +304,6 @@ exports.changePassword = async (req, res) => {
   }
 }
 
-
 exports.loginWithGoogle = async (req, res) => {
   try {
     const token = await jwt.sign({
@@ -328,7 +322,6 @@ exports.loginWithGoogle = async (req, res) => {
     })
   }
 }
-
 
 exports.createTransactionPin = async (req, res) => {
   try {
@@ -359,7 +352,6 @@ exports.createTransactionPin = async (req, res) => {
     })
   }
 }
-
 
 exports.update = async (req, res) => {
   const file = req.file;
@@ -414,47 +406,6 @@ exports.update = async (req, res) => {
     })
   }
 };
-
-
-exports.resend = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await userModel.findOne({ email: email.toLowerCase() });
-
-    if (!user) {
-      return res.status(400).json({
-        status: false,
-        message: "User not found"
-      })
-    };
-
-    Object.assign(user, {
-      otp,
-      otpExpires: Date.now() + (1000 * 60 * 5)
-    })
-
-    await user.save()
-    res.status(200).json({
-      status: true,
-      message: 'OTP has been sent to email'
-    });
-
-    (async () => {
-      const html = await transactionPin(`${user.firstName} ${user.lastName}`, user.otp)
-      await sendEmail({
-        email: user.email,
-        subject: 'Verify OTP',
-        html
-      })
-    })()
-  } catch (error) {
-    res.status(500).json({
-      message: 'Error creating user',
-      error: error.message
-    })
-  }
-};
-
 
 exports.changePin = async (req, res) => {
   try {
