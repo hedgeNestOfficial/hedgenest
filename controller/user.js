@@ -345,11 +345,11 @@ exports.createTransactionPin = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const file = req.file;
   let uploadResult;
 
   try {
-    const { firstName, lastName, phoneNumber } = req.body;
+    const file = req.file;
+    const { phoneNumber, profilePicture } = req.body;
     const { id } = req.user;
     const user = await userModel.findById(id);
 
@@ -373,26 +373,14 @@ exports.update = async (req, res) => {
       fs.unlinkSync(file.path);
     }
 
-    const data = {
-      firstName: firstName ?? user.firstName,
-      lastName: lastName ?? user.lastName,
-      phoneNumber: phoneNumber ?? user.phoneNumber,
-      profilePicture: uploadResult
-        ? {
-            url: uploadResult.secure_url,
-            publicId: uploadResult.public_id,
-          }
-        : user.profilePicture,
-    };
+    const newUpdate = await userModel.findByIdAndUpdate(id, {phoneNumber, profilePicture:profilePicture}, {new: true
+        })
+        res.status(201).json({
+            message: "User profile updated successfully",
+            data: newUpdate
+        })
 
-    Object.assign(user, data);
-    await user.save();
-    res.status(200).json({
-      status: true,
-      message: "User account updated successfully.",
-    });
   } catch (error) {
-    if (file?.path) fs.unlinkSync(file.path);
     res.status(500).json({
       message: "Error updating user",
       error: error.message,
@@ -450,7 +438,7 @@ exports.changePin = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashPin = await bcrypt.hash(transactionPin, salt);
+    const hashPin = await bcrypt.hash(newTransactionPin, salt);
     user.transactionPin = hashPin;
     await user.save();
     res.status(200).json({
