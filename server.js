@@ -18,9 +18,7 @@ const PORT = process.env.PORT || 3333
 const app = express()
 
 app.use(cors({origin: "*"}));
-app.use(express.json())
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use(expressSession({
   secret:'michael',
@@ -35,9 +33,6 @@ app.use('/api/v1', bankRouter)
 app.use('/api/v1', kycRouter)
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
-app.use('/', (req, res) => {
-    res.send('Welcome to Hedgenest API')
-})
 
 app.listen(PORT, () =>{
     console.log(`Server is running on PORT: ${PORT}`)
