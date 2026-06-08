@@ -1,5 +1,6 @@
 require("dotenv").config();
 const userModel = require("../model/user");
+const adminModel = require("../model/admin");
 const walletModel = require("../model/wallet");
 const cloudinary = require("../middleware/cloudinary");
 const fs = require("fs");
@@ -181,9 +182,26 @@ exports.forgotPassword = async (req, res) => {
     const user = await userModel.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found",
+      const user = await adminModel.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res.status(404).json({
+          status: false,
+          message: "User not found",
+        });
+      }
+
+      const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false,specialChars: false,});
+      user.otp = otp
+      admin.otpExpires = Date.now() + (1000 * 60 * 7)
+
+      await user.save();
+      const html = await resetPasswordTemplate(
+        `${admin.firstName} ${admin.lastName}`,
+        otp,
+      );
+      await sendEmail(user.email, "Reset Password", html);
+      return res.status(200).json({
+        message: "OTP sent to email"
       });
     }
     const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false,specialChars: false,});
@@ -224,16 +242,23 @@ exports.resetPassword = async (req, res) => {
         message: "User not found",
       });
     }
+    if ( Date.now() > user.otpExpires || user.otp !== otp ){
+      return res.status(400).json({
+        message:'Invalid OTP'
+      })
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(newPassword, salt);
     user.password = hashPassword;
     await user.save();
+
    const html = await resetPasswordSuccessfulTemplate(
       `${user.firstName} ${user.lastName}`,
       otp,
     );
     await sendEmail(user.email, "Password Reset Successfully", html);
+
     res.status(200).json({
       message: "Password reset successfully",
     });
@@ -261,7 +286,6 @@ exports.changePassword = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: false,
         message: "User not found",
       });
     }
@@ -269,7 +293,6 @@ exports.changePassword = async (req, res) => {
 
     if (!correctPassword) {
       return res.status(400).json({
-        status: false,
         message: "Incorrect Password",
       });
     }
@@ -387,7 +410,6 @@ exports.update = async (req, res) => {
     });
   }
 };
-
 exports.resend = async (req, res) => {
   try {
     const { email } = req.body;
