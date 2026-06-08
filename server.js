@@ -18,6 +18,7 @@ const userRouter = require('./routes/user')
 const bankRouter = require('./routes/bank')
 const kycRouter = require('./routes/kyc')
 const paymentRouter = require('./routes/payment')
+const conversionRouter = require('./routes/conversion')
 
 app.use(express.json());
 app.use(cors())
@@ -36,6 +37,7 @@ app.use('/api/v1', userRouter)
 app.use('/api/v1', bankRouter)
 app.use('/api/v1', kycRouter)
 app.use('/api/v1', paymentRouter)
+app.use('/api/v1', conversionRouter)
 
 app.listen(PORT, () =>{
     console.log(`Server is running on PORT: ${PORT}`)

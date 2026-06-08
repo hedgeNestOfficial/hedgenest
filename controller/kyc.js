@@ -5,19 +5,18 @@ const fs = require('fs');
 const bcrypt = require('bcrypt')
 
 exports.uploadKYC = async (req, res) => {
-  const file = req.file;
   let uploadResult;
 
   try {
+    const file = req.file;
     const { id } = req.user
     const { idNumber } = req.body;
     const idType = req.body.idType?.toLowerCase();
     const user = await userModel.findById(id)
 
     if (!user) {
-      deleteTempFile(file);
+      if (file?.path) fs.unlinkSync(file.path);
       return res.status(400).json({
-        status: false,
         message: "User not found"
       })
     };
@@ -62,7 +61,6 @@ exports.uploadKYC = async (req, res) => {
       tier: user.tier
     })
   } catch (error) {
-    deleteTempFile(file);
     res.status(500).json({
       message: 'Error uploading KYC',
       error: error.message
@@ -72,10 +70,10 @@ exports.uploadKYC = async (req, res) => {
 
 
 exports.uploadUtility = async (req, res) => {
-  const file = req.file;
   let uploadResult;
 
   try {
+    const file = req.file;
     const { id } = req.user
     const user = await userModel.findById(id)
 
@@ -85,7 +83,13 @@ exports.uploadUtility = async (req, res) => {
         message: "User not found"
       })
     };
-    
+
+    if (user.tier < 1) {
+      return res.status(403).json({
+        message: "Complete Tier 1 verification before proceeding to Tier 2"
+      });
+    }
+
     const kyc = await kycModel.findOne({userId: user._id}).sort({ createdAt: -1 })
     
     if (!kyc) {

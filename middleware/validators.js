@@ -2,15 +2,15 @@ const joi = require('joi')
 
 exports.signUpValidator = (req, res, next)=>{
     const schema = joi.object({
-        firstName: joi.string().trim().pattern(/^[A-Za-z]{4,}$/).required().messages({
+        firstName: joi.string().trim().pattern(/^[A-Za-z]{2,}$/).required().messages({
             'any.required': 'FirstName is required',
             'string.empty':'FirstName cannot be Empty',
-            'string.pattern.base': 'FirstName cannot contain numbers, spaces and must be atleast 4 characters'
+            'string.pattern.base': 'FirstName cannot contain numbers, spaces and must be atleast 2 characters'
 		}),
-        lastName: joi.string().trim().pattern(/^[A-Za-z]{4,}$/).required().messages({
+        lastName: joi.string().trim().pattern(/^[A-Za-z]{2,}$/).required().messages({
             'any.required': 'LastName is required',
             'string.empty':'LastName cannot be Empty',
-            'string.pattern.base': 'LastName cannot contain numbers, spaces and must be atleast 4 characters'
+            'string.pattern.base': 'LastName cannot contain numbers, spaces and must be atleast 2 characters'
 		}),
         email:joi.string().email().required().messages({
 						'any required':'Email is required',
@@ -154,13 +154,13 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 }
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
-        idType: joi.string().valid('nin', 'bvn').required().messages({
+        idType: joi.string().valid('nin').required().messages({
            'any.required': 'ID type is required',
            'string.empty': 'ID type cannot be empty',
-            'any.only': 'ID type must be either nin or bvn'
+            'any.only': 'ID type must be nin'
         }),
         idNumber: joi.string().pattern(/^\d{11}$/) .required().messages({
-            'string.pattern.base': 'NIN/BVN must be exactly 11 digits',
+            'string.pattern.base': 'NIN must be exactly 11 digits',
             'string.empty': 'ID number cannot be empty',
             'any.required': 'ID number is required'
        })
@@ -244,6 +244,11 @@ exports.initiatePaymentValidator = (req, res, next) => {
             "number.integer": "Amount must be a whole Naira value",
             "number.min": "Minimum deposit amount is ₦1500",
             "any.required": "Amount is required"
+        }),
+        type: joi.string().valid('deposit', 'withdraw').required().messages({
+           'any.required': 'Type is required',
+           'string.empty': 'Type cannot be empty',
+            'any.only': 'Type must be either deposit or withdraw'
         })
     })
     const { error } = schema.validate(req.body);

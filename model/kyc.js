@@ -8,7 +8,7 @@ const kycSchema = new mongoose.Schema(
     },
     idType: {
       type: String,
-      enum: ['nin', 'bvn'],
+      enum: ['nin'],
       lowercase: true,
       required: true
     },
@@ -19,11 +19,11 @@ const kycSchema = new mongoose.Schema(
     idPhoto: {
       url: {
         type: String,
-        default: null
+        required: true
       },
       publicId: {
         type: String,
-        default: null
+        required: true
       }
     },
     utilityBill: {
