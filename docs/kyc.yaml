@@ -23,16 +23,16 @@ paths:
               properties:
                 idType: 
                   type: string
-                  enum: [nin, bvn]
+                  enum: [nin]
                   example: nin
-                  description: Use nin when uploading an ID photo. BVN does not require idPhoto.
+                  description: Use nin when uploading an ID photo
                 idNumber: 
                   type: string
                   example: "98900865437"
                 idPhoto:
                   type: string
                   format: binary
-                  description: Required only when idType is nin
+                  description: NIN required
       responses: 
         "200":
           description: KYC uploaded successfully

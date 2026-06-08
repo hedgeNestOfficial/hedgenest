@@ -1,14 +1,16 @@
 const paymentModel = require('../model/payment')
 const userModel = require('../model/user')
 const walletModel = require('../model/wallet')
+const transactionModel = require('../model/transaction')
+const conversionModel = require('../model/conversion')
 const axios = require('axios')
 const otpGenerator = require('otp-generator')
 
 exports.initiatePayment = async(req, res) =>{
     try {
         const userId = req.user.id
-        const { amount } = req.body || {}
-        
+        const { amount, type = "deposit" } = req.body 
+
         if(!amount || Number(amount) <= 1499 || amount == undefined || amount == null){
             return res.status(400).json({
                 message: "Enter a valid deposit amount, the minimum amount to deposit is 1500"
@@ -53,6 +55,13 @@ exports.initiatePayment = async(req, res) =>{
             reference,
             userId,
         })
+        const transaction = await transactionModel.create({
+            userId: user._id,
+            transactionType: type,
+            amount: {
+                figure,currency
+            }
+        })
         await payment.save()
         res.status(200).json({
             message: 'Payment initialized successful',
@@ -61,7 +70,15 @@ exports.initiatePayment = async(req, res) =>{
         })
 
     } catch (error) {
-        console.log(error.message)
+        if (
+        error.response?.status === 522 ||
+        error.response?.status === 502 ||
+        error.response?.status === 504
+    ) {
+        return res.status(503).json({
+            message: "Payment provider is temporarily unavailable. Please try again in a few minutes."
+        });
+    }
         res.status(500).json({
             message: "Error initializing payment"
         })
@@ -76,16 +93,39 @@ exports.verifyPayment = async(req, res) => {
                 Authorization: `Bearer ${process.env.KORA_API_KEY}`
             }
         });
+
         const payment = await paymentModel.findOne({reference})
         if(!payment){
             return res.status(404).json({
-                    message: 'Payment not found'
-                })
+                message: 'Payment not found'
+            })
+        }
+
+        if (payment.status === "success") {
+            return res.status(200).json({
+                message: "Payment already verified",
+                data: payment
+            });
+        }
+
+        const wallet = await walletModel.findOne({
+            userId: payment.userId
+        });
+
+        if(!wallet){
+            return res.status(404).json({
+                message: "wallet not found"
+            })
         }
         if (data?.status === true && data?.data.status === 'success'){
-            // update the status of payment
+            
+            wallet.availableBalance += payment.amount;
+
             payment.status = data?.data.status;
+
             await payment.save()
+            await wallet.save()
+
             return res.status(200).json({
                 message: 'Payment verified successfully',
                 data: payment

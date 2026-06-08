@@ -18,6 +18,7 @@ const userRouter = require('./routes/user')
 const bankRouter = require('./routes/bank')
 const kycRouter = require('./routes/kyc')
 const paymentRouter = require('./routes/payment')
+const conversionRouter = require('./routes/conversion')
 const adminRouter = require('./routes/admin')
 
 
@@ -38,6 +39,7 @@ app.use('/api/v1', userRouter)
 app.use('/api/v1', bankRouter)
 app.use('/api/v1', kycRouter)
 app.use('/api/v1', paymentRouter)
+app.use('/api/v1', conversionRouter)
 app.use('/api/v1', adminRouter)
 
 app.listen(PORT, () =>{

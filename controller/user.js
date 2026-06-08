@@ -248,14 +248,28 @@ exports.resetPassword = async (req, res) => {
       })
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(newPassword, salt);
-    user.password = hashPassword;
-    await user.save();
-
-   const html = await resetPasswordSuccessfulTemplate(
-      `${user.firstName} ${user.lastName}`,
-      otp,
+    if (user.otp !== otp) {
+    return res.status(400).json({
+      message: "Invalid OTP"
+    });
+  }
+  
+  if (user.otpExpires < Date.now()) {
+    return res.status(400).json({
+      message: "OTP has expired"
+    });
+  }
+  user.otp = null;
+  user.otpExpires = null;
+  user.isVerified = true;
+  
+  const salt = await bcrypt.genSalt(10);
+  const hashPassword = await bcrypt.hash(newPassword, salt);
+  user.password = hashPassword;
+  await user.save();
+  const html = await resetPasswordSuccessfulTemplate(
+    `${user.firstName} ${user.lastName}`,
+    otp,
     );
     await sendEmail(user.email, "Password Reset Successfully", html);
 
