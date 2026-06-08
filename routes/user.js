@@ -7,6 +7,7 @@ const upload = require('../middleware/multer');
 
 
 router.post('/create-user', signUpValidator, createUser)
+
 router.patch('/create-pin', Authentication, createTransactionPinValidator, createTransactionPin)
 router.post('/login', login)
 router.post('/forgot-password', forgotPassword)
@@ -15,6 +16,7 @@ router.post('/change-password', Authentication, changePasswordValidator, changeP
 router.post('/verify/check', verifyEmail)
 router.put('/update', Authentication, updateValidator, upload.single('profilePicture'), update)
 router.post('/resendOtp', resend)
+
 router.put('/changePin', Authentication, changeTransactionPinValidator, changePin)
 
 router.get('/auth/google', profile)

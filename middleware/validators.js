@@ -52,7 +52,7 @@ exports.resetPasswordValidator = async (req, res, next)=>{
             newPassword: joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z]).{8,}$/).required().messages({
                 'any.required': 'Password is required',
                 'string.empty': 'Password cannot be empty',
-               'string.pattern.base': 'Password must be at least * characters and must Include 1 uppercase and 1 lowercase'
+               'string.pattern.base': 'Password must be at least 8 characters and must Include 1 uppercase and 1 lowercase'
             }),
             confirmPassword:joi.string().required().valid(joi.ref('newPassword')).messages({
                 'any.only':'Confirm password must match password',
@@ -74,12 +74,12 @@ exports.changePasswordValidator = (req,res,next)=>{
         oldPassword:joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z]).{8,}$/).messages({
             'any.required': 'Old password is required',
             'string.empty': 'Old Password cannot be empty',
-            'string.pattern.base': 'Old Password must be at least * characters and must Include 1 uppercase and 1 lowercase'
+            'string.pattern.base': 'Old Password must be at least 8 characters and must Include 1 uppercase and 1 lowercase'
         }),
         newPassword: joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z]).{8,}$/).required().messages({
             'any.required': 'new Password is required',
             'string.empty': 'new Password cannot be empty',
-            'string.pattern.base': 'new Password must be at least * characters and must Include 1 uppercase and 1 lowercase'
+            'string.pattern.base': 'new Password must be at least 8 characters and must Include 1 uppercase and 1 lowercase'
         }),
         confirmPassword:joi.string().required().valid(joi.ref('newPassword')).messages({
                 'any.only':'Confirm password must match new password',
