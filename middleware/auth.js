@@ -14,8 +14,7 @@ const Authentication = async (req, res, next)=>{
             if(err){
                 console.log(err.message)
                 return res.status(500).json({
-                    message:'Token validation failed',
-                    data:Validtoken
+                    message:'Token validation failed'
                 })
             }
             req.user = data
@@ -29,6 +28,15 @@ const Authentication = async (req, res, next)=>{
         })
     }
 }
+const adminAuth = (req, res,next)=>{
+    if(req.user.role !== 'admin'){
+        return res.status(403).json({
+            message:'Unauthorized Access'
+        })
+    }
+    next()
+}
 module.exports = {
-    Authentication
+    Authentication,
+    adminAuth
 }
