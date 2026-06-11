@@ -58,9 +58,7 @@ exports.initiatePayment = async(req, res) =>{
         const transaction = await transactionModel.create({
             userId: user._id,
             transactionType: type,
-            amount: {
-                figure,currency
-            }
+            amount,
         })
         await payment.save()
         res.status(200).json({

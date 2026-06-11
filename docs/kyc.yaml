@@ -5,34 +5,28 @@ info:
   version: 1.0.0
   description: HedgeNest for KYC
 paths: 
-  /api/v1/uploadId:
+  /api/v1/verify:
     post:
-      summary: this end point is for uploading KYC for tier 1
+      summary: this end point is for verifying KYC for tier 1
       tags: [kyc]
       security: 
         - bearerAuth: []
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               required:
-                - idType
-                - idNumber
+                - id
+                - verification_consent
               properties:
-                idType: 
-                  type: string
-                  enum: [nin]
-                  example: nin
-                  description: Use nin when uploading an ID photo
-                idNumber: 
+                id: 
                   type: string
                   example: "98900865437"
-                idPhoto:
-                  type: string
-                  format: binary
-                  description: NIN required
+                verification_consent: 
+                  type: boolean
+                  example: true
       responses: 
         "200":
           description: KYC uploaded successfully
