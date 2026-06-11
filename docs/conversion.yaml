@@ -1,0 +1,50 @@
+
+openapi: 3.0.0
+info: 
+  title: Documentation for HedgeNest conversion of money from naira to usdt and vice versa
+  version: 1.0.0
+  description: HedgeNest for  coverting money from naira to usdt and vice versa
+paths: 
+  /api/v1/convert:
+    post:
+      summary: this end point is for converting money
+      tags: [conversion]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - from
+                - to
+                - amount
+              properties:
+                from: 
+                  type: string
+                  enum:
+                    - NGN
+                    - USDT
+                  example: NGN
+                  description: Currency to convert from
+                to:
+                  type: string
+                  enum:
+                    - NGN
+                    - USDT
+                  example: USDT
+                  description: Currency to convert to
+                amount:
+                  type: number
+                  example: 5000
+                  description:
+                    Minimum amount is ₦1500 when converting from NGN.
+                    Minimum amount is 1.30 when converting from USDT.
+
+      responses: 
+        "200":
+          description: Conversion successful
+        "400":
+          description: something went wrong

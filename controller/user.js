@@ -326,29 +326,6 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-exports.loginWithGoogle = async (req, res) => {
-  try {
-    const token = await jwt.sign(
-      {
-        id: req.user._id,
-        role: req.user.role,
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: "1d" },
-    );
-
-    res.status(200).json({
-      message: "Login Successful",
-      data: `${req.user.firstName} ${req.user.lastName}`,
-      token,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
 exports.createTransactionPin = async (req, res) => {
   try {
     const { transactionPin, email } = req.body;

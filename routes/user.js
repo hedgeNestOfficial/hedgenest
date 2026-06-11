@@ -19,7 +19,4 @@ router.post('/resendOtp', resend)
 
 router.put('/changePin', Authentication, changeTransactionPinValidator, changePin)
 
-router.get('/auth/google', profile)
-router.get('/auth/google/callback', loginProfile,loginWithGoogle)
-
 module.exports = router
