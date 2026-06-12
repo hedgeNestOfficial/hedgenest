@@ -28,16 +28,6 @@ const kycSchema = new mongoose.Schema(
       default: false
 
     },
-    idPhoto: {
-      url: {
-        type: String,
-        // required: true
-      },
-      publicId: {
-        type: String,
-        // required: true
-      }
-    },
     utilityBill: {
       url: {
         type: String,

@@ -9,7 +9,8 @@ const axios = require('axios')
 exports.kyc1Verification = async (req, res) => {
   try {
     const userId = req.user.id
-    const {id, verification_consent} = req.body
+    const {id} = req.body
+    const verification_consent = true;
 
     const user = await userModel.findById(userId)
     if(!user){
@@ -28,13 +29,6 @@ exports.kyc1Verification = async (req, res) => {
       return res.status(400).json({
       success: false,
       message: "NIN is invalid"
-    });
-  }
-   
-  if (verification_consent !== true) {
-    return res.status(400).json({
-      success: false,
-      message: "Verification consent must be true"
     });
   }
 

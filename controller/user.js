@@ -130,10 +130,16 @@ exports.login = async (req, res) => {
     }
 
     const user = await userModel.findOne({ email: email.toLowerCase() });
-
+    
     if (!user) {
       return res.status(404).json({
         message: "Invalid Credentials",
+      });
+    }
+    const wallet = await walletModel.findOne({userId: user._id});
+       if (!wallet) {
+      return res.status(404).json({
+        message: "Wallet not found",
       });
     }
     const correctPassword = await bcrypt.compare(password, user.password);
@@ -159,6 +165,7 @@ exports.login = async (req, res) => {
     return res.status(200).json({
       message: "Login Successful",
       user,
+      wallet,
       token,
     });
   } catch (error) {
