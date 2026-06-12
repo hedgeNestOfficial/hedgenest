@@ -17,6 +17,22 @@ const conversionSchema = new mongoose.Schema({
         type:  Number,
         default: 0
        },
+       from: {
+        type: String,
+        enum: ['NGN', 'USDT'],
+        trim: true
+       },
+       to: {
+        type: String,
+        enum: ['NGN', 'USDT'],
+        trim: true
+       },
+       rate: {
+        type:  Number,
+       },
+       fee: {
+        type:  Number,
+       },
 }, { timestamps: true });
 const conversionModel = mongoose.model('conversions', conversionSchema)
 module.exports = conversionModel

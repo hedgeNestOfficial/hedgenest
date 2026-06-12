@@ -228,16 +228,8 @@ paths:
             schema:
               type: object
               required:
-                - firstName
-                - lastName
                 - phoneNumber
               properties:
-                firstName: 
-                  type: string
-                  example: Adele
-                lastName: 
-                  type: string
-                  example: "King"
                 phoneNumber:
                   type: string
                   example: "09090123456"

@@ -7,7 +7,6 @@ const cors = require('cors')
 const PORT = process.env.PORT || 3333
 
 const swaggerUi = require('swagger-ui-express')
-const expressSession = require('express-session')
 const app = express()
 
 const { passport } = require('./middleware/passport')
@@ -25,14 +24,6 @@ const smartSaveRouter = require('./routes/smartSave')
 
 app.use(express.json());
 app.use(cors())
-
-app.use(expressSession({
-  secret:'michael',
-  resave:true,
-  saveUninitialized:true
-}))
-app.use(passport.initialize())
-app.use(passport.session())
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
 

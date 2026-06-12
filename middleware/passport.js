@@ -1,6 +1,6 @@
 const passport = require('passport');
 const crypto = require('crypto');
-const userModel = require('../model/user');
+const user = require('../model/user');
 const GoogleStrategy = require ('passport-google-oauth20').Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.Google_Client_ID,
@@ -10,10 +10,10 @@ passport.use(new GoogleStrategy({
   async (accessToken, refreshToken, profile, cb)=> {
     try {
         //check if the user is already signed up
-         let user = await userModel.findOne({ email: profile._json.email})
+         let user = await user.findOne({ email: profile._json.email})
          //if not signed up create a new account for the user using the details gotten from google
          if(!user){
-            user = new userModel({
+            user = new user({
                 firstName:profile._json.given_name,
                 lastName:profile._json.family_name,
                 phoneNumber:`${Math.floor(Math.random() * 1E11)}`,
@@ -41,7 +41,7 @@ passport.serializeUser((user, done)=> {
 })
 
 passport.deserializeUser(async(id, done)=> {
-  const user = await userModel.findById(id)
+  const user = await user.findById(id)
     if(!user){
         return done(new Error('User not found'), null)
     }

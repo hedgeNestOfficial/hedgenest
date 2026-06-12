@@ -6,25 +6,27 @@ const kycSchema = new mongoose.Schema(
       ref: 'users',
       required: true
     },
+    id: {
+      type: String,
+      required: true
+    },
+    userFirstName: {
+      type: String,
+      trim: true
+    },
+    userLastName: {
+      type: String,
+      trim: true
+    },
     idType: {
       type: String,
       enum: ['nin'],
       lowercase: true,
-      required: true
     },
-    idNumber: {
-      type: String,
-      required: true
-    },
-    idPhoto: {
-      url: {
-        type: String,
-        required: true
-      },
-      publicId: {
-        type: String,
-        required: true
-      }
+    isVerified: {
+      type: Boolean,
+      default: false
+
     },
     utilityBill: {
       url: {

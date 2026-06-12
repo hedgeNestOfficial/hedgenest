@@ -154,17 +154,11 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 }
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
-        idType: joi.string().valid('nin').required().messages({
-           'any.required': 'ID type is required',
-           'string.empty': 'ID type cannot be empty',
-            'any.only': 'ID type must be nin'
-        }),
-        idNumber: joi.string().pattern(/^\d{11}$/) .required().messages({
+        id: joi.string().pattern(/^\d{11}$/).required().messages({
             'string.pattern.base': 'NIN must be exactly 11 digits',
-            'string.empty': 'ID number cannot be empty',
-            'any.required': 'ID number is required'
-       })
- 
+            'string.empty': 'NIN cannot be empty',
+            'any.required': 'NIN is required'
+        })
     })
      const { error } = schema.validate(req.body);
 
@@ -260,3 +254,31 @@ exports.initiatePaymentValidator = (req, res, next) => {
     }
     next();
 }
+exports.conversionValidator = (req, res, next) => {
+    const schema = joi.object({
+        from: joi.string().valid('NGN', 'USDT').required(),
+        to: joi.string().valid('NGN', 'USDT').required(),
+        amount: joi.number().required().when('from', {is: 'NGN',
+            then: joi.number().min(1500).messages({
+                    'number.min': 'Minimum NGN conversion amount is ₦1500'
+                }),
+                otherwise: joi.number().min(1.30).messages({
+                    'number.min': 'Minimum USDT conversion amount is 1.30 USDT'
+                })
+            }).messages({
+                'number.base': 'Amount must be a number',
+                'any.required': 'Amount is required'
+            })
+        });
+        const { error } = schema.validate(req.body);
+        
+        if (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.details[0].message
+        });
+    }
+
+    next();
+};
+

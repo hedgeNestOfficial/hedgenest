@@ -6,6 +6,11 @@ const bankSchema = new mongoose.Schema(
       ref: 'users',
       required: true
     },
+    currency: {
+      type: String,
+      enum: ['NGN'],
+      uppercase: true
+    },
     bankName: {
       type: String,
       required: true,
