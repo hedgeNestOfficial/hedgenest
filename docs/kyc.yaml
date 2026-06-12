@@ -19,14 +19,10 @@ paths:
               type: object
               required:
                 - id
-                - verification_consent
               properties:
-                id: 
+                nin: 
                   type: string
-                  example: "98900865437"
-                verification_consent: 
-                  type: boolean
-                  example: true
+                  example: "55555555555"
       responses: 
         "200":
           description: KYC uploaded successfully

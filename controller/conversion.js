@@ -3,6 +3,7 @@ const userModel = require('../model/user');
 const paymentModel = require('../model/payment')
 const walletModel = require('../model/wallet');
 const transaction = require('../model/transaction')
+const revenueModel = require('../model/revenue')
 const axios = require('axios')
 
 exports.conversion = async (req, res) => {
@@ -111,6 +112,19 @@ exports.conversion = async (req, res) => {
             fee: conversionFee,
             conversionAmount: amount
         });
+        let revenue = await revenueModel.findOne({ });
+        
+        if (!revenue) {
+            revenue = new revenueModel({
+                revenueType: "conversion",
+                totalConversionRevenue: conversionFee
+            });
+        } else {
+            revenue.revenueType = "conversion";
+            revenue.totalConversionRevenue += conversionFee;
+        }
+
+        await revenue.save()
         await conversion.save()
         await wallet.save();
         await transaction.create({
