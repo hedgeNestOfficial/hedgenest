@@ -9,6 +9,8 @@ const{sendEmail} = require('../utils/brevo')
 const {emailTemplate, resetPasswordTemplate, resetPasswordSuccessfulTemplate} = require('../email')
 const userModel = require('../model/user')
 const paymentModel = require('../model/payment')
+const transactionModel = require('../model/transaction')
+const revenueModel = require('../model/revenue')
 
 exports.createAdmin = async (req, res)=>{
     try{
@@ -319,6 +321,37 @@ exports.getAllPayment = async (req, res) => {
     })
   }
 }
+exports.getAllTransactions = async (req, res) =>{
+  try {
+    const transaction = await transactionModel.find()
+
+    res.status(200).json({
+      message:'All Transactions Found',
+      count: transaction.length,
+      transaction,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+exports.getAllRevenue = async (req, res) =>{
+  try {
+    const transaction = await revenueModel.find()
+
+    res.status(200).json({
+      message:'All Revenue Found',
+      count: transaction.length,
+      transaction,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
 
 
 
