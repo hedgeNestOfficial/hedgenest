@@ -1,0 +1,126 @@
+openapi: 3.0.0
+info: 
+  title: Documentation for HedgeNest KYC
+  version: 1.0.0
+  description: HedgeNest for KYC
+paths:
+  /api/v1/preview-plan:
+    post:
+      summary: This endpoint is for previewing a savings plan
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - targetAmount
+                - planType
+                - savingFrequency
+                - amountPerFrequency
+              properties:
+                title:
+                  type: string
+                  example: "My Savings Plan"
+                targetAmount:
+                  type: number
+                  example: 50000
+                planType:
+                  type: string
+                  example: "FLEXIBLE"
+                duration:
+                  type: number
+                  example: 30
+                savingFrequency:
+                  type: string
+                  example: "DAILY"
+                amountPerFrequency:
+                  type: number
+                  example: 500
+      responses:
+        "200":
+          description: Plan previewed successfully
+        "400":
+          description: Something went wrong
+
+  /api/v1/create-plan:
+    post:
+      summary: This endpoint is for creating a savings plan
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - targetAmount
+                - planType
+                - savingFrequency
+                - amountPerFrequency
+                - transactionPin
+              properties:
+                title:
+                  type: string
+                  example: "My Savings Plan"
+                targetAmount:
+                  type: number
+                  example: 50000
+                planType:
+                  type: string
+                  example: "FLEXIBLE"
+                duration:
+                  type: number
+                  example: 30
+                savingFrequency:
+                  type: string
+                  example: "DAILY"
+                amountPerFrequency:
+                  type: number
+                  example: 500
+                transactionPin:
+                  type: string
+                  example: "123456"
+      responses:
+        "201":
+          description: Savings plan created successfully
+        "400":
+          description: Something went wrong
+
+  /api/v1/break-plan/{planId}:
+    post:
+      summary: This endpoint is for breaking a savings plan
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: planId
+          required: true
+          schema:
+            type: string
+          example: "64f1b2c3d4e5f6a7b8c9d0e1"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transactionPin
+              properties:
+                transactionPin:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: Plan broken successfully
+        "400":
+          description: Something went wrong
