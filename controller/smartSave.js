@@ -116,6 +116,13 @@ exports.createPlan = async (req, res) => {
   try {
     const {title, targetAmount, planType, duration, savingFrequency, amountPerFrequency, transactionPin } = req.body;
 
+    if (!amountPerFrequency || Number(amountPerFrequency) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount per frequency is required for savings",
+      });
+    }
+
     const normalizedPlanType = planType?.toUpperCase();
     const normalizedSavingFrequency = savingFrequency?.toUpperCase();
 
@@ -204,6 +211,14 @@ exports.createPlan = async (req, res) => {
 
         maturityDate,
       });
+
+    await transactionModel.create({
+      userId: req.user.id,
+      transactionType: "savings",
+      amount: Number(amountPerFrequency ?? targetAmount),
+      currency: "NGN",
+    });
+    
 
     return res.status(201).json({
       success: true,
