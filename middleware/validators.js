@@ -281,4 +281,64 @@ exports.conversionValidator = (req, res, next) => {
 
     next();
 };
+exports.createPlanValidator = (req, res, next) => {
+  const schema = joi.object({
+    title: joi.string().required().messages({
+      "string.base": "Title must be a string",
+      "any.required": "Title is required",
+    }),
 
+    targetAmount: joi.number().min(100).required().messages({
+      "number.base": "Target amount must be a number",
+      "number.min": "Target amount must be greater than 100",
+      "any.required": "Target amount is required",
+    }),
+
+    planType: joi.string().valid("FLEXIBLE", "LOCKED", "STEALTH").required().messages({
+      "string.base": "Plan type must be a string",
+      "any.only": "Plan type must be one of FLEXIBLE, LOCKED, or STEALTH",
+      "any.required": "Plan type is required",
+    }),
+
+    duration: joi.when("planType", {
+      is: joi.string().valid("LOCKED", "STEALTH"),
+      then: joi.number().min(1).required().messages({
+        "number.base": "Duration must be a number",
+        "number.min": "Duration must be at least 1 day",
+        "any.required": "Duration is required for LOCKED and STEALTH plans",
+      }),
+    
+    }),
+
+    savingFrequency: joi.when("planType", {
+        is: joi.string().valid("FLEXIBLE"),
+        then: joi.string().valid("DAILY", "WEEKLY", "MONTHLY").required().messages({
+                "string.base": "Saving frequency must be a string",
+                "any.only": "Saving frequency must be one of DAILY, WEEKLY, or MONTHLY",
+                "any.required": "Saving frequency is required for FLEXIBLE plans",
+   }),
+}),
+    amountPerFrequency: joi.number().min(100).required().messages({
+      "number.base": "Amount per frequency must be a number",
+      "number.min": "Amount per frequency must be greater than 100",
+      "any.required": "Amount per frequency is required",
+    }),
+
+    transactionPin:joi.string().pattern(/^\d{6}$/).messages({
+      'any.required': 'New pin is required',
+      'string.empty': 'New Pin cannot be empty',
+      'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
+  }
+
+  next();
+};
