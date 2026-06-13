@@ -113,7 +113,7 @@ exports.conversion = async (req, res) => {
             conversionAmount: amount
         });
         let revenue = await revenueModel.findOne({ });
-        
+
         if (!revenue) {
             revenue = new revenueModel({
                 revenueType: "conversion",
@@ -151,3 +151,23 @@ exports.conversion = async (req, res) => {
         });
     }
 }
+
+exports.myConversion = async (req, res) => {
+    try {
+        const { userId } = req.params; 
+        const conversion = await conversionModel.find({ userId: userId })
+            .sort({ createdAt: -1 })
+            // .populate('planId', 'investmentName roi term'); 
+
+        return res.status(200).json({
+            message: "Conversion retrieved successfully",
+            count: conversion.length,
+            data: conversion
+        });
+
+    } catch (error) {
+        return res.status(500).json({ 
+            message: error.message
+        });
+    }
+};

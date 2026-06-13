@@ -4,24 +4,23 @@ const mongoose = require('mongoose');
 const investmentSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'users',
         required: true
     },
-    nestType: {
-        type: String,
-        enum: ['nestSafe 90', 'nestPortfolio', 'nestGrow 180', 'nestEquity'],
-        trim: true
+    investmentPlanId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'investmentPlans',
+        required: true
     },
     amount: {
         type: Number,
         required: true
     },
-    roi: {
-        type: Number,
-        default: 10 
+    startDate: {
+        type: Date,
     },
-    term: {
-        type: Number,
+    maturityDate: {
+        type: Date,
     },
     expectedReturn: {
         type: Number
@@ -31,10 +30,6 @@ const investmentSchema = new mongoose.Schema({
         enum: ['pending','active', 'completed'],
         default: 'pending'
     },
-    maturityDate: {
-        type: Date,
-        default: Date.now
-    }
 }, {
     timestamps: true
 });

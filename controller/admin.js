@@ -11,6 +11,8 @@ const userModel = require('../model/user')
 const paymentModel = require('../model/payment')
 const transactionModel = require('../model/transaction')
 const revenueModel = require('../model/revenue')
+const investmentModel = require('../model/investment')
+const smartSaveModel = require('../model/smartSave')
 
 exports.createAdmin = async (req, res)=>{
     try{
@@ -321,6 +323,21 @@ exports.getAllPayment = async (req, res) => {
     })
   }
 }
+exports.getAllSavings = async (req, res) => {
+  try {
+    const savings = await smartSaveModel.find()
+
+    res.status(200).json({
+      message:'All savings Gotten Succesfully',
+      count: savings.length,
+      savings
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
 exports.getAllTransactions = async (req, res) =>{
   try {
     const transaction = await transactionModel.find()
@@ -341,9 +358,25 @@ exports.getAllRevenue = async (req, res) =>{
     const transaction = await revenueModel.find()
 
     res.status(200).json({
-      message:'All Revenue Found',
+      message:'All transactions Found',
       count: transaction.length,
       transaction,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
+exports.getAllInvestment = async (req, res) =>{
+  try {
+    const investment = await investmentModel.find()
+
+    res.status(200).json({
+      message:'All investments Found',
+      count: investment.length,
+      investment,
     })
   } catch (error) {
     res.status(500).json({
