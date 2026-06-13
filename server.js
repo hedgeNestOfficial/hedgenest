@@ -19,6 +19,7 @@ const kycRouter = require('./routes/kyc')
 const paymentRouter = require('./routes/payment')
 const conversionRouter = require('./routes/conversion')
 const adminRouter = require('./routes/admin')
+const investmentPlanRouter = require('./routes/investmentPlan')
 
 
 app.use(express.json());
@@ -32,6 +33,7 @@ app.use('/api/v1', kycRouter)
 app.use('/api/v1', paymentRouter)
 app.use('/api/v1', conversionRouter)
 app.use('/api/v1', adminRouter)
+app.use('/api/v1', investmentPlanRouter)
 
 app.listen(PORT, () =>{
     console.log(`Server is running on PORT: ${PORT}`)
