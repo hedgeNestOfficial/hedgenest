@@ -9,8 +9,9 @@ const otpGenerator = require('otp-generator')
 exports.initiatePayment = async(req, res) =>{
     try {
         const userId = req.user.id
-        const { amount, type = "deposit" } = req.body 
+        const { amount } = req.body 
 
+        const type = "deposit"
         if(!amount || Number(amount) <= 1499 || amount == undefined || amount == null){
             return res.status(400).json({
                 message: "Enter a valid deposit amount, the minimum amount to deposit is 1500"
@@ -144,3 +145,44 @@ exports.verifyPayment = async(req, res) => {
         })
     }
 }
+
+// exports.payoutFunds = async (req, res) => {
+//     try {
+//         const { merchantId, amount, bankCode, accountNumber } = req.body;
+
+//         const wallet = await WalletModel.findOne({ userId: merchantId });
+
+//         if (!wallet) {
+//             return res.status(404).json({ error: "Wallet not found." });
+//         }
+//         if (wallet.availableBalance < Number(amount)) {
+//             return res.status(400).json({ error: "Insufficient funds for this disbursement." });
+//         }
+
+//         const transferSuccessful = true; 
+//         if (!transferSuccessful) {
+//             return res.status(502).json({ error: "Bank transfer failed. Try again later." });
+//         }
+
+//         wallet.availableBalance -= Number(amount);
+//         await wallet.save();
+
+//         const newTransaction = await TransactionModel.create({
+//             userId: merchantId,
+//             type: 'debit',
+//             purpose: 'disbursement',
+//             amount: Number(amount),
+//             destinationAccount: accountNumber,
+//             status: 'successful'
+//         });
+
+//         return res.status(200).json({
+//             message: "Disbursement successful",
+//             data: newTransaction
+//         });
+
+//     } catch (error) {
+//         console.error("Disbursement Error:", error);
+//         return res.status(500).json({ error: "Internal server error" });
+//     }
+// };
