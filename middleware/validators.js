@@ -150,9 +150,9 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
         id: joi.string().pattern(/^\d{11}$/).required().messages({
-            'string.pattern.base': 'NIN must be exactly 11 digits',
-            'string.empty': 'NIN cannot be empty',
-            'any.required': 'NIN is required'
+            'string.pattern.base': 'ID number must be exactly 11 digits',
+            'string.empty': 'ID number cannot be empty',
+            'any.required': 'ID number is required'
         })
     })
      const { error } = schema.validate(req.body);

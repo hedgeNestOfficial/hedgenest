@@ -2,7 +2,7 @@ const userModel = require('../model/user');
 const bankModel = require('../model/bank');
 
 
-exports.linkBankOld = async (req, res) => {
+exports.linkBank = async (req, res) => {
   try {
     const { id } = req.user
     const { bankName, accountName, accountNumber } = req.body;
