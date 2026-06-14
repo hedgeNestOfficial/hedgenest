@@ -29,7 +29,7 @@ const options = {
 
     },
     apis: [
-        "./docs/users.yaml","./docs/bank.yaml","./docs/kyc.yaml","./docs/payment.yaml", "./docs/conversion.yaml","./docs/smartSave.yaml","./docs/admin.yaml", "./docs/investmentPlan.yaml"
+        "./docs/users.yaml","./docs/bank.yaml","./docs/kyc.yaml","./docs/payment.yaml", "./docs/conversion.yaml","./docs/smartSave.yaml","./docs/admin.yaml", "./docs/investmentPlan.yaml","./docs/investment.yaml"
     ],
 }
 
