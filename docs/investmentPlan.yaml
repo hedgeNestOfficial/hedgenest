@@ -7,7 +7,7 @@ info:
 paths: 
   /api/v1/investmentPlan:
     post:
-      summary: this end point is for converting money
+      summary: this end point is for the investment plans
       tags: [investment plan]
       security: 
         - bearerAuth: []
