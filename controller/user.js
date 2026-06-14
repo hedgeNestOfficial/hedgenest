@@ -486,3 +486,17 @@ exports.changePin = async (req, res) => {
     });
   }
 };
+
+// exports.logout = async (req, res) => {
+//     try {
+//         return res.status(200).json({
+//             status: true,
+//             message: "Logged out successfully"
+//         });
+//     } catch (error) {
+//         return res.status(500).json({
+//             status: false,
+//             message: error.message
+//         });
+//     }
+// };
