@@ -56,7 +56,7 @@ exports.initiatePayment = async(req, res) =>{
             amount: depositAmount,
             reference,
             userId,
-            status: 'processing' 
+            // status: 'processing' 
         })
         const transaction = await transactionModel.create({
             userId: user._id,
@@ -151,6 +151,7 @@ exports.verifyPayment = async(req, res) => {
 
 exports.verifyWebhook = async (req, res, next) => {
     try {
+        console.log('WEBHOOK RECEIVED')
         const signature = req.headers["x-korapay-signature"];
 
         const { event, data } = req.body;
