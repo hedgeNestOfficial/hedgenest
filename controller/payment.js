@@ -5,6 +5,7 @@ const transactionModel = require('../model/transaction')
 const conversionModel = require('../model/conversion')
 const axios = require('axios')
 const otpGenerator = require('otp-generator')
+const crypto = require('crypto')
 
 exports.initiatePayment = async(req, res) =>{
     try {
@@ -146,6 +147,45 @@ exports.verifyPayment = async(req, res) => {
     }
 }
 
+exports.verifyWebhook = async (req, res, next) => {
+    try {
+        const { event, data } = req.body;
+        const hash = crypto.createHmac("sha256", secretKey).update(JSON.stringify(data)).digest("hex");
+        const signature = req.headers["x-korapay-signature"];
+        
+        if (hash !== signature) 
+            return next(new appError("Invalid webhook signature", 401));
+        
+        const payment = await paymentModel.findOne({ reference: data.reference });
+        const user = await walletModel.findOne({ userId: payment.userId });
+        
+        if (!payment || !user) return next(new appError("User or NO payment record found", 404));
+        if (event === 'charge.success') {
+            await updateStatus(data.reference, 'successful');
+        } else if (event === 'charge.pending') {
+            await updateStatus(data.reference, 'processing');
+        } else if (event === 'charge.failed') {
+            updateStatus(data.reference, 'failed');
+            
+            payment.status = 'successful'
+        };
+        
+        await wallet.save();
+        await payment.save();
+        res.status(200).json({
+            success: true,
+            status: "successful",
+            message: 'Payment for order is successfully'
+        })
+    
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).json({
+            message: 'Error fetching payment'
+        })
+    }
+
+}
 // exports.payoutFunds = async (req, res) => {
 //     try {
 //         const { merchantId, amount, bankCode, accountNumber } = req.body;

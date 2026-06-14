@@ -129,24 +129,33 @@ exports.getOneInvestment = async (req, res) => {
 exports.completeInvestment = async (req, res) => {
     try {
         const { investmentId, userId } = req.body; 
-        const investment = await UserInvestmentModel.findOne({ 
+        const investment = await investmentModel.findOne({ 
             _id: investmentId, 
             userId: userId 
         });
-
+        console.log(investmentId);
+        console.log(userId);
+        
+        
         if (!investment) {
-            return res.status(404).json({ error: "Investment not found or unauthorized." });
-        }
-        if (investment.status === 'completed') {
-            return res.status(400).json({ error: "This investment is complete already." });
-        }
-        else if (investment.status === 'claimed') {
-            return res.status(400).json({ error: "This investment has been claimed already." 
+            return res.status(404).json({
+                message: "Investment not found or unauthorized."
             });
         }
-        const currentTime = new Date();
-        if (currentTime < investment.maturityDate) {
-            return res.status(400).json({ error: "Investment has not reached maturity yet." });
+        if(investment.status !== 'active'){
+            return res.status(400).json({ 
+                messagge: "This investment is no longer active." 
+            });
+        }
+        if (investment.status === 'completed') {
+            return res.status(400).json({
+                message: "This investment is complete already."
+            });
+        }
+        else if (investment.status === 'claimed') {
+            return res.status(400).json({
+                message: "This investment has been claimed already." 
+            });
         }
 
         investment.status = 'completed'
@@ -162,24 +171,29 @@ exports.completeInvestment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Claim Investment Error:", error);
-        return res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        return res.status(500).json({
+            message: "Something went wrong"
+        });
     }
 };
 
 exports.claimInvestment = async (req, res) => {
     try {
         const { investmentId, userId } = req.body; 
-        const investment = await UserInvestmentModel.findOne({ 
+        const investment = await investmentModel.findOne({ 
             _id: investmentId, 
             userId: userId 
         });
 
         if (!investment) {
-            return res.status(404).json({ error: "Investment not found or unauthorized." });
+            return res.status(404).json({
+                message: "Investment not found."
+            });
         }
        if (investment.status === 'claimed') {
-            return res.status(400).json({ error: "This investment has been claimed already." 
+            return res.status(400).json({
+                message: "This investment has been claimed already." 
             });
         }
         if(investment.status !== 'completed'){
@@ -222,9 +236,64 @@ exports.claimInvestment = async (req, res) => {
     }
 };
 
-// const daysPassed = (Date.now() - investment.createdAt) /(1000 * 60 * 60 * 24);
-//         if (daysPassed < 2) {
-//             return res.status(400).json({
-//                 messa ge:"Withdrawals will be available in 2"
+// exports.breakInvestment = async (req, res) => {
+//     try {
+//         const userId = req.user.id;
+//         const { investmentId } = req.params;
+
+//         const investment = await investmentModel.findOne({
+//             _id: investmentId,
+//             userId
+//         });
+
+//         if (!investment) {
+//             return res.status(404).json({
+//                 message: "Investment not found"
 //             });
 //         }
+
+//         if (investment.status !== "active") {
+//             return res.status(400).json({
+//                 message: "This investment is no longer active"
+//             });
+//         }
+
+//         const wallet = await walletModel.findOne({ userId });
+
+//         if (!wallet) {
+//             return res.status(404).json({
+//                 message: "Wallet not found"
+//             });
+//         }
+
+//         if (new Date() >= investment.maturityDate) {
+//             return res.status(400).json({
+//                 message: "This investment has already matured. Use the normal withdrawal process."
+//             });
+//         }
+
+//         const penalty = investment.amount * 0.10;
+//         const payout = investment.amount - penalty;
+
+//         wallet.balanceInNaira += payout;
+
+//         investment.status = "withdrawn";
+//         investment.penalty = penalty;
+//         investment.withdrawnAmount = payout;
+//         investment.withdrawnAt = new Date();
+
+//         await wallet.save();
+//         await investment.save();
+
+//         return res.status(200).json({
+//             message: "Investment terminated successfully",
+//             penalty,
+//             payout
+//         });
+
+//     } catch (error) {
+//         return res.status(500).json({
+//             message: error.message
+//         });
+//     }
+// };
