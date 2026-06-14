@@ -282,7 +282,7 @@ exports.getOneUser = async (req, res) =>{
                 message:"User not found"
             })
         }
-        const wallet = await walletModel.findOne({userId: user._id});
+        const wallet = await walletModel.findOne({userId: existingUser._id});
                if (!wallet) {
               return res.status(404).json({
                 message: "Wallet not found",

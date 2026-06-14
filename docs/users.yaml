@@ -297,3 +297,17 @@ paths:
           description: otp verified successfully
         "400":
           description: something went wrong
+
+  /api/v1/logout:
+    post:
+      summary: this end point is to logout a user
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+        description: logged out successfully
+        "401":
+        description: unauthorized
+        "500":
+        description: internal server error
