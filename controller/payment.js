@@ -45,7 +45,7 @@ exports.initiatePayment = async(req, res) =>{
                 email: user.email,
                 name: `${user.lastName} ${user.firstName}`
             },
-            redirect_url: 'https://hedge-nest-react-file.vercel.app/'
+            redirect_url: 'https://hedge-nest-react-file.vercel.app/payment-success'
         }
         const response = await axios.post('https://api.korapay.com/merchant/api/v1/charges/initialize', paymentData,{
             headers:{
