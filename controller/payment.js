@@ -80,8 +80,9 @@ exports.initiatePayment = async(req, res) =>{
             message: "Payment provider is temporarily unavailable. Please try again in a few minutes."
         });
     }
+    console.log(error)
         res.status(500).json({
-            message: "Error initializing payment"
+            message: error.message
         })
     }
 }
@@ -153,8 +154,8 @@ exports.verifyWebhook = async (req, res, next) => {
         const signature = req.headers["x-korapay-signature"];
 
         const { event, data } = req.body;
-        const hash = crypto.createHmac("sha256", secretKey).update(JSON.stringify(data)).digest("hex");
-        
+        const hash = crypto.createHmac("sha256", process.env.KORA_API_KEY).update(JSON.stringify(data)).digest("hex");
+        console.log (hash)
         
         if (hash !== signature) 
             return next(new appError("Invalid webhook signature", 401));

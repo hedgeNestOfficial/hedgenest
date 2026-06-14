@@ -5,7 +5,7 @@ const { initiatePaymentValidator } = require('../middleware/validators')
 
 router.post('/fundWallet', Authentication, initiatePaymentValidator, initiatePayment)
 router.get('/verifyFund', Authentication, verifyPayment)
-router.post('/webhook', Authentication, verifyWebhook)
+router.post('/webhook', verifyWebhook)
 
 
 module.exports = router
