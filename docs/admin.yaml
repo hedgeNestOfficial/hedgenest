@@ -4,41 +4,188 @@ info:
   version: 1.0.0
   description: HedgeNest for admin management
 paths:
-  /api/v1/get-One/{id}:
-    get:
-      summary: Get a single user by ID
+  /api/v1/create-admin:
+    post:
+      summary: this end point is to create an admin
       tags: [admin]
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          example: "64f1b2c3d4e5f6a7b8c9d0e1"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - phoneNumber
+                - email
+                - password
+              properties:
+                firstName:
+                  type: string
+                  example: John
+                lastName:
+                  type: string
+                  example: Doe
+                phoneNumber:
+                  type: string
+                  example: 09183748577
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+                password:
+                  type: string
+                  example: Password123
+      responses:
+        "201":
+          description: Admin created successfully, otp has been sent to email
+        "400":
+          description: Admin with this email already exist
+
+  /api/v1/login-admin:
+    post:
+      summary: this end point is to login an admin
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+                password:
+                  type: string
+                  example: Password123
       responses:
         "200":
-          description: User found successfully
+          description: Login Successful
+        "400":
+          description: Email and password are required or Invalid Credentials or Please verify your email
         "404":
-          description: User not found
+          description: Invalid Credentials
 
-  /api/v1/get-all-users:
-    get:
-      summary: Get all users
+  /api/v1/verify-admin:
+    post:
+      summary: this end point is to verify admin email with otp
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+                otp:
+                  type: string
+                  example: 482910
+      responses:
+        "200":
+          description: OTP Verified successfully
+        "400":
+          description: OTP Expired or Invalid OTP credentials
+        "404":
+          description: Admin not found
+
+  /api/v1/forgot-admin-password:
+    post:
+      summary: this end point is to send otp to admin email for password reset
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+      responses:
+        "200":
+          description: OTP sent to email
+        "400":
+          description: Email is required or Admin not found
+
+  /api/v1/reset-admin-password:
+    post:
+      summary: this end point is to reset admin password using otp
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+                - newPassword
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+                otp:
+                  type: string
+                  example: 482910
+                newPassword:
+                  type: string
+                  example: NewPassword123
+      responses:
+        "200":
+          description: Password reset successfully
+        "400":
+          description: Email, OTP and New password are required or OTP Expired or Invalid OTP credentials
+        "404":
+          description: Admin not found
+
+  /api/v1/change-admin-password:
+    post:
+      summary: this end point is to change admin password (requires authentication)
       tags: [admin]
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                  example: Password123
+                newPassword:
+                  type: string
+                  example: NewPassword456
       responses:
         "200":
-          description: Found all users
+          description: Password changed successfully
+        "400":
+          description: Old password and new password are required or Incorrect Password
+        "404":
+          description: Admin not found
 
-  /api/v1/get-all-payments:
+  /api/v1/get-all-revenue:
     get:
-      summary: Get all payments
+      summary: this end point is to get all revenue
       tags: [admin]
-      security:
-        - bearerAuth: []
       responses:
         "200":
-          description: All Payment Gotten Successfully
+          description: All Revenue Found
