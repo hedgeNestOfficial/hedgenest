@@ -108,7 +108,7 @@ exports.getOneInvestment = async (req, res) => {
         const investment = await investmentModel.findOne({ 
             _id: investmentId, 
             userId: userId 
-        }).populate('planId');
+        }).populate('investmentPlanId');
 
         if (!investment) {
             return res.status(404).json({ error: "Investment not found or unauthorized access." });
@@ -120,7 +120,49 @@ exports.getOneInvestment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Fetch Single Investment Error:", error);
+        console.error(error);
+        return res.status(500).json({ error: "Internal server error" });
+        message: error.message
+    }
+};
+
+exports.completeInvestment = async (req, res) => {
+    try {
+        const { investmentId, userId } = req.body; 
+        const investment = await UserInvestmentModel.findOne({ 
+            _id: investmentId, 
+            userId: userId 
+        });
+
+        if (!investment) {
+            return res.status(404).json({ error: "Investment not found or unauthorized." });
+        }
+        if (investment.status === 'completed') {
+            return res.status(400).json({ error: "This investment is complete already." });
+        }
+        else if (investment.status === 'claimed') {
+            return res.status(400).json({ error: "This investment has been claimed already." 
+            });
+        }
+        const currentTime = new Date();
+        if (currentTime < investment.maturityDate) {
+            return res.status(400).json({ error: "Investment has not reached maturity yet." });
+        }
+
+        investment.status = 'completed'
+        investment.isCompleted = true
+        await investment.save();
+        
+        return res.status(200).json({
+            message: "Investment has reached its maturity stage,withdrawals will be available in 2",
+            data: {
+                completeAmount: investment.expectedReturn,
+                investmentStatus: investment.status
+            }
+        });
+
+    } catch (error) {
+        console.error("Claim Investment Error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 };
@@ -136,16 +178,26 @@ exports.claimInvestment = async (req, res) => {
         if (!investment) {
             return res.status(404).json({ error: "Investment not found or unauthorized." });
         }
-        if (investment.status === 'claimed') {
-            return res.status(400).json({ error: "This investment has already been claimed." });
+       if (investment.status === 'claimed') {
+            return res.status(400).json({ error: "This investment has been claimed already." 
+            });
+        }
+        if(investment.status !== 'completed'){
+            return res.status(400).json({ 
+                messagge: "This investment has  not been completed." 
+            });
         }
         const currentTime = new Date();
         if (currentTime < investment.maturityDate) {
-            return res.status(400).json({ error: "Investment has not reached maturity yet." });
+            return res.status(400).json({ 
+                message: "Investment has not reached maturity yet."
+            });
         }
         const wallet = await WalletModel.findOne({ userId });
         if (!wallet) {
-            return res.status(404).json({ error: "Wallet not found." });
+            return res.status(404).json({ 
+                message: "Withdrawals will be available in 2"
+            });
         }
 
         wallet.availableBalance += investment.expectedReturn;
@@ -156,7 +208,7 @@ exports.claimInvestment = async (req, res) => {
         await investment.save();
         
         return res.status(200).json({
-            message: "Investment claimed successfully!",
+            message: "Investment has reached its maturity stage",
             data: {
                 claimedAmount: investment.expectedReturn,
                 newWalletBalance: wallet.availableBalance,
@@ -169,3 +221,10 @@ exports.claimInvestment = async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
+
+// const daysPassed = (Date.now() - investment.createdAt) /(1000 * 60 * 60 * 24);
+//         if (daysPassed < 2) {
+//             return res.status(400).json({
+//                 messa ge:"Withdrawals will be available in 2"
+//             });
+//         }

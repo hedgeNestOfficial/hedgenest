@@ -363,17 +363,11 @@ exports.createInvestmentValidator = (req, res, next) => {
 exports.getOneInvestmentValidator = (req, res, next) => {
     const schema = joi.object({
         userId: joi.string().hex().length(24).required().messages({
-            "string.base": "Investment Plan ID must be a string",
-            "string.hex": "Invalid Investment Plan ID",
-            "string.length": "Invalid Investment Plan ID",
-            "any.required": "Investment Plan ID is required"
+            "string.base": "user ID must be a string",
+            "string.hex": "Invalid user ID",
+            "string.length": "Invalid user ID",
+            "any.required": "user ID is required"
         }),
-
-        amount: joi.number().integer().required().messages({
-            "number.base": "Amount must be a number",
-            "number.integer": "Amount must be a whole Naira value",
-            "any.required": "Amount is required"
-        })
     });
 
     const { error } = schema.validate(req.body);

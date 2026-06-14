@@ -1,0 +1,70 @@
+
+openapi: 3.0.0
+info: 
+  title: Documentation for HedgeNest investment creation for only admin
+  version: 1.0.0
+  description: HedgeNest for  creating investment 
+paths: 
+  /api/v1/investment:
+    post:
+      summary: this end point is for investmen operation
+      tags: [investment]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - investmentPlanId
+                - amount
+              properties:
+                investmentPlanId: 
+                  type: string
+                  example: 6843f0c4b7a8d5e2f9c12345
+                amount:
+                  type: number
+                  example: 5000
+      responses: 
+        "200":
+          description: Conversion successful
+        "400":
+          description: something went wrong
+   
+  /api/v1/investment/{userId}:
+    get:
+      summary: this end point is to get all investments of a user 
+      tags: [investment]
+      security: 
+        - bearerAuth: []
+      responses: 
+        "201":
+          description: All my investments gotten
+        "400":
+          description: something went wrong
+   
+  /api/v1/investment/{investmentId}:
+    get:
+      summary: this end point is to get one investment of a user 
+      tags: [investment]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId: 
+                  type: string
+                  example: 6843f0c4b7a8d5e2f9c12345
+      responses: 
+        "201":
+          description: One my investment gotten
+        "400":
+          description: something went wrong
