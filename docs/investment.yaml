@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: HedgeNest for  creating investment 
 paths: 
-  /api/v1/investment:
+  /api/v1/initiateInvestment:
     post:
       summary: this end point is for investmen operation
       tags: [investment]

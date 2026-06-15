@@ -84,7 +84,7 @@ exports.createInvestment = async (req, res) => {
 exports.myInvestments = async (req, res) => {
     try {
         const { userId } = req.params; 
-        const investments = await investmentModel.find({ userId: userId })
+        const investments = await investmentModel.find({ userId })
             .sort({ createdAt: -1 })
             .populate('investmentPlanId', 'investmentName roi term'); 
 
