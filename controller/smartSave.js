@@ -356,7 +356,6 @@ exports.breakPlan = async (req, res) => {
       userId: req.user.id,
       transactionType: "withdraw",
       amount: amountToCredit,
-      currency: null,
     });
 
     // FIX 3: Return originalBalance instead of plan.currentBalance (which is now 0)
