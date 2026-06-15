@@ -384,4 +384,90 @@ exports.breakPlan = async (req, res) => {
       message: error.message,
     });
   }
+}
+exports.topUpFlexible = async (req, res) => {
+  try {
+    const { amount, transactionPin } = req.body;
+    const { savingsId } = req.params;
+    const userId = req.user._id;
+
+    if (!amount || !transactionPin) {
+      return res.status(400).json({ 
+        message: "Amount and transaction pin are required" 
+      });
+    }
+
+    if (amount <= 0) {
+      return res.status(400).json({ 
+        message: "Enter a valid amount" 
+      });
+    }
+
+    // verify transaction pin
+    const wallet = await walletModel.findOne({ userId });
+    if (!wallet) {
+      return res.status(404).json({ 
+        message: "Wallet not found" 
+      });
+    }
+
+    const isPinValid = await bcrypt.compare(String(transactionPin), wallet.transactionPin);
+    if (!isPinValid) {
+      return res.status(400).json({ 
+        message: "Invalid transaction pin" 
+      });
+    }
+
+    // find savings plan
+    const savingsPlan = await savingsModel.findOne({ _id: savingsId, userId });
+    if (!savingsPlan) {
+      return res.status(404).json({ 
+        message: "Savings plan not found" 
+      });
+    }
+
+    if (savingsPlan.type !== "flexible") {
+      return res.status(400).json({ 
+        message: "This plan does not support top up" 
+      });
+    }
+
+    if (wallet.balance < amount) {
+      return res.status(400).json({ 
+        message: "Insufficient wallet balance" 
+      });
+    }
+
+    // deduct from wallet and add to savings
+    wallet.balance -= amount;
+    await wallet.save();
+
+    savingsPlan.balance += amount;
+    await savingsPlan.save();
+
+    const transaction = await transactionModel.create({
+      userId,
+      type: "top_up",
+      amount,
+      reference: `TOPUP-${Date.now()}`,
+      savingsId,
+      description: `Top up - ${savingsPlan.name}`,
+    });
+
+    res.status(200).json({
+      message: "Top up successful",
+      data: {
+        savingsName: savingsPlan.name,
+        newSavingsBalance: savingsPlan.balance,
+        newWalletBalance: wallet.balance,
+        transaction,
+      },
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
 };

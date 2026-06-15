@@ -370,7 +370,7 @@ exports.update = async (req, res) => {
 
   try {
     const file = req.file;
-    const { phoneNumber, profilePicture } = req.body;
+    const { phoneNumber } = req.body;
     const { id } = req.user;
     const user = await userModel.findById(id);
 
@@ -390,17 +390,31 @@ exports.update = async (req, res) => {
       uploadResult = await cloudinary.uploader.upload(file.path, {
         folder: "profile-picture",
       });
-
+      
       fs.unlinkSync(file.path);
     }
+    
+    const updateData = {
+      phoneNumber
+    };
 
-    const newUpdate = await userModel.findByIdAndUpdate(id, {phoneNumber, profilePicture:profilePicture}, {new: true
-        })
+    if (uploadResult) {
+      updateData.profilePicture = {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id
+      };
+    }
+
+    const newUpdate = await userModel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
         res.status(201).json({
             message: "User profile updated successfully",
             data: newUpdate
         })
-
+        
   } catch (error) {
     res.status(500).json({
       message: "Error updating user",
@@ -408,6 +422,7 @@ exports.update = async (req, res) => {
     });
   }
 };
+
 exports.resend = async (req, res) => {
   try {
     const { email } = req.body;
@@ -470,4 +485,18 @@ exports.changePin = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+exports.logout = async (req, res) => {
+    try {
+        return res.status(200).json({
+            status: true,
+            message: "Logged out successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: error.message
+        });
+    }
 };

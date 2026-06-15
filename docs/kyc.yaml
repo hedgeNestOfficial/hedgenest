@@ -20,7 +20,7 @@ paths:
               required:
                 - id
               properties:
-                nin: 
+                id: 
                   type: string
                   example: "55555555555"
       responses: 

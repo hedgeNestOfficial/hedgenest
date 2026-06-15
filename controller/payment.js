@@ -5,12 +5,14 @@ const transactionModel = require('../model/transaction')
 const conversionModel = require('../model/conversion')
 const axios = require('axios')
 const otpGenerator = require('otp-generator')
+const crypto = require('crypto')
 
 exports.initiatePayment = async(req, res) =>{
     try {
         const userId = req.user.id
-        const { amount, type = "deposit" } = req.body 
+        const { amount } = req.body 
 
+        const type = "deposit"
         if(!amount || Number(amount) <= 1499 || amount == undefined || amount == null){
             return res.status(400).json({
                 message: "Enter a valid deposit amount, the minimum amount to deposit is 1500"
@@ -43,7 +45,7 @@ exports.initiatePayment = async(req, res) =>{
                 email: user.email,
                 name: `${user.lastName} ${user.firstName}`
             },
-            redirect_url: 'https://hedge-nest-react-file.vercel.app/'
+            redirect_url: 'http://localhost:5173/payment-success'
         }
         const response = await axios.post('https://api.korapay.com/merchant/api/v1/charges/initialize', paymentData,{
             headers:{
@@ -54,6 +56,7 @@ exports.initiatePayment = async(req, res) =>{
             amount: depositAmount,
             reference,
             userId,
+            status: 'processing' 
         })
         const transaction = await transactionModel.create({
             userId: user._id,
@@ -77,8 +80,9 @@ exports.initiatePayment = async(req, res) =>{
             message: "Payment provider is temporarily unavailable. Please try again in a few minutes."
         });
     }
+    console.log(error)
         res.status(500).json({
-            message: "Error initializing payment"
+            message: error.message
         })
     }
 }
@@ -144,3 +148,94 @@ exports.verifyPayment = async(req, res) => {
         })
     }
 }
+
+exports.verifyWebhook = async (req, res, next) => {
+    try {
+        console.log('WEBHOOK REC')
+        const signature = req.headers["x-korapay-signature"];
+
+        const { event, data } = req.body;
+        const hash = crypto.createHmac("sha256", process.env.KORA_API_KEY).update(JSON.stringify(data)).digest("hex");
+        console.log (hash)
+        
+        if (hash !== signature) 
+            return next(new appError("Invalid webhook signature", 401));
+        
+        const payment = await paymentModel.findOne({ reference: data.reference });
+        if (!payment) return res.status(404).json({ message: "Payment record not found" });
+        
+        const wallet = await walletModel.findOne({ userId: payment.userId });
+        if (!wallet) return res.status(404).json({ message: "Wallet record not found" })
+
+
+
+        if (event === 'charge.success') {
+           if (payment.status !== 'successful') {
+                payment.status = 'successful';
+                // Credit user wallet balance here safely
+                wallet.balance = (wallet.balance || 0) + payment.amount;
+                await wallet.save();
+            }
+        } else if (event === 'charge.pending') {
+            payment.status = 'processing';
+        } else if (event === 'charge.failed') {
+            payment.status = 'failed'
+        };
+        
+        await wallet.save();
+        await payment.save();
+        res.status(200).json({
+            success: true,
+            status: "successful",
+            message: 'Payment for deposit is successfully'
+        })
+    
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).json({
+            message: 'Error fetching payment'
+        })
+    }
+
+}
+// exports.payoutFunds = async (req, res) => {
+//     try {
+//         const { merchantId, amount, bankCode, accountNumber } = req.body;
+
+//         const wallet = await WalletModel.findOne({ userId: merchantId });
+
+//         if (!wallet) {
+//             return res.status(404).json({ error: "Wallet not found." });
+//         }
+//         if (wallet.availableBalance < Number(amount)) {
+//             return res.status(400).json({ error: "Insufficient funds for this disbursement." });
+//         }
+
+//         const transferSuccessful = true; 
+//         if (!transferSuccessful) {
+//             return res.status(502).json({ error: "Bank transfer failed. Try again later." });
+//         }
+
+//         wallet.availableBalance -= Number(amount);
+//         await wallet.save();
+
+//         const newTransaction = await TransactionModel.create({
+//             userId: merchantId,
+//             type: 'debit',
+//             purpose: 'disbursement',
+//             amount: Number(amount),
+//             destinationAccount: accountNumber,
+//             status: 'successful'
+//         });
+
+//         return res.status(200).json({
+//             message: "Disbursement successful",
+//             data: newTransaction
+//         });
+
+//     } catch (error) {
+//         console.error("Disbursement Error:", error);
+//         return res.status(500).json({ error: "Internal server error" });
+//     }
+// };
+

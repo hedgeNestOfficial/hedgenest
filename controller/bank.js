@@ -2,7 +2,7 @@ const userModel = require('../model/user');
 const bankModel = require('../model/bank');
 
 
-exports.linkBankOld = async (req, res) => {
+exports.linkBank = async (req, res) => {
   try {
     const { id } = req.user
     const { bankName, accountName, accountNumber } = req.body;
@@ -36,127 +36,127 @@ exports.linkBankOld = async (req, res) => {
   }
 }
 
-const axios = require('axios');
+// const axios = require('axios');
 
 
-exports.getBankCode = async (req, res) => {
-  try {
-    const { id } = req.user;
-    const { bankName, accountName, accountNumber } = req.body;
+// exports.getBankCode = async (req, res) => {
+//   try {
+//     const { id } = req.user;
+//     const { bankName, accountName, accountNumber } = req.body;
 
-    const user = await userModel.findById(id);
+//     const user = await userModel.findById(id);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found"
+//       });
+//     }
 
-    // Fetch banks from Korapay
-    const response = await axios.get(
-      'https://api.korapay.com/merchant/api/v1/misc/banks?countryCode=NG',
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORA_API_KEY}`
-        }
-      }
-    );
+//     // Fetch banks from Korapay
+//     const response = await axios.get(
+//       'https://api.korapay.com/merchant/api/v1/misc/banks?countryCode=NG',
+//       {
+//         headers: {
+//           Authorization: `Bearer ${process.env.KORA_API_KEY}`
+//         }
+//       }
+//     );
 
-    const banks = response.data.data;
-
-
-    const selectedBank = banks.find(
-      bank => bank.name.toLowerCase() === bankName.toLowerCase()
-    );
-
-    if (!selectedBank) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid bank name"
-      });
-    }
-
-    const bank = await bankModel.create({
-      userId: user._id,
-      bankName,
-      bankCode: selectedBank.code,
-      accountName,
-      accountNumber
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Bank code gotten successfully",
-      data: bank
-    });
-
-  } catch (error) {
-    console.error(error.response?.data || error);
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
+//     const banks = response.data.data;
 
 
+//     const selectedBank = banks.find(
+//       bank => bank.name.toLowerCase() === bankName.toLowerCase()
+//     );
 
-exports.linkBank = async (req, res) => {
-  try {
-    const { id } = req.user;
-    const { bankName, bankCode, accountNumber } = req.body;
+//     if (!selectedBank) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid bank name"
+//       });
+//     }
 
-    const user = await userModel.findById(id);
+//     const bank = await bankModel.create({
+//       userId: user._id,
+//       bankName,
+//       bankCode: selectedBank.code,
+//       accountName,
+//       accountNumber
+//     });
 
-    if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: 'User not found'
-      });
-    }
+//     return res.status(200).json({
+//       success: true,
+//       message: "Bank code gotten successfully",
+//       data: bank
+//     });
 
-    // Resolve account details from Kora
-    const { data } = await axios.post(
-      'https://api.korapay.com/merchant/api/v1/misc/banks/resolve',
-      {
-        bank: bankCode,
-        account: accountNumber
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORA_API_KEY}`
-        }
-      }
-    );
+//   } catch (error) {
+//     console.error(error.response?.data || error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message
+//     });
+//   }
+// };
 
-    if (!data.status) {
-      return res.status(400).json({
-        status: false,
-        message: 'Unable to resolve account'
-      });
-    }
 
-    const bank = await bankModel.create({
-      userId: user._id,
-      currency: 'NGN',
-      bankName,
-      accountName: data.data.account_name,
-      accountNumber
-    });
 
-    return res.status(201).json({
-      status: true,
-      message: 'Account linked successfully',
-      data: bank
-    });
+// exports.linkBank = async (req, res) => {
+//   try {
+//     const { id } = req.user;
+//     const { bankName, bankCode, accountNumber } = req.body;
 
-  } catch (error) {
-    console.log(error.response?.data || error.message);
+//     const user = await userModel.findById(id);
 
-    return res.status(500).json({
-      message: 'Error linking bank account',
-      error: error.message
-    });
-  }
-};
+//     if (!user) {
+//       return res.status(404).json({
+//         status: false,
+//         message: 'User not found'
+//       });
+//     }
+
+//     // Resolve account details from Kora
+//     const { data } = await axios.post(
+//       'https://api.korapay.com/merchant/api/v1/misc/banks/resolve',
+//       {
+//         bank: bankCode,
+//         account: accountNumber
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${process.env.KORA_API_KEY}`
+//         }
+//       }
+//     );
+
+//     if (!data.status) {
+//       return res.status(400).json({
+//         status: false,
+//         message: 'Unable to resolve account'
+//       });
+//     }
+
+//     const bank = await bankModel.create({
+//       userId: user._id,
+//       currency: 'NGN',
+//       bankName,
+//       accountName: data.data.account_name,
+//       accountNumber
+//     });
+
+//     return res.status(201).json({
+//       status: true,
+//       message: 'Account linked successfully',
+//       data: bank
+//     });
+
+//   } catch (error) {
+//     console.log(error.response?.data || error.message);
+
+//     return res.status(500).json({
+//       message: 'Error linking bank account',
+//       error: error.message
+//     });
+//   }
+// };

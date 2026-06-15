@@ -1,5 +1,5 @@
 const router = require ('express').Router()
-const {createAdmin, adminLogin, verifyAdminEmail, adminforgotPassowrd, getOneUser, changeAdminPassword, resetAdminPassword, getAlluser, getAllPayment, getAllTransactions, getAllRevenue} = require('../controller/admin')
+const {createAdmin, adminLogin, verifyAdminEmail, adminforgotPassowrd, getOneUser, changeAdminPassword, resetAdminPassword, getAlluser, getAllPayment, getAllTransactions, getAllRevenue, getAllSavings, getAllInvestment} = require('../controller/admin')
 const {Authentication, adminAuth} = require('../middleware/auth')
 const{signUpValidator, resetPasswordValidator,changePasswordValidator} = require('../middleware/validators')
 

@@ -1,15 +1,18 @@
-  const userModel = require('../model/user')
-  const walletModel = require('../model/wallet')
-  const payment = require('../model/payment')
-  const admin = require('../model/admin')
-  const bcrypt = require('bcrypt')
-  const jwt = require('jsonwebtoken')
-  const otpGenerator = require('otp-generator')
-  const{sendEmail} = require('../utils/brevo')
-  const {emailTemplate, resetPasswordTemplate, resetPasswordSuccessfulTemplate} = require('../email')
-  const paymentModel = require('../model/payment')
-  const transactionModel = require('../model/transaction')
-  const revenueModel = require('../model/revenue')
+const user = require('../model/user')
+const wallet = require('../model/wallet')
+const payment = require('../model/payment')
+const admin = require('../model/admin')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const otpGenerator = require('otp-generator')
+const{sendEmail} = require('../utils/brevo')
+const {emailTemplate, resetPasswordTemplate, resetPasswordSuccessfulTemplate} = require('../email')
+const userModel = require('../model/user')
+const paymentModel = require('../model/payment')
+const transactionModel = require('../model/transaction')
+const revenueModel = require('../model/revenue')
+const investmentModel = require('../model/investment')
+const smartSaveModel = require('../model/smartSave')
 
   exports.createAdmin = async (req, res)=>{
       try{
@@ -274,27 +277,25 @@
           const id = req.params.id
           const existingUser = await userModel.findById(id)
 
-          if(!existingUser){
-              return res.status(404).json({
-                  message:"User not found"
-              })
-          }
-          const wallet = await walletModel.findOne({ userId: id })
-          
-          res.status(200).json({
-              message:"User found successfully",
-              data: existingUser
-          })
-      }catch(error){
-          res.status(500).json({
-              message:"Something went wrong",
-              error: error.message
-          })
-      }
-  }
-  exports.getAlluser = async (req, res) =>{
-    try {
-      const users = await userModel.find().select('-password')
+        if(!existingUser){
+            return res.status(404).json({
+                message:"User not found"
+            })
+        }
+        res.status(200).json({
+            message:"User found successfully",
+            data: existingUser
+        })
+    }catch(error){
+        res.status(500).json({
+            message:"Something went wrong",
+            error: error.message
+        })
+    }
+}
+exports.getAlluser = async (req, res) =>{
+  try {
+    const users = await userModel.find().select('-password')
 
       res.status(200).json({
         message:'Found all users',
@@ -311,20 +312,20 @@
     try {
       const payments = await paymentModel.find()
 
-      res.status(200).json({
-        message:'All Payment Gotten Succesfully',
-        count: payments.length,
-        payments
-      })
-    } catch (error) {
-      res.status(500).json({
-        message: error.message
-      })
-    }
+    res.status(200).json({
+      message:'All Payment Gotten Succesfully',
+      count: payment.length,
+      payments
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
   }
-  exports.getAllTransactions = async (req, res) =>{
-    try {
-      const transaction = await transactionModel.find()
+}
+exports.getAllTransactions = async (req, res) =>{
+  try {
+    const transaction = await transactionModel.find()
 
       res.status(200).json({
         message:'All Transactions Found',
@@ -341,17 +342,17 @@
     try {
       const transaction = await revenueModel.find()
 
-      res.status(200).json({
-        message:'All Revenue Found',
-        count: transaction.length,
-        transaction,
-      })
-    } catch (error) {
-      res.status(500).json({
-        message: error.message
-      })
-    }
+    res.status(200).json({
+      message:'All Revenue Found',
+      count: transaction.length,
+      transaction,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
   }
+}
 
 
 

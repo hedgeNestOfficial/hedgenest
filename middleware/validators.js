@@ -128,11 +128,6 @@ exports.createTransactionPinValidator = (req,res,next)=>{
             'string.empty': 'Email cannot be empty',
             'string.email': 'Email must be a valid email'
             }),
-            // otp:joi.string().pattern(/^\d{6}$/).required().messages({
-            //     'any.required': 'OTP is required',
-            //     'string.empty': 'OTP cannot be empty',
-            //    'string.pattern.base': 'OTP must only contain digits and must be 6 digits'
-            // }),
         transactionPin:joi.string().pattern(/^\d{6}$/).messages({
                 'any.required': 'New pin is required',
                 'string.empty': 'New Pin cannot be empty',
@@ -155,9 +150,9 @@ exports.createTransactionPinValidator = (req,res,next)=>{
 exports.kycValidator = (req, res, next) => {
     const schema = joi.object({
         id: joi.string().pattern(/^\d{11}$/).required().messages({
-            'string.pattern.base': 'NIN must be exactly 11 digits',
-            'string.empty': 'NIN cannot be empty',
-            'any.required': 'NIN is required'
+            'string.pattern.base': 'ID number must be exactly 11 digits',
+            'string.empty': 'ID number cannot be empty',
+            'any.required': 'ID number is required'
         })
     })
      const { error } = schema.validate(req.body);
@@ -239,11 +234,6 @@ exports.initiatePaymentValidator = (req, res, next) => {
             "number.min": "Minimum deposit amount is ₦1500",
             "any.required": "Amount is required"
         }),
-        type: joi.string().valid('deposit', 'withdraw').required().messages({
-           'any.required': 'Type is required',
-           'string.empty': 'Type cannot be empty',
-            'any.only': 'Type must be either deposit or withdraw'
-        })
     })
     const { error } = schema.validate(req.body);
 
@@ -341,4 +331,108 @@ exports.createPlanValidator = (req, res, next) => {
   }
 
   next();
+};
+
+exports.createInvestmentValidator = (req, res, next) => {
+    const schema = joi.object({
+        investmentPlanId: joi.string().hex().length(24).required().messages({
+            "string.base": "Investment Plan ID must be a string",
+            "string.hex": "Invalid Investment Plan ID",
+            "string.length": "Invalid Investment Plan ID",
+            "any.required": "Investment Plan ID is required"
+        }),
+
+        amount: joi.number().integer().required().messages({
+            "number.base": "Amount must be a number",
+            "number.integer": "Amount must be a whole Naira value",
+            "any.required": "Amount is required"
+        })
+    });
+
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            status: false,
+            message: error.details[0].message
+        });
+    }
+
+    next();
+};
+exports.getOneInvestmentValidator = (req, res, next) => {
+    const schema = joi.object({
+        userId: joi.string().hex().length(24).required().messages({
+            "string.base": "user ID must be a string",
+            "string.hex": "Invalid user ID",
+            "string.length": "Invalid user ID",
+            "any.required": "user ID is required"
+        }),
+    });
+
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            status: false,
+            message: error.details[0].message
+        });
+    }
+
+    next();
+};
+exports.compInvestmentValidator = (req, res, next) => {
+    const schema = joi.object({
+        userId: joi.string().hex().length(24).required().messages({
+            "string.base": "user ID must be a string",
+            "string.hex": "Invalid user ID",
+            "string.length": "Invalid user ID",
+            "any.required": "user ID is required"
+        }),
+        investmentId: joi.string().hex().length(24).required().messages({
+            "string.base": "investment ID must be a string",
+            "string.hex": "Invalid investment ID",
+            "string.length": "Invalid investment ID",
+            "any.required": "investment ID is required"
+        }),
+    });
+
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            status: false,
+            message: error.details[0].message
+        });
+    }
+
+    next();
+};
+
+exports.claimInvestmentValidator = (req, res, next) => {
+    const schema = joi.object({
+        userId: joi.string().hex().length(24).required().messages({
+            "string.base": "user ID must be a string",
+            "string.hex": "Invalid user ID",
+            "string.length": "Invalid user ID",
+            "any.required": "user ID is required"
+        }),
+        investmentId: joi.string().hex().length(24).required().messages({
+            "string.base": "investment ID must be a string",
+            "string.hex": "Invalid investment ID",
+            "string.length": "Invalid investment ID",
+            "any.required": "investment ID is required"
+        }),
+    });
+
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            status: false,
+            message: error.details[0].message
+        });
+    }
+
+    next();
 };

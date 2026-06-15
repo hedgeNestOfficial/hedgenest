@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: HedgeNest for linking of bank
 paths: 
-  /api/v1/link:
+  /api/v1/linkBank:
     post:
       summary: this end point is for linking withdrawal bank
       tags: [bank]

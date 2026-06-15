@@ -1,5 +1,5 @@
 const router = require ('express').Router()
-const {createUser, verifyEmail, login, forgotPassword, resetPassword, changePassword, loginWithGoogle, createTransactionPin, update, changePin, resend} = require('../controller/user')
+const {createUser, verifyEmail, login, forgotPassword, resetPassword, changePassword, loginWithGoogle, createTransactionPin, update, changePin, resend, logout} = require('../controller/user')
 const {Authentication} = require('../middleware/auth')
 const {profile, loginProfile} = require('../middleware/passport')
 const {resetPasswordValidator, changePasswordValidator,signUpValidator, changeTransactionPinValidator, createTransactionPinValidator, resendOtpValidator, updateValidator} = require('../middleware/validators')
@@ -18,5 +18,6 @@ router.put('/update', Authentication, updateValidator, upload.single('profilePic
 router.post('/resendOtp', resend)
 
 router.put('/changePin', Authentication, changeTransactionPinValidator, changePin)
+router.post('/logout', Authentication, logout)
 
 module.exports = router
