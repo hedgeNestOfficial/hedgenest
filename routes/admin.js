@@ -11,13 +11,11 @@ router.post('/reset-admin-password',resetPasswordValidator, resetAdminPassword)
 router.post('/change-admin-password', Authentication, adminAuth, changePasswordValidator, changeAdminPassword)
 
 
-router.get('/get-One/:id', Authentication, getOneUser)
-router.get('/get-all-users', getAlluser)
-router.get('/get-all-payments', getAllPayment)
-router.get('/get-all-transactions', getAllTransactions)
-router.get('/get-all-revenue', getAllRevenue)
-router.get('/get-all-saving', getAllSavings)
-router.get('/get-all-investment', getAllInvestment)
+router.get('/get-One/:id',  Authentication, getOneUser)
+router.get('/get-all-users', Authentication, adminAuth, getAlluser)
+router.get('/get-all-payments',Authentication, adminAuth, getAllPayment)
+router.get('/get-all-transactions', Authentication, adminAuth, getAllTransactions)
+router.get('/get-all-revenue',Authentication, adminAuth, getAllRevenue)
 
 
 module.exports = router

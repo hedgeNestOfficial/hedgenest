@@ -384,4 +384,101 @@ exports.breakPlan = async (req, res) => {
       message: error.message,
     });
   }
+}
+exports.topUpFlexible = async (req, res) => {
+  try {
+    const { amount, transactionPin } = req.body;
+    const { savingId } = req.params;
+    const savingsId = savingId;
+    const userId = req.user.id;
+
+    if (!amount || !transactionPin) {
+      return res.status(400).json({ 
+        message: "Amount and transaction pin are required" 
+      });
+    }
+
+    if (amount <= 0) {
+      return res.status(400).json({ 
+        message: "Enter a valid amount" 
+      });
+    }
+
+    // Verify user exists
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found" 
+      });
+    }
+
+    // Verify transaction pin against user (not wallet)
+    const isPinValid = await bcrypt.compare(String(transactionPin), user.transactionPin);
+    if (!isPinValid) {
+      return res.status(400).json({ 
+        message: "Invalid transaction pin" 
+      });
+    }
+
+    // Find or create wallet
+    let wallet = await walletModel.findOne({ userId });
+    if (!wallet) {
+      wallet = await walletModel.create({ userId });
+    }
+
+    // Find savings plan
+    const savingsPlan = await smartSaveModel.findById(savingsId);
+    if (!savingsPlan) {
+      return res.status(404).json({ 
+        message: "Savings plan not found" 
+      });
+    }
+
+    if (savingsPlan.user.toString() !== userId) {
+      return res.status(403).json({ 
+        message: "Unauthorized: This plan does not belong to you" 
+      });
+    }
+
+    if (savingsPlan.planType !== "FLEXIBLE") {
+      return res.status(400).json({ 
+        message: "This plan does not support top up" 
+      });
+    }
+
+    if (wallet.availableBalance < amount) {
+      return res.status(400).json({ 
+        message: "Insufficient wallet balance" 
+      });
+    }
+
+    // Deduct from wallet and add to savings
+    wallet.availableBalance -= Number(amount);
+    await wallet.save();
+
+    savingsPlan.currentBalance += Number(amount);
+    await savingsPlan.save();
+
+    const transaction = await transactionModel.create({
+      userId,
+      transactionType: "savings",
+      amount: Number(amount),
+    });
+
+    res.status(200).json({
+      message: "Top up successful",
+      data: {
+        savingsName: savingsPlan.title,
+        newSavingsBalance: savingsPlan.currentBalance,
+        newWalletBalance: wallet.availableBalance,
+        transaction,
+      },
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
 };
