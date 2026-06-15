@@ -45,7 +45,8 @@ exports.initiatePayment = async(req, res) =>{
                 email: user.email,
                 name: `${user.lastName} ${user.firstName}`
             },
-            redirect_url: 'http://localhost:5173/payment-success'
+            redirect_url: 'http://localhost:5173/payment-success',
+            notification: ''
         }
         const response = await axios.post('https://api.korapay.com/merchant/api/v1/charges/initialize', paymentData,{
             headers:{
@@ -151,7 +152,7 @@ exports.verifyPayment = async(req, res) => {
 
 exports.verifyWebhook = async (req, res, next) => {
     try {
-        console.log('WEBHOOK REC')
+        console.log('WEBHOOK RECEIVE')
         const signature = req.headers["x-korapay-signature"];
 
         const { event, data } = req.body;
