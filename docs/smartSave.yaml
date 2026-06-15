@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info: 
-  title: Documentation for HedgeNest KYC
+  title: Documentation for HedgeNest User
   version: 1.0.0
-  description: HedgeNest for KYC
-paths:
+  description: HedgeNest for user authentication and management
+paths: 
   /api/v1/preview-plan:
-    post:
-      summary: This endpoint is for previewing a savings plan
+    gett:
+      summary: this end point is for previewing a savings plan before creating it
       tags: [smartSave]
       security:
         - bearerAuth: []
@@ -20,8 +20,6 @@ paths:
                 - title
                 - targetAmount
                 - planType
-                - savingFrequency
-                - amountPerFrequency
               properties:
                 title:
                   type: string
@@ -43,13 +41,15 @@ paths:
                   example: 500
       responses:
         "200":
-          description: Plan previewed successfully
+          description: Savings plan preview retrieved successfully
         "400":
-          description: Something went wrong
+          description: Title or target amount is required or invalid duration
+        "500":
+          description: something went wrong
 
   /api/v1/create-plan:
     post:
-      summary: This endpoint is for creating a savings plan
+      summary: this end point is for creating a savings plan
       tags: [smartSave]
       security:
         - bearerAuth: []
@@ -92,11 +92,11 @@ paths:
         "201":
           description: Savings plan created successfully
         "400":
-          description: Something went wrong
+          description: something went wrong
 
   /api/v1/break-plan/{planId}:
     post:
-      summary: This endpoint is for breaking a savings plan
+      summary: this end point is for breaking a savings plan
       tags: [smartSave]
       security:
         - bearerAuth: []
@@ -123,11 +123,11 @@ paths:
         "200":
           description: Plan broken successfully
         "400":
-          description: Something went wrong
+          description: something went wrong
 
-/api/v1/top-up/{savingId}:
+  /api/v1/top-up/{savingId}:
     post:
-      summary: This endpoint is for topping up a flexible savings plan
+      summary: this end point is for topping up a flexible savings plan
       tags: [smartSave]
       security:
         - bearerAuth: []
@@ -158,29 +158,23 @@ paths:
         "200":
           description: Top up successful
         "400":
-          description: Invalid transaction pin or insufficient wallet balance
-        "404":
-          description: Savings plan or wallet not found
-        "500":
-          description: Something went wrong
+          description: something went wrong
 
-/api/v1/get-all-plan:
+  /api/v1/get-all-plan:
     get:
-      summary: This endpoint is for getting all savings plans
+      summary: this end point is for getting all savings plans
       tags: [smartSave]
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Savings plans retrieved successfully
-        "404":
-          description: No savings plans found
+          description: Found all plans successfully
         "500":
-          description: Something went wrong
+          description: something went wrong
 
-/api/v1/get-one-plan/{id}:
+  /api/v1/get-one-plan/{id}:
     get:
-      summary: This endpoint is for getting a single savings plan
+      summary: this end point is for getting a single savings plan
       tags: [smartSave]
       security:
         - bearerAuth: []
@@ -193,8 +187,8 @@ paths:
           example: "64f1b2c3d4e5f6a7b8c9d0e1"
       responses:
         "200":
-          description: Savings plan retrieved successfully
+          description: Plan found successfully
         "404":
-          description: Savings plan not found
+          description: Plan not found
         "500":
-          description: Something went wrong
+          description: something went wrong
