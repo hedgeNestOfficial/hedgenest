@@ -1,13 +1,23 @@
-const userModel = require('../model/user')
-const smartSaveModel = require('../model/smartSave')
-const transactionModel = require('../model/transaction')
-const walletModel = require('../model/wallet')
-const bcrypt = require ('bcrypt')
-const { caculateSavings, getInterestRate } = require('../utils/savingsCaculator')
+const userModel = require("../model/user");
+const smartSaveModel = require("../model/smartSave");
+const transactionModel = require("../model/transaction");
+const walletModel = require("../model/wallet");
+const bcrypt = require("bcrypt");
+const {
+  caculateSavings,
+  getInterestRate,
+} = require("../utils/savingsCaculator");
 
 exports.previewPlan = async (req, res) => {
   try {
-    const { title, targetAmount, planType, duration, savingFrequency, amountPerFrequency} = req.body;
+    const {
+      title,
+      targetAmount,
+      planType,
+      duration,
+      savingFrequency,
+      amountPerFrequency,
+    } = req.body;
     const normalizedPlanType = planType?.toUpperCase();
 
     if (!title) {
@@ -23,7 +33,7 @@ exports.previewPlan = async (req, res) => {
         message: "Target amount is required",
       });
     }
-    
+
     let interestRate = 10;
     let canBreak = true;
     let breakingFeePercentage = 0;
@@ -34,7 +44,6 @@ exports.previewPlan = async (req, res) => {
     }
 
     if (normalizedPlanType === "LOCKED") {
-      
       if (!duration) {
         return res.status(400).json({
           success: false,
@@ -45,45 +54,34 @@ exports.previewPlan = async (req, res) => {
       if (duration < 7 || duration > 1000) {
         return res.status(400).json({
           success: false,
-          message:
-            "Duration must be between 7 and 1000 days",
+          message: "Duration must be between 7 and 1000 days",
         });
       }
 
-      interestRate =
-        getInterestRate(duration);
+      interestRate = getInterestRate(duration);
 
       breakingFeePercentage = 1.5;
 
       maturityDate = new Date();
 
-      maturityDate.setDate(
-        maturityDate.getDate() +
-          Number(duration)
-      );
+      maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     if (normalizedPlanType === "STEALTH") {
       canBreak = false;
 
-      interestRate =
-        getInterestRate(duration);
+      interestRate = getInterestRate(duration);
 
       maturityDate = new Date();
 
-      maturityDate.setDate(
-        maturityDate.getDate() +
-          Number(duration)
-      );
+      maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
-    const savingsCalculations =
-      caculateSavings({
-        amount: targetAmount,
-        duration:
-          duration || 365,
-        interestRate,
-      });
+    const savingsCalculations = caculateSavings({
+      amount: targetAmount,
+      duration: duration || 365,
+      interestRate,
+    });
 
     return res.status(200).json({
       success: true,
@@ -114,7 +112,15 @@ exports.previewPlan = async (req, res) => {
 };
 exports.createPlan = async (req, res) => {
   try {
-    const {title, targetAmount, planType, duration, savingFrequency, amountPerFrequency, transactionPin } = req.body;
+    const {
+      title,
+      targetAmount,
+      planType,
+      duration,
+      savingFrequency,
+      amountPerFrequency,
+      transactionPin,
+    } = req.body;
 
     if (!amountPerFrequency || Number(amountPerFrequency) <= 0) {
       return res.status(400).json({
@@ -135,17 +141,15 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const isCorrectPin =
-      await bcrypt.compare(
-        transactionPin,
-        user.transactionPin
-      );
+    const isCorrectPin = await bcrypt.compare(
+      transactionPin,
+      user.transactionPin,
+    );
 
     if (!isCorrectPin) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid transaction pin",
+        message: "Invalid transaction pin",
       });
     }
 
@@ -159,58 +163,48 @@ exports.createPlan = async (req, res) => {
     }
 
     if (normalizedPlanType === "LOCKED") {
-      interestRate =
-        getInterestRate(duration);
+      interestRate = getInterestRate(duration);
 
       breakingFeePercentage = 1.5;
 
       maturityDate = new Date();
 
-      maturityDate.setDate(
-        maturityDate.getDate() +
-          Number(duration)
-      );
+      maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     if (normalizedPlanType === "STEALTH") {
       canBreak = false;
 
-      interestRate =
-        getInterestRate(duration);
+      interestRate = getInterestRate(duration);
 
       maturityDate = new Date();
 
-      maturityDate.setDate(
-        maturityDate.getDate() +
-          Number(duration)
-      );
+      maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
-    const plan =
-      await smartSaveModel.create({
-        user: req.user.id,
-        
-        title,
-        targetAmount,
-        planType: normalizedPlanType,
+    const plan = await smartSaveModel.create({
+      user: req.user.id,
 
-        currentBalance:
-          amountPerFrequency,
+      title,
+      targetAmount,
+      planType: normalizedPlanType,
 
-        amountPerFrequency,
+      currentBalance: amountPerFrequency,
 
-        savingFrequency: normalizedSavingFrequency,
+      amountPerFrequency,
 
-        duration,
+      savingFrequency: normalizedSavingFrequency,
 
-        interestRate,
+      duration,
 
-        canBreak,
+      interestRate,
 
-        breakingFeePercentage,
+      canBreak,
 
-        maturityDate,
-      });
+      breakingFeePercentage,
+
+      maturityDate,
+    });
 
     await transactionModel.create({
       userId: req.user.id,
@@ -218,12 +212,10 @@ exports.createPlan = async (req, res) => {
       amount: Number(amountPerFrequency ?? targetAmount),
       currency: "NGN",
     });
-    
 
     return res.status(201).json({
       success: true,
-      message:
-        "Savings plan created successfully",
+      message: "Savings plan created successfully",
       data: plan,
     });
   } catch (error) {
@@ -233,7 +225,6 @@ exports.createPlan = async (req, res) => {
     });
   }
 };
-
 
 exports.breakPlan = async (req, res) => {
   try {
@@ -253,7 +244,10 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    const isCorrectPin = await bcrypt.compare(transactionPin, user.transactionPin);
+    const isCorrectPin = await bcrypt.compare(
+      transactionPin,
+      user.transactionPin,
+    );
     if (!isCorrectPin) {
       return res.status(400).json({
         message: "Invalid transaction pin",
@@ -290,13 +284,16 @@ exports.breakPlan = async (req, res) => {
     const now = new Date();
 
     // FIX 1: isMatured now returns false instead of null when maturityDate is not set
-    const isMatured = plan.maturityDate ? now >= new Date(plan.maturityDate) : false;
+    const isMatured = plan.maturityDate
+      ? now >= new Date(plan.maturityDate)
+      : false;
 
     // STEALTH: No withdrawal before maturity date
     if (plan.planType === "STEALTH" && !isMatured) {
       return res.status(400).json({
         success: false,
-        message: "Stealth savings plans cannot be broken before the maturity date. Please wait until the plan matures.",
+        message:
+          "Stealth savings plans cannot be broken before the maturity date. Please wait until the plan matures.",
       });
     }
 
@@ -309,18 +306,17 @@ exports.breakPlan = async (req, res) => {
       amountToCredit = plan.currentBalance;
       breakingFee = 0;
       statusUpdate = "COMPLETED";
-
     } else if (plan.planType === "LOCKED") {
       // FIX 2: Locked plan broken before maturity — charge breaking fee
       // Default to 1.5% if breakingFeePercentage is missing or zero in DB
-      const feePercentage = plan.breakingFeePercentage && plan.breakingFeePercentage > 0
-        ? plan.breakingFeePercentage
-        : 1.5;
+      const feePercentage =
+        plan.breakingFeePercentage && plan.breakingFeePercentage > 0
+          ? plan.breakingFeePercentage
+          : 1.5;
 
       breakingFee = (feePercentage / 100) * plan.currentBalance;
       amountToCredit = plan.currentBalance - breakingFee;
       statusUpdate = "CANCELLED";
-
     } else if (plan.planType === "FLEXIBLE") {
       // FLEXIBLE plans — always full withdrawal, no fee
       amountToCredit = plan.currentBalance;
@@ -364,26 +360,25 @@ exports.breakPlan = async (req, res) => {
       message: isMatured
         ? "Plan matured. Full balance withdrawn successfully."
         : plan.planType === "LOCKED"
-        ? `Plan broken early. A breaking fee of ₦${breakingFee.toFixed(2)} was deducted.`
-        : "Plan withdrawn successfully.",
+          ? `Plan broken early. A breaking fee of ₦${breakingFee.toFixed(2)} was deducted.`
+          : "Plan withdrawn successfully.",
       data: {
         planId: plan._id,
         planType: plan.planType,
         status: plan.status,
         isMatured,
-        originalBalance,               
+        originalBalance,
         breakingFee: parseFloat(breakingFee.toFixed(2)),
         amountCredited: parseFloat(amountToCredit.toFixed(2)),
       },
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
-}
+};
 exports.topUpFlexible = async (req, res) => {
   try {
     const { amount, transactionPin } = req.body;
@@ -392,30 +387,33 @@ exports.topUpFlexible = async (req, res) => {
     const userId = req.user.id;
 
     if (!amount || !transactionPin) {
-      return res.status(400).json({ 
-        message: "Amount and transaction pin are required" 
+      return res.status(400).json({
+        message: "Amount and transaction pin are required",
       });
     }
 
     if (amount <= 0) {
-      return res.status(400).json({ 
-        message: "Enter a valid amount" 
+      return res.status(400).json({
+        message: "Enter a valid amount",
       });
     }
 
     // Verify user exists
     const user = await userModel.findById(userId);
     if (!user) {
-      return res.status(404).json({ 
-        message: "User not found" 
+      return res.status(404).json({
+        message: "User not found",
       });
     }
 
     // Verify transaction pin against user (not wallet)
-    const isPinValid = await bcrypt.compare(String(transactionPin), user.transactionPin);
+    const isPinValid = await bcrypt.compare(
+      String(transactionPin),
+      user.transactionPin,
+    );
     if (!isPinValid) {
-      return res.status(400).json({ 
-        message: "Invalid transaction pin" 
+      return res.status(400).json({
+        message: "Invalid transaction pin",
       });
     }
 
@@ -428,26 +426,26 @@ exports.topUpFlexible = async (req, res) => {
     // Find savings plan
     const savingsPlan = await smartSaveModel.findById(savingsId);
     if (!savingsPlan) {
-      return res.status(404).json({ 
-        message: "Savings plan not found" 
+      return res.status(404).json({
+        message: "Savings plan not found",
       });
     }
 
     if (savingsPlan.user.toString() !== userId) {
-      return res.status(403).json({ 
-        message: "Unauthorized: This plan does not belong to you" 
+      return res.status(403).json({
+        message: "Unauthorized: This plan does not belong to you",
       });
     }
 
     if (savingsPlan.planType !== "FLEXIBLE") {
-      return res.status(400).json({ 
-        message: "This plan does not support top up" 
+      return res.status(400).json({
+        message: "This plan does not support top up",
       });
     }
 
     if (wallet.availableBalance < amount) {
-      return res.status(400).json({ 
-        message: "Insufficient wallet balance" 
+      return res.status(400).json({
+        message: "Insufficient wallet balance",
       });
     }
 
@@ -473,7 +471,41 @@ exports.topUpFlexible = async (req, res) => {
         transaction,
       },
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+exports.getAllPlan = async (req, res) => {
+  try {
+    const plan = await smartSaveModel.find();
 
+    res.status(200).json({
+      message: "Found all Plans",
+      plan,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+exports.getOnePlan = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const existingPlan = await smartSaveModel.findById(id);
+
+    if (!existingPlan) {
+      return res.status(404).json({
+        message: "Plan not found",
+      });
+    }
+    res.status(200).json({
+      message: "Plan found successfully",
+      data,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Something went wrong",

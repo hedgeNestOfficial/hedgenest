@@ -13,6 +13,7 @@ const transactionModel = require('../model/transaction')
 const revenueModel = require('../model/revenue')
 const investmentModel = require('../model/investment')
 const smartSaveModel = require('../model/smartSave')
+const walletModel = require('../model/wallet')
 
 exports.createAdmin = async (req, res)=>{
     try{
@@ -45,9 +46,16 @@ exports.createAdmin = async (req, res)=>{
             );
             await sendEmail(newAdmin.email, "Verify Admin Email", html)
 
+        const data = {
+          firstName: newAdmin.firstName,
+          lastName: newAdmin.lastName,
+          email: newAdmin.email,
+          phoneNumber: newAdmin.phoneNumber
+    }
+
             res.status(201).json({
             message:"Admin created successfully, otp has been sent to email",
-            data: newAdmin
+            data,
         })
     }catch(error){
         console.log(error)
@@ -135,10 +143,16 @@ exports.adminLogin = async (req, res) => {
       process.env.SECRET_KEY,
       { expiresIn: "1d" },
     );
+    const data = {
+          firstName: existingAdmin.firstName,
+          lastName: existingAdmin.lastName,
+          email: existingAdmin.email,
+          phoneNumber: existingAdmin.phoneNumber
+    }
 
     return res.status(200).json({
       message: "Login Successful",
-      admin: existingAdmin,
+      data,
       token,
     });
   } catch (error) {
@@ -288,9 +302,15 @@ exports.getOneUser = async (req, res) =>{
                 message: "Wallet not found",
               });
             }
+            const data = {
+              firstName: existingUser.firstName,
+              lastName: existingUser.lastName,
+              email: existingUser.email,
+              phoneNumber: existingUser.phoneNumber
+            }
         res.status(200).json({
             message:"User found successfully",
-            data: existingUser,
+            data,
             wallet
         })
     }catch(error){

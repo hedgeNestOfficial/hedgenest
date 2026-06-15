@@ -67,11 +67,19 @@ exports.createUser = async (req, res) => {
     );
     await sendEmail(user.email, "Verify Email", html);
 
+    const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber
+    }
+
     res.status(200).json({
       status: true,
       message: "User created successfully, otp has been sent to email",
-      data: user,
+      data
     });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -111,6 +119,7 @@ exports.verifyEmail = async (req, res) => {
     res.status(200).json({
         message:'OTP Verified successfully'
       })
+
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
@@ -162,9 +171,16 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" },
     );
 
+    const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber
+    }
+
     return res.status(200).json({
       message: "Login Successful",
-      user,
+      data,
       wallet,
       token,
     });
@@ -352,10 +368,16 @@ exports.createTransactionPin = async (req, res) => {
     const token = await jwt.sign({ id: user._id }, process.env.SECRET, {
       expiresIn: "1d",
     });
+    const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber
+    }
     res.status(200).json({
       status: true,
       message: "Transaction pin created successfully",
-      user,
+      data,
       token,
     });
   } catch (error) {
