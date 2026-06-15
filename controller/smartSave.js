@@ -388,8 +388,9 @@ exports.breakPlan = async (req, res) => {
 exports.topUpFlexible = async (req, res) => {
   try {
     const { amount, transactionPin } = req.body;
-    const { savingsId } = req.params;
-    const userId = req.user._id;
+    const { savingId } = req.params;
+    const savingsId = savingId;
+    const userId = req.user.id;
 
     if (!amount || !transactionPin) {
       return res.status(400).json({ 
@@ -403,63 +404,73 @@ exports.topUpFlexible = async (req, res) => {
       });
     }
 
-    // verify transaction pin
-    const wallet = await walletModel.findOne({ userId });
-    if (!wallet) {
+    // Verify user exists
+    const user = await userModel.findById(userId);
+    if (!user) {
       return res.status(404).json({ 
-        message: "Wallet not found" 
+        message: "User not found" 
       });
     }
 
-    const isPinValid = await bcrypt.compare(String(transactionPin), wallet.transactionPin);
+    // Verify transaction pin against user (not wallet)
+    const isPinValid = await bcrypt.compare(String(transactionPin), user.transactionPin);
     if (!isPinValid) {
       return res.status(400).json({ 
         message: "Invalid transaction pin" 
       });
     }
 
-    // find savings plan
-    const savingsPlan = await savingsModel.findOne({ _id: savingsId, userId });
+    // Find or create wallet
+    let wallet = await walletModel.findOne({ userId });
+    if (!wallet) {
+      wallet = await walletModel.create({ userId });
+    }
+
+    // Find savings plan
+    const savingsPlan = await smartSaveModel.findById(savingsId);
     if (!savingsPlan) {
       return res.status(404).json({ 
         message: "Savings plan not found" 
       });
     }
 
-    if (savingsPlan.type !== "flexible") {
+    if (savingsPlan.user.toString() !== userId) {
+      return res.status(403).json({ 
+        message: "Unauthorized: This plan does not belong to you" 
+      });
+    }
+
+    if (savingsPlan.planType !== "FLEXIBLE") {
       return res.status(400).json({ 
         message: "This plan does not support top up" 
       });
     }
 
-    if (wallet.balance < amount) {
+    if (wallet.availableBalance < amount) {
       return res.status(400).json({ 
         message: "Insufficient wallet balance" 
       });
     }
 
-    // deduct from wallet and add to savings
-    wallet.balance -= amount;
+    // Deduct from wallet and add to savings
+    wallet.availableBalance -= Number(amount);
     await wallet.save();
 
-    savingsPlan.balance += amount;
+    savingsPlan.currentBalance += Number(amount);
     await savingsPlan.save();
 
     const transaction = await transactionModel.create({
       userId,
-      type: "top_up",
-      amount,
-      reference: `TOPUP-${Date.now()}`,
-      savingsId,
-      description: `Top up - ${savingsPlan.name}`,
+      transactionType: "savings",
+      amount: Number(amount),
     });
 
     res.status(200).json({
       message: "Top up successful",
       data: {
-        savingsName: savingsPlan.name,
-        newSavingsBalance: savingsPlan.balance,
-        newWalletBalance: wallet.balance,
+        savingsName: savingsPlan.title,
+        newSavingsBalance: savingsPlan.currentBalance,
+        newWalletBalance: wallet.availableBalance,
         transaction,
       },
     });
