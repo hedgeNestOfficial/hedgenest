@@ -522,3 +522,22 @@ exports.logout = async (req, res) => {
         });
     }
 };
+
+exports.myWallet = async(req, res) => {
+  try {
+    const userId = req.user.id;
+    const wallet = await walletModel.find({
+      userId: userId
+    }).sort({ createdAt: -1 })
+
+    res.status(200).json({
+      message: "My wallet successfully retrieved",
+      data: wallet
+    })
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: error.message
+    });
+  }
+}
