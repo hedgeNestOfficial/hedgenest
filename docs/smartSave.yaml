@@ -163,3 +163,38 @@ paths:
           description: Savings plan or wallet not found
         "500":
           description: Something went wrong
+
+/api/v1/get-all-plan:
+    get:
+      summary: This endpoint is for getting all savings plans
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Savings plans retrieved successfully
+        "404":
+          description: No savings plans found
+        "500":
+          description: Something went wrong
+
+/api/v1/get-one-plan/{id}:
+    get:
+      summary: This endpoint is for getting a single savings plan
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: "64f1b2c3d4e5f6a7b8c9d0e1"
+      responses:
+        "200":
+          description: Savings plan retrieved successfully
+        "404":
+          description: Savings plan not found
+        "500":
+          description: Something went wrong

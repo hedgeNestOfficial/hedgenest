@@ -504,7 +504,7 @@ exports.getOnePlan = async (req, res) => {
     }
     res.status(200).json({
       message: "Plan found successfully",
-      data,
+     data: existingPlan
     });
   } catch (error) {
     res.status(500).json({
