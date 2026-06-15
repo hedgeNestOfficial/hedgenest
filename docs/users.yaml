@@ -298,6 +298,7 @@ paths:
         "400":
           description: something went wrong
 
+
   /api/v1/logout:
     post:
       summary: this end point is to logout a user
@@ -306,8 +307,8 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-        description: logged out successfully
+          description: logged out successfully
         "401":
-        description: unauthorized
+          description: unauthorized
         "500":
-        description: internal server error
+          description: internal server error
