@@ -184,7 +184,7 @@ paths:
 
   /api/v1/create-pin:
     patch:
-      summary: this end point is for changing password 
+      summary: this end point is for creating Pin
       tags: [users]
       security: 
         - bearerAuth: []
@@ -268,7 +268,7 @@ paths:
           
   /api/v1/changePin:
     put:
-      summary: this end point is for changing password 
+      summary: this end point is for changing pin
       tags: [users]
       security: 
         - bearerAuth: []
