@@ -176,7 +176,7 @@ exports.verifyWebhook = async (req, res, next) => {
                 
                 wallet.availableBalance = (wallet.availableBalance || 0) + payment.amount;
             }
-            
+
         } else if (event === 'charge.pending') {
             payment.status = 'processing';
         } else if (event === 'charge.failed') {
