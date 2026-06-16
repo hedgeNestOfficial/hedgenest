@@ -115,9 +115,17 @@ exports.verifyEmail = async (req, res) => {
       });
     }
     user.isVerified = true
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.SECRET_KEY,
+      { expiresIn: "1d" },
+    );
+    
     await user.save()
     res.status(200).json({
-        message:'OTP Verified successfully'
+        message:'OTP Verified successfully',
+        token,
       })
 
   } catch (error) {
