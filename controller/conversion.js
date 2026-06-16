@@ -107,6 +107,7 @@ exports.conversion = async (req, res) => {
             
             conversionAmount = Number(amount) / rate;
             
+            console.log(totalDebit)
             wallet.availableBalance -= totalDebit;
             wallet.balanceInNaira += Number(amount);
             wallet.balanceInUSDT += conversionAmount;

@@ -360,27 +360,7 @@ exports.createInvestmentValidator = (req, res, next) => {
 
     next();
 };
-exports.getOneInvestmentValidator = (req, res, next) => {
-    const schema = joi.object({
-        userId: joi.string().hex().length(24).required().messages({
-            "string.base": "user ID must be a string",
-            "string.hex": "Invalid user ID",
-            "string.length": "Invalid user ID",
-            "any.required": "user ID is required"
-        }),
-    });
 
-    const { error } = schema.validate(req.body);
-
-    if (error) {
-        return res.status(400).json({
-            status: false,
-            message: error.details[0].message
-        });
-    }
-
-    next();
-};
 exports.compInvestmentValidator = (req, res, next) => {
     const schema = joi.object({
         userId: joi.string().hex().length(24).required().messages({

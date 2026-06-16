@@ -5,8 +5,8 @@ const { Authentication } = require('../middleware/auth');
 const { createInvestmentValidator, getOneInvestmentValidator, compInvestmentValidator, claimInvestmentValidator } = require('../middleware/validators');
 
 router.post('/initiateInvestment', Authentication, createInvestmentValidator, createInvestment)
-router.get('/investment/:userId', Authentication, myInvestments);
-router.get('/oneInvestment/:investmentId', Authentication, getOneInvestmentValidator, getOneInvestment);
+router.get('/investment', Authentication, myInvestments);
+router.get('/oneInvestment/:investmentId', Authentication, getOneInvestment);
 router.put('/compInvestment', Authentication, compInvestmentValidator, completeInvestment);
 router.put('/claimInvestment', Authentication, claimInvestmentValidator, claimInvestment);
 
