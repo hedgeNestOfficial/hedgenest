@@ -2,6 +2,7 @@ const userModel = require("../model/user");
 const smartSaveModel = require("../model/smartSave");
 const transactionModel = require("../model/transaction");
 const walletModel = require("../model/wallet");
+const revenueModel = require("../model/revenue");
 const bcrypt = require("bcrypt");
 const {
   caculateSavings,
@@ -152,6 +153,25 @@ exports.createPlan = async (req, res) => {
         message: "Invalid transaction pin",
       });
     }
+    const wallet = await walletModel.findOne({ userId: req.user.id });
+
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        message: "Wallet not found",
+      });
+    }
+
+    if (wallet.availableBalance < Number(amountPerFrequency)) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient wallet balance",
+      });
+    }
+
+    wallet.availableBalance -= Number(amountPerFrequency);
+    wallet.smartVaults += Number(amountPerFrequency)
+    await wallet.save();
 
     let interestRate = 10;
     let canBreak = true;
@@ -301,6 +321,11 @@ exports.breakPlan = async (req, res) => {
     let breakingFee = 0;
     let statusUpdate = "CANCELLED";
 
+    const maturity = isMatured - this.breakPlan.createdAt
+    cron.schedule("0 0 maturity * *", async () => {
+      
+    })
+
     if (isMatured) {
       // Any plan type that has matured — full withdrawal, mark as COMPLETED
       amountToCredit = plan.currentBalance;
@@ -330,6 +355,26 @@ exports.breakPlan = async (req, res) => {
     plan.currentBalance = 0;
     await plan.save();
 
+    // Record breaking fee to revenue if applicable
+    if (breakingFee > 0) {
+      await revenueModel.findOneAndUpdate(
+        { revenueType: "breaking_fee" },
+        {
+          $inc: {
+            totalBreakingFeeRevenue: breakingFee,
+          },
+        },
+        { upsert: true, new: true }
+      );
+
+      // Also create a transaction record for this breaking fee
+      await revenueModel.create({
+        revenueType: "breaking_fee",
+        amount: breakingFee,
+        description: `Breaking fee for plan ${plan._id}`,
+      });
+    }
+
     // Credit user's wallet
     let wallet = await walletModel.findOne({ userId: req.user.id });
     if (!wallet) {
@@ -345,12 +390,13 @@ exports.breakPlan = async (req, res) => {
 
     wallet.availableBalance += amountToCredit;
     wallet.balanceInNaira += amountToCredit;
+    wallet.smartVaults -= originalBalance;  
     await wallet.save();
 
     // Create transaction record
     await transactionModel.create({
       userId: req.user.id,
-      transactionType: "withdraw",
+      transactionType: "return",
       amount: amountToCredit,
     });
 
@@ -504,7 +550,7 @@ exports.getOnePlan = async (req, res) => {
     }
     res.status(200).json({
       message: "Plan found successfully",
-     data: existingPlan
+      data: existingPlan,
     });
   } catch (error) {
     res.status(500).json({

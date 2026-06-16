@@ -5,14 +5,25 @@ const revenueSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    revenueType: {
-        type: String,
-        enum: ["conversion", "withdrawal", "savings"],
-    },
-    totalConversionRevenue: {
+    totalBreakingFeeRevenue: {
         type: Number,
         default: 0
     },
+    revenueType: {
+        type: String,
+        enum: ["conversion", "withdrawal", "savings", "breaking_fee"],
+    },
+    amount: {
+        type: Number,
+        required: true
+    },
+    description: {
+        type: String,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 module.exports = mongoose.model('Revenues', revenueSchema)

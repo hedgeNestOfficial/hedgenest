@@ -549,3 +549,36 @@ exports.myWallet = async(req, res) => {
     });
   }
 }
+exports.confirmTransactionPin = async (req, res) => {
+  try {
+    const { enteredPin } = req.body;
+
+    const user = await userModel.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isValidPin = await bcrypt.compare(enteredPin, user.transactionPin);
+
+    if (!isValidPin) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction pin is invalid",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Transaction pin confirmed",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
