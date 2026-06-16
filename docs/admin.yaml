@@ -246,6 +246,8 @@ paths:
       responses:
         "200":
           description: All Revenue Found
+        "400":
+          description: something went wrong
 
   /api/v1/get-all-conversion:
     get:
@@ -256,3 +258,5 @@ paths:
       responses:
         "200":
           description: All Conversion Found
+        "400":
+          description: something went wrong
