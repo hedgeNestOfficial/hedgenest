@@ -1,9 +1,9 @@
 openapi: 3.0.0
-info: 
+info:
   title: Documentation for HedgeNest User
   version: 1.0.0
   description: HedgeNest for user authentication and management
-paths: 
+paths:
   /api/v1/create-user:
     post:
       summary: this end point is to create a user
@@ -24,28 +24,27 @@ paths:
                 firstName:
                   type: string
                   example: John
-                lastName: 
+                lastName:
                   type: string
                   example: Divine
-                phoneNumber: 
+                phoneNumber:
                   type: string
                   example: 09183748577
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
                 password:
                   type: string
                   example: Password123
-      responses: 
+      responses:
         "201":
           description: user successfully created
         "400":
           description: something went wrong
 
-
   /api/v1/login:
     post:
-      summary: this end point is to login a user 
+      summary: this end point is to login a user
       tags: [users]
       requestBody:
         required: true
@@ -57,13 +56,13 @@ paths:
                 - email
                 - password
               properties:
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
-                password: 
+                password:
                   type: string
                   example: Password123
-      responses: 
+      responses:
         "201":
           description: login successful
         "400":
@@ -71,7 +70,7 @@ paths:
 
   /api/v1/verify/check:
     post:
-      summary: this end point is to verify users 
+      summary: this end point is to verify users
       tags: [users]
       requestBody:
         required: true
@@ -83,12 +82,12 @@ paths:
                 - email
                 - otp
               properties:
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
-                otp: 
+                otp:
                   type: string
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
@@ -96,7 +95,7 @@ paths:
 
   /api/v1/forgot-password:
     post:
-      summary: this end point is for forgotten password 
+      summary: this end point is for forgotten password
       tags: [users]
       requestBody:
         required: true
@@ -107,10 +106,10 @@ paths:
               required:
                 - email
               properties:
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
@@ -118,7 +117,7 @@ paths:
 
   /api/v1/reset-password:
     post:
-      summary: this end point is for resetting password 
+      summary: this end point is for resetting password
       tags: [users]
       requestBody:
         required: true
@@ -132,18 +131,18 @@ paths:
                 - confirmPassword
                 - otp
               properties:
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
-                newPassword: 
+                newPassword:
                   type: string
                   example: NewPassword123
-                confirmPassword: 
+                confirmPassword:
                   type: string
                   example: NewPassword123
                 otp:
                   type: string
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
@@ -151,9 +150,9 @@ paths:
 
   /api/v1/change-password:
     post:
-      summary: this end point is for changing password 
+      summary: this end point is for changing password
       tags: [users]
-      security: 
+      security:
         - bearerAuth: []
       requestBody:
         required: true
@@ -166,27 +165,26 @@ paths:
                 - oldPassword
                 - confirmPassword
               properties:
-                newPassword: 
+                newPassword:
                   type: string
                   example: NewPassword456
-                oldPassword: 
+                oldPassword:
                   type: string
                   example: Password123
                 confirmPassword:
                   type: string
                   example: NewPassword456
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
           description: something went wrong
 
-
   /api/v1/create-pin:
     patch:
       summary: this end point is for creating Pin
       tags: [users]
-      security: 
+      security:
         - bearerAuth: []
       requestBody:
         required: true
@@ -199,7 +197,7 @@ paths:
                 - transactionPin
                 - confirmTransactionPin
               properties:
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
                 transactionPin:
@@ -208,18 +206,17 @@ paths:
                 confirmTransactionPin:
                   type: string
                   example: "123456"
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
           description: something went wrong
 
-
   /api/v1/update:
     put:
       summary: this end point is for updating user
       tags: [users]
-      security: 
+      security:
         - bearerAuth: []
       requestBody:
         required: true
@@ -233,19 +230,18 @@ paths:
                 phoneNumber:
                   type: string
                   example: "09090123456"
-                profilePicture: 
+                profilePicture:
                   type: string
                   format: binary
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
           description: something went wrong
 
-
   /api/v1/resendOtp:
     post:
-      summary: this end point is to verify users 
+      summary: this end point is to verify users
       tags: [users]
       requestBody:
         required: true
@@ -256,21 +252,20 @@ paths:
               required:
                 - email
               properties:
-                email: 
+                email:
                   type: string
                   example: johndoe@gmail.com
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
           description: something went wrong
 
-          
   /api/v1/changePin:
     put:
       summary: this end point is for changing pin
       tags: [users]
-      security: 
+      security:
         - bearerAuth: []
       requestBody:
         required: true
@@ -283,16 +278,16 @@ paths:
                 - newTransactionPin
                 - confirmTransactionPin
               properties:
-                oldTransactionPin: 
+                oldTransactionPin:
                   type: string
                   example: "123456"
-                newTransactionPin: 
+                newTransactionPin:
                   type: string
                   example: "123456"
                 confirmTransactionPin:
                   type: string
                   example: "123456"
-      responses: 
+      responses:
         "201":
           description: otp verified successfully
         "400":
@@ -325,3 +320,24 @@ paths:
           description: unauthorized
         "500":
           description: internal server error
+  
+  
+/api/v1/entered-pin/{userId}:
+  post:
+    summary: This endpoint is used to confirm a user's transaction PIN
+    tags: [users]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Transaction PIN confirmed successfully
+      "400":
+        description: Invalid transaction PIN
+      "500":
+        description: Internal server error
