@@ -246,3 +246,13 @@ paths:
       responses:
         "200":
           description: All Revenue Found
+
+  /api/v1/get-all-conversion:
+    get:
+      summary: this end point is to retrieve all conversion
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All Conversion Found

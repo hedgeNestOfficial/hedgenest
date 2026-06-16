@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken')
 const otpGenerator = require('otp-generator')
 const{sendEmail} = require('../utils/brevo')
 const {emailTemplate, resetPasswordTemplate, resetPasswordSuccessfulTemplate} = require('../email')
-const userModel = require('../model/user')
+const conversionModel = require('../model/conversion')
 const paymentModel = require('../model/payment')
 const transactionModel = require('../model/transaction')
 const revenueModel = require('../model/revenue')
@@ -408,6 +408,21 @@ exports.getAllInvestment = async (req, res) =>{
   } catch (error) {
     res.status(500).json({
       message: error.message
+    })
+  }
+}
+exports.getAllConversion = async (req, res)=>{
+  try {
+    const conversion = await conversionModel.find()
+
+    res.status(200).json({
+      message:'All Conversion Found',
+      count:conversion.length,
+      conversion,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message:error.message
     })
   }
 }
