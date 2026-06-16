@@ -175,7 +175,8 @@ exports.login = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      phoneNumber: user.phoneNumber
+      phoneNumber: user.phoneNumber,
+      profilePicture: user.profilePicture
     }
 
     return res.status(200).json({
@@ -522,3 +523,21 @@ exports.logout = async (req, res) => {
         });
     }
 };
+
+exports.myWallet = async(req, res) => {
+  try {
+    const userId = req.user.id;
+    const wallet = await walletModel.find({
+      userId: userId
+    })
+    res.status(200).json({
+      message: "My wallet successfully retrieved",
+      data: wallet
+    })
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: error.message
+    });
+  }
+}

@@ -1,4 +1,3 @@
-
 openapi: 3.0.0
 info: 
   title: Documentation for HedgeNest conversion of money from naira to usdt and vice versa
@@ -42,9 +41,36 @@ paths:
                   description:
                     Minimum amount is ₦1500 when converting from NGN.
                     Minimum amount is 1.30 when converting from USDT.
-
       responses: 
         "200":
           description: Conversion successful
         "400":
-          description: something went wrong
+          description: something went wrong 
+          
+  /api/v1/liveRate:
+    get:
+      summary: this end point is to get the live rate for conversion 
+      tags: [conversion]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Live rate retrieved successfully
+        "401":
+          description: unauthorized
+        "500":
+          description: internal server error
+          
+  /api/v1/myConversion:
+    get:
+      summary: this end point is to get all conversion done by a user
+      tags: [conversion]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My conversion retrieved successfully
+        "401":
+          description: unauthorized
+        "500":
+          description: internal server error

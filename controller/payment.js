@@ -46,7 +46,7 @@ exports.initiatePayment = async(req, res) =>{
                 name: `${user.lastName} ${user.firstName}`
             },
             redirect_url: 'http://localhost:5173/payment-success',
-            notification: ''
+            notification_url: 'https://hedgenest.onrender.com/api/v1/webhook'
         }
         const response = await axios.post('https://api.korapay.com/merchant/api/v1/charges/initialize', paymentData,{
             headers:{
@@ -162,7 +162,7 @@ exports.verifyWebhook = async (req, res, next) => {
         if (hash !== signature) 
             return next(new appError("Invalid webhook signature", 401));
         
-        const payment = await paymentModel.findOne({ reference: data.reference });
+        const payment = await paymentModel.findOne({ reference: `TCA-hedgeNest-${data.reference}`});
         if (!payment) return res.status(404).json({ message: "Payment record not found" });
         
         const wallet = await walletModel.findOne({ userId: payment.userId });
@@ -173,10 +173,10 @@ exports.verifyWebhook = async (req, res, next) => {
         if (event === 'charge.success') {
            if (payment.status !== 'successful') {
                 payment.status = 'successful';
-                // Credit user wallet balance here safely
-                wallet.balance = (wallet.balance || 0) + payment.amount;
-                await wallet.save();
+                
+                wallet.availableBalance = (wallet.availableBalance || 0) + payment.amount;
             }
+
         } else if (event === 'charge.pending') {
             payment.status = 'processing';
         } else if (event === 'charge.failed') {

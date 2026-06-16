@@ -6,6 +6,26 @@ const transaction = require('../model/transaction')
 const revenueModel = require('../model/revenue')
 const axios = require('axios')
 
+exports.liveRate = async(req, res) =>{
+    try {
+        const { data } = await axios.get(
+            "https://app.quidax.io/api/v1/markets/tickers/usdtngn"
+        );
+        rate = Number(data.data.ticker.buy) + 50;
+
+        res.status(200).json({
+            success: true,
+            rate
+        });
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch rate",
+        });
+    }
+}
+
 exports.conversion = async (req, res) => {
     try {
         const userId = req.user.id
@@ -83,7 +103,9 @@ exports.conversion = async (req, res) => {
             }
         }
         if (from.toUpperCase() === 'NGN') {
-            rate = Number(data.data.ticker.buy) + 50;conversionAmount = Number(amount) / rate;
+            rate = Number(data.data.ticker.buy) + 50;
+            
+            conversionAmount = Number(amount) / rate;
             
             wallet.availableBalance -= totalDebit;
             wallet.balanceInNaira += Number(amount);
@@ -147,17 +169,16 @@ exports.conversion = async (req, res) => {
         console.error(error)
         res.status(500).json({
             success: false,
-            message: "Failed to fetch rate",
+            message: "Failed to convert",
         });
     }
 }
 
 exports.myConversion = async (req, res) => {
     try {
-        const { userId } = req.params; 
+        const userId = req.user.id; 
         const conversion = await conversionModel.find({ userId: userId })
             .sort({ createdAt: -1 })
-            // .populate('planId', 'investmentName roi term'); 
 
         return res.status(200).json({
             message: "Conversion retrieved successfully",
