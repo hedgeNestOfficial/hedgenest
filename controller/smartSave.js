@@ -321,10 +321,7 @@ exports.breakPlan = async (req, res) => {
     let breakingFee = 0;
     let statusUpdate = "CANCELLED";
 
-    const maturity = isMatured - this.breakPlan.createdAt
-    cron.schedule("0 0 maturity * *", async () => {
-      
-    })
+   
 
     if (isMatured) {
       // Any plan type that has matured — full withdrawal, mark as COMPLETED
