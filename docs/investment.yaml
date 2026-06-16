@@ -32,7 +32,7 @@ paths:
         "400":
           description: something went wrong
    
-  /api/v1/investment/{userId}:
+  /api/v1/investment:
     get:
       summary: this end point is to get all investments of a user 
       tags: [investment]
