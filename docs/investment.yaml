@@ -50,18 +50,6 @@ paths:
       tags: [investment]
       security: 
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - userId
-              properties:
-                userId: 
-                  type: string
-                  example: 6843f0c4b7a8d5e2f9c12345
       responses: 
         "201":
           description: One my investment gotten
