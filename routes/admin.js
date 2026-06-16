@@ -1,5 +1,5 @@
 const router = require ('express').Router()
-const {createAdmin, adminLogin, verifyAdminEmail, adminforgotPassowrd, getOneUser, changeAdminPassword, resetAdminPassword, getAlluser, getAllPayment, getAllTransactions, getAllRevenue, getAllSavings, getAllInvestment} = require('../controller/admin')
+const {createAdmin, adminLogin, verifyAdminEmail, adminforgotPassowrd, getOneUser, changeAdminPassword, resetAdminPassword, getAlluser, getAllPayment, getAllTransactions, getAllRevenue, getAllSavings, getAllInvestment, getAllConversion} = require('../controller/admin')
 const {Authentication, adminAuth} = require('../middleware/auth')
 const{signUpValidator, resetPasswordValidator,changePasswordValidator} = require('../middleware/validators')
 
@@ -16,6 +16,7 @@ router.get('/get-all-users', Authentication, adminAuth, getAlluser)
 router.get('/get-all-payments',Authentication, adminAuth, getAllPayment)
 router.get('/get-all-transactions', Authentication, adminAuth, getAllTransactions)
 router.get('/get-all-revenue',Authentication, adminAuth, getAllRevenue)
+router.get('/get-all-conversion', Authentication, getAllConversion)
 
 
 module.exports = router
