@@ -176,10 +176,9 @@ exports.conversion = async (req, res) => {
 
 exports.myConversion = async (req, res) => {
     try {
-        const { userId } = req.params; 
+        const userId = req.user.id; 
         const conversion = await conversionModel.find({ userId: userId })
             .sort({ createdAt: -1 })
-            // .populate('planId', 'investmentName roi term'); 
 
         return res.status(200).json({
             message: "Conversion retrieved successfully",
