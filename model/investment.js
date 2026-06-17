@@ -27,13 +27,17 @@ const investmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending','active', 'completed', 'claimed'],
+        enum: ['pending','active', 'completed', 'claimed', 'terminated'],
         default: 'pending'
     },
     isCompleted: {
         type: Boolean,
         default: false,
     },
+    terminatedAt: {
+        type: Date,
+        default: null
+    }
 }, {
     timestamps: true
 });

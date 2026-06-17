@@ -328,6 +328,8 @@ paths:
         - in: path
           name: userId 
       tags: [users]
+      security: 
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -345,5 +347,27 @@ paths:
           description: Transaction PIN confirmed successfully
         "400":
           description: Invalid transaction PIN
+
+  /api/v1/forgotPin:
+    post:
+      summary: this end point is for forgotten pin
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+      responses:
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
 
     

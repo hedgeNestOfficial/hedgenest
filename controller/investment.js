@@ -6,20 +6,20 @@ const transactionModel = require('../model/transaction');
 const { date } = require('joi');
 
 exports.createInvestment = async (req, res) => {
-  try {
-    const { investmentPlanId, amount } = req.body;
-    const userId = req.user.id;
+    try {
+        const { investmentPlanId, amount } = req.body;
+        const userId = req.user.id;
 
-    const user = await userModel.findById(userId)
-    
-    if (!user) {
-                return res.status(404).json({
-                    message: 'User not found'
-                })
-            }
+        const user = await userModel.findById(userId)
 
-    const wallet = await walletModel.findOne({ userId: user._id})
-    if (!wallet) {
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found'
+            })
+        }
+
+        const wallet = await walletModel.findOne({ userId: user._id })
+        if (!wallet) {
             return res.status(404).json({
                 message: "Wallet not found"
             });
@@ -31,64 +31,65 @@ exports.createInvestment = async (req, res) => {
             });
         }
 
-    const plan = await investmentPlanModel.findById(investmentPlanId);
+        const plan = await investmentPlanModel.findById(investmentPlanId);
 
-    if (!plan) {
-      return res.status(404).json({
-        message: "Investment plan not found"
-      });
+        if (!plan) {
+            return res.status(404).json({
+                message: "Investment plan not found"
+            });
+        }
+
+        if (amount < plan.minAmount) {
+            return res.status(400).json({
+                message: `Minimum amount is ${plan.minAmount}`
+            });
+        };
+
+        const { roi, term } = plan
+        const expectedReturn = Number(amount) + (Number(amount) * roi / 100 * term / 365);
+
+        const startDate = new Date
+        const maturityDate = new Date(startDate);
+        maturityDate.setDate(maturityDate.getDate() + term);
+
+        wallet.availableBalance -= Number(amount);
+        wallet.investments += Number(amount)
+
+        await wallet.save()
+        const investment = await investmentModel.create({
+            userId,
+            investmentPlanId,
+            amount,
+            startDate,
+            maturityDate,
+            expectedReturn,
+            status: 'active'
+        });
+
+        const transaction = await transactionModel.create({
+            userId: user._id,
+            transactionType: 'investment',
+            amount
+        })
+
+        res.status(201).json({
+            message: "Investment activated successfully",
+            data: investment
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
     }
-
-    if (amount < plan.minAmount) {
-      return res.status(400).json({
-        message: `Minimum amount is ${plan.minAmount}`
-      });
-    };
-    
-    const { roi, term } = plan
-    const expectedReturn = Number(amount) + (Number(amount) * roi / 100);
-    const startDate = new Date
-    const maturityDate = new Date(startDate);
-    maturityDate.setDate(maturityDate.getDate() + term);
-    
-    wallet.availableBalance -= Number(amount);
-    wallet.investments += Number(amount)
-        
-    await wallet.save()
-    const investment = await investmentModel.create({
-      userId,
-      investmentPlanId,
-      amount,
-      startDate,
-      maturityDate,
-      expectedReturn,
-      status: 'active'
-    });
-
-    const transaction = await transactionModel.create({
-        userId: user._id,
-        transactionType: 'investment',
-        amount
-    })
-
-    res.status(201).json({
-      message: "Investment activated successfully",
-      data: investment
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
 };
 
 exports.myInvestments = async (req, res) => {
     try {
-        const userId = req.user.id; 
+        const userId = req.user.id;
         const investments = await investmentModel.find({ userId: userId })
             .sort({ createdAt: -1 })
-            .populate('investmentPlanId', 'investmentName roi term'); 
+            .populate('investmentPlanId', 'investmentName roi term');
 
         return res.status(200).json({
             message: "Investments retrieved successfully",
@@ -97,7 +98,7 @@ exports.myInvestments = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ 
+        return res.status(500).json({
             message: error.message
         });
     }
@@ -105,11 +106,11 @@ exports.myInvestments = async (req, res) => {
 
 exports.getOneInvestment = async (req, res) => {
     try {
-        const { investmentId } = req.params; 
-        const userId = req.user.id; 
-        const investment = await investmentModel.findOne({ 
-            _id: investmentId, 
-            userId: userId 
+        const { investmentId } = req.params;
+        const userId = req.user.id;
+        const investment = await investmentModel.findOne({
+            _id: investmentId,
+            userId: userId
         }).populate('investmentPlanId');
 
         if (!investment) {
@@ -130,20 +131,20 @@ exports.getOneInvestment = async (req, res) => {
 
 exports.completeInvestment = async (req, res) => {
     try {
-        const { investmentId, userId } = req.body; 
-        const investment = await investmentModel.findOne({ 
-            _id: investmentId, 
-            userId 
-        });        
-        
+        const { investmentId, userId } = req.body;
+        const investment = await investmentModel.findOne({
+            _id: investmentId,
+            userId
+        });
+
         if (!investment) {
             return res.status(404).json({
                 message: "Investment not found or unauthorized."
             });
         }
-        if(investment.status !== 'active'){
-            return res.status(400).json({ 
-                messagge: "This investment is no longer active." 
+        if (investment.status !== 'active') {
+            return res.status(400).json({
+                messagge: "This investment is no longer active."
             });
         }
         if (investment.status === 'completed') {
@@ -153,7 +154,7 @@ exports.completeInvestment = async (req, res) => {
         }
         else if (investment.status === 'claimed') {
             return res.status(400).json({
-                message: "This investment has been claimed already." 
+                message: "This investment has been claimed already."
             });
         }
 
@@ -168,9 +169,9 @@ exports.completeInvestment = async (req, res) => {
         investment.isCompleted = true
 
         await investment.save();
-        
+
         return res.status(200).json({
-            message: "Investment has reached its maturity stage,withdrawals will be available in 2",
+            message: "Investment has reached its maturity stage,withdrawals will be available in 2 days",
             data: {
                 completeAmount: investment.expectedReturn,
                 investmentStatus: investment.status
@@ -187,10 +188,10 @@ exports.completeInvestment = async (req, res) => {
 
 exports.claimInvestment = async (req, res) => {
     try {
-        const { investmentId, userId } = req.body; 
-        const investment = await investmentModel.findOne({ 
-            _id: investmentId, 
-            userId: userId 
+        const { investmentId, userId } = req.body;
+        const investment = await investmentModel.findOne({
+            _id: investmentId,
+            userId: userId
         });
 
         const user = await userModel.findById(userId)
@@ -205,42 +206,42 @@ exports.claimInvestment = async (req, res) => {
                 message: "Investment not found."
             });
         }
-       if (investment.status === 'claimed') {
+        if (investment.status === 'claimed') {
             return res.status(400).json({
-                message: "This investment has been claimed already." 
+                message: "This investment has been claimed already."
             });
         }
-        if(investment.status !== 'completed'){
-            return res.status(400).json({ 
-                messagge: "This investment is incomplete." 
+        if (investment.status !== 'completed') {
+            return res.status(400).json({
+                messagge: "This investment is incomplete."
             });
         }
         const currentTime = new Date();
         if (currentTime < investment.maturityDate) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 message: "Investment has not reached maturity yet."
             });
         }
         const wallet = await walletModel.findOne({ userId });
         if (!wallet) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 message: "Wallet not found"
             });
         }
 
         wallet.availableBalance += investment.expectedReturn;
-        
+
         investment.status = 'claimed';
 
         await wallet.save();
         await investment.save();
 
         const transaction = await transactionModel.create({
-        userId: user._id,
-        transactionType: 'return',
-        amount: investment.expectedReturn
-    })
-        
+            userId: user._id,
+            transactionType: 'return',
+            amount: investment.expectedReturn
+        })
+
         return res.status(200).json({
             message: "Investment successfully claimed",
             data: {
@@ -251,70 +252,85 @@ exports.claimInvestment = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ 
+        return res.status(500).json({
             message: error.message
         });
     }
 };
 
-// exports.breakInvestment = async (req, res) => {
-//     try {
-//         const userId = req.user.id;
-//         const { investmentId } = req.params;
+exports.breakInvestment = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { investmentId } = req.params;
 
-//         const investment = await investmentModel.findOne({
-//             _id: investmentId,
-//             userId
-//         });
+        const investment = await investmentModel.findOne({
+            _id: investmentId,
+            userId
+        });
 
-//         if (!investment) {
-//             return res.status(404).json({
-//                 message: "Investment not found"
-//             });
-//         }
+        if (!investment) {
+            return res.status(404).json({
+                message: "Investment not found"
+            });
+        }
 
-//         if (investment.status !== "active") {
-//             return res.status(400).json({
-//                 message: "This investment is no longer active"
-//             });
-//         }
+        if (investment.status !== "active") {
+            return res.status(400).json({
+                message: "This investment is no longer active"
+            });
+        }
 
-//         const wallet = await walletModel.findOne({ userId });
+        const wallet = await walletModel.findOne({ userId });
 
-//         if (!wallet) {
-//             return res.status(404).json({
-//                 message: "Wallet not found"
-//             });
-//         }
+        if (!wallet) {
+            return res.status(404).json({
+                message: "Wallet not found"
+            });
+        }
+        const plan = await investmentPlanModel.findById(investment.investmentPlanId);
 
-//         if (new Date() >= investment.maturityDate) {
-//             return res.status(400).json({
-//                 message: "This investment has already matured. Use the normal withdrawal process."
-//             });
-//         }
+        if (!plan) {
+            return res.status(404).json({
+                message: "Investment plan not found"
+            });
+        }
 
-//         const penalty = investment.amount * 0.10;
-//         const payout = investment.amount - penalty;
+        if (new Date() >= investment.maturityDate) {
+            return res.status(400).json({
+                message: "This investment has already matured. Use the normal withdrawal process."
+            });
+        }
 
-//         wallet.balanceInNaira += payout;
+        const amount = Number(investment.amount)
+        const roi = Number(plan.roi)
+        const startDate = new Date(investment.startDate); const breakDate = new Date();
+        const diffInMs = breakDate - startDate
+        const daysInvested = Math.floor((diffInMs) / (1000 * 60 * 60 * 24));
 
-//         investment.status = "withdrawn";
-//         investment.penalty = penalty;
-//         investment.withdrawnAmount = payout;
-//         investment.withdrawnAt = new Date();
+        console.log('Day: ', daysInvested);
+        console.log('Amount: ', amount)
+        console.log('ROI: ', roi)
+        console.log('STARTDATE: ', startDate)
 
-//         await wallet.save();
-//         await investment.save();
 
-//         return res.status(200).json({
-//             message: "Investment terminated successfully",
-//             penalty,
-//             payout
-//         });
+        const expectedReturn = amount + (amount * roi * daysInvested) / (100 * 365);
 
-//     } catch (error) {
-//         return res.status(500).json({
-//             message: error.message
-//         });
-//     }
-// };
+        investment.status = 'terminated'
+        investment.terminatedAt = new Date();
+
+        await investment.save();
+
+        return res.status(200).json({
+            message: "Investment terminated successfully, withdrawals will be available in 2 days",
+            amount,
+            expectedReturn,
+            daysInvested
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
+    }
+};
+
