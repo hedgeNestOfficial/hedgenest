@@ -96,7 +96,7 @@ exports.verifyPayment = async(req, res) => {
                 Authorization: `Bearer ${process.env.KORA_API_KEY}`
             }
         });
-
+console.log("kora: ",data)
         const payment = await paymentModel.findOne({reference})
         if(!payment){
             return res.status(404).json({
@@ -152,7 +152,6 @@ exports.verifyPayment = async(req, res) => {
 
 exports.verifyWebhook = async (req, res, next) => {
     try {
-        console.log('WEBHOOK RECEIVE')
         const signature = req.headers["x-korapay-signature"];
 
         const { event, data } = req.body;

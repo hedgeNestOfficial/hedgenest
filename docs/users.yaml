@@ -320,24 +320,30 @@ paths:
           description: unauthorized
         "500":
           description: internal server error
-  
-  
-/api/v1/entered-pin/{userId}:
-  post:
-    summary: This endpoint is used to confirm a user's transaction PIN
-    tags: [users]
-    security:
-      - bearerAuth: []
-    parameters:
-      - in: path
-        name: userId
+          
+  /api/v1/entered-pin/{userId}:
+    post:
+      summary: This endpoint is used to confirm a user's transaction PIN
+      parameters:
+        - in: path
+          name: userId 
+      tags: [users]
+      requestBody:
         required: true
-        schema:
-          type: string
-    responses:
-      "200":
-        description: Transaction PIN confirmed successfully
-      "400":
-        description: Invalid transaction PIN
-      "500":
-        description: Internal server error
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enteredPin
+              properties:
+                enteredPin: 
+                  type: number 
+                  example: 123456
+      responses: 
+        "201":
+          description: Transaction PIN confirmed successfully
+        "400":
+          description: Invalid transaction PIN
+
+    
