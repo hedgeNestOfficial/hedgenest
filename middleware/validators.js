@@ -416,3 +416,21 @@ exports.claimInvestmentValidator = (req, res, next) => {
 
     next();
 };
+
+exports.confirmTransactionPinValidator = (req,res,next)=>{
+    const schema = joi.object({
+        enteredPin:joi.string().pattern(/^\d{6}$/).messages({
+            'any.required': 'Entered pin is required',
+            'string.empty': 'Entered pin cannot be empty',
+            'string.pattern.base': 'Entered Pin must be at least 6 characters and must Include only digits'
+        }),
+    })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}

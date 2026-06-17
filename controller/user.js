@@ -549,6 +549,7 @@ exports.myWallet = async(req, res) => {
     });
   }
 }
+
 exports.confirmTransactionPin = async (req, res) => {
   try {
     const { enteredPin } = req.body;
