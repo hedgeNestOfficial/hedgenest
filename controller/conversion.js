@@ -111,6 +111,7 @@ exports.conversion = async (req, res) => {
             wallet.availableBalance -= totalDebit;
             wallet.balanceInNaira += Number(amount);
             wallet.balanceInUSDT += conversionAmount;
+        
 
         } else if (from.toUpperCase() === 'USDT') {
             if (Number(amount) > wallet.balanceInUSDT) {
@@ -133,7 +134,8 @@ exports.conversion = async (req, res) => {
             to,
             rate,
             fee: conversionFee,
-            conversionAmount: amount
+            conversionAmount: amount,
+            amountNow: conversionAmount
         });
         let revenue = await revenueModel.findOne({ });
 
