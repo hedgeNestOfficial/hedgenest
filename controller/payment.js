@@ -162,7 +162,7 @@ exports.verifyWebhook = async (req, res, next) => {
         if (hash !== signature) 
             return next(new appError("Invalid webhook signature", 401));
         
-        const payment = await paymentModel.findOne({ reference: `TCA-hedgeNest-${data.reference}`});
+        const payment = await paymentModel.findOne({ reference });
         if (!payment) return res.status(404).json({ message: "Payment record not found" });
         
         const wallet = await walletModel.findOne({ userId: payment.userId });
