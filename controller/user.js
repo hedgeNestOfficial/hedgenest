@@ -9,6 +9,7 @@ const { sendEmail } = require("../utils/brevo");
 const {emailTemplate,resetPasswordTemplate,resetPasswordSuccessfulTemplate,transactionPinTemplate, resetPinTemplate} = require("../email");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
+const transactionModel = require("../model/transaction");
 
 exports.createUser = async (req, res) => {
   try {
@@ -639,4 +640,23 @@ exports.forgotPin = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+exports.myTransactions = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const transactions = await transactionModel.find({ userId: userId })
+            .sort({ createdAt: -1 })
+
+        return res.status(200).json({
+            message: "Transactions retrieved successfully",
+            count: transactions.length,
+            data: transactions
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
+    }
 };

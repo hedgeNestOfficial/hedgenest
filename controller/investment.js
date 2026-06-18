@@ -171,7 +171,7 @@ exports.completeInvestment = async (req, res) => {
         await investment.save();
 
         return res.status(200).json({
-            message: "Investment has reached its maturity stage,withdrawals will be available in 2 days",
+            message: "Investment has reached its maturity stage,withdrawals will be available in 26 hours",
             data: {
                 completeAmount: investment.expectedReturn,
                 investmentStatus: investment.status
@@ -307,12 +307,6 @@ exports.breakInvestment = async (req, res) => {
         const diffInMs = breakDate - startDate
         const daysInvested = Math.floor((diffInMs) / (1000 * 60 * 60 * 24));
 
-        console.log('Day: ', daysInvested);
-        console.log('Amount: ', amount)
-        console.log('ROI: ', roi)
-        console.log('STARTDATE: ', startDate)
-
-
         const expectedReturn = amount + (amount * roi * daysInvested) / (100 * 365);
 
         investment.status = 'terminated'
@@ -321,7 +315,7 @@ exports.breakInvestment = async (req, res) => {
         await investment.save();
 
         return res.status(200).json({
-            message: "Investment terminated successfully, withdrawals will be available in 2 days",
+            message: "Investment terminated successfully, withdrawals will be available in 26 hours",
             amount,
             expectedReturn,
             daysInvested
