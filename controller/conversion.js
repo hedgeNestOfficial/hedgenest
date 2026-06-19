@@ -122,6 +122,7 @@ exports.conversion = async (req, res) => {
             rate = Number(data.data.ticker.buy);conversionAmount = Number(amount) * rate;
             
             wallet.balanceInUSDT -= Number(amount);
+            wallet.balanceInNaira -= Number(conversionAmount.toFixed(2))
             wallet.availableBalance += Number(conversionAmount.toFixed(2))
         }
         const conversion = new conversionModel({
