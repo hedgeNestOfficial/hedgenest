@@ -43,8 +43,8 @@ exports.createUser = async (req, res) => {
     const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false });
 
     const user = new userModel({
-      firstName,
-      lastName,
+      firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
+      lastName: lastName.charAt(0).toUpperCase() + lastName.slice(1),
       phoneNumber,
       email: email.toLowerCase(),
       password: hashPassword,

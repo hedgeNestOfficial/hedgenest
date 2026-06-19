@@ -54,7 +54,7 @@ exports.createInvestment = async (req, res) => {
 
         wallet.availableBalance -= Number(amount);
         wallet.investments += investment.length
-        
+
         await wallet.save()
         const investment = await investmentModel.create({
             userId,
@@ -142,11 +142,6 @@ exports.completeInvestment = async (req, res) => {
                 message: "Investment not found or unauthorized."
             });
         }
-        if (investment.status !== 'active') {
-            return res.status(400).json({
-                messagge: "This investment is no longer active."
-            });
-        }
         if (investment.status === 'completed') {
             return res.status(400).json({
                 message: "This investment is complete already."
@@ -222,6 +217,17 @@ exports.claimInvestment = async (req, res) => {
                 message: "Investment has not reached maturity yet."
             });
         }
+        const newMaturityDate = new Date(investment.maturityDate);
+        const withdrawalAllowedAt = new Date(newMaturityDate + 26 * 60 * 60 * 1000);
+        
+        const now = new Date();
+        
+        if (now < withdrawalAllowedAt) {
+            return res.status(400).json({
+                message: "Withdrawals will be available after 26 hours of completion or maturity date"
+            });
+        }
+
         const wallet = await walletModel.findOne({ userId });
         if (!wallet) {
             return res.status(404).json({
