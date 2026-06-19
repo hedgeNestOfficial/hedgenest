@@ -200,6 +200,7 @@ exports.verifyWebhook = async (req, res, next) => {
     }
 
 }
+
 // exports.payoutFunds = async (req, res) => {
 //     try {
 //         const { merchantId, amount, bankCode, accountNumber } = req.body;
