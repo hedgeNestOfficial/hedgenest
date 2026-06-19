@@ -10,6 +10,7 @@ const {emailTemplate,resetPasswordTemplate,resetPasswordSuccessfulTemplate,trans
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const transactionModel = require("../model/transaction");
+const bankModel = require('../model/bank');
 
 exports.createUser = async (req, res) => {
   try {
@@ -659,4 +660,28 @@ exports.myTransactions = async (req, res) => {
             message: error.message
         });
     }
+};
+exports.getLinkedAccounts = async (req, res) => {
+  try {
+    const linkedAccounts = await bankModel.find({ userId: req.user.id });
+
+    if (!linkedAccounts || linkedAccounts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No linked accounts found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Linked accounts retrieved successfully",
+      totalAccounts: linkedAccounts.length,
+      linkedAccounts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

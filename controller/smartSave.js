@@ -523,11 +523,11 @@ exports.topUpFlexible = async (req, res) => {
 };
 exports.getAllPlan = async (req, res) => {
   try {
-    const plan = await smartSaveModel.find();
+    const plans = await smartSaveModel.find({ user: req.user.id });
 
     res.status(200).json({
       message: "Found all Plans",
-      plan,
+      plans,
     });
   } catch (error) {
     res.status(500).json({
@@ -553,6 +553,67 @@ exports.getOnePlan = async (req, res) => {
     res.status(500).json({
       message: "Something went wrong",
       error: error.message,
+    });
+  }
+};
+exports.getUserWithPlan = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { planId }= req.params;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found" 
+      });
+    }
+    const plan = await smartSaveModel.findOne({ _id: planId, user: userId });
+    if (!plan) {
+      return res.status(404).json({ 
+        message: "Plan not found for this user" 
+      });
+    }
+     const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber
+    }
+    res.status(200).json({
+      message: "User with plan gotten successfully",
+      data,
+      plan,
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: error.message 
+    });
+  }
+};
+exports.getUserWithPlans = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const plans = await smartSaveModel.find({ user: req.user.id });
+
+    res.status(200).json({
+      success: true,
+      message: "User with all plans retrieved successfully",
+      totalPlans: plans.length,
+      user,
+      plans,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

@@ -22,12 +22,12 @@ const adminRouter = require('./routes/admin')
 const investmentPlanRouter = require('./routes/investmentPlan')
 const investmentRouter = require('./routes/investment')
 const smartSaveRouter = require('./routes/smartSave')
-const morgan = require('morgan');
+// const morgan = require('morgan');
 
 
 app.use(express.json());
 app.use(cors())
-app.use(morgan('dev'));
+// app.use(morgan('dev'));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
 
