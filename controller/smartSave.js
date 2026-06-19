@@ -171,7 +171,6 @@ exports.createPlan = async (req, res) => {
     }
 
     wallet.availableBalance -= Number(amountPerFrequency);
-    await wallet.save();
 
     let interestRate = 10;
     let canBreak = true;
@@ -211,8 +210,15 @@ exports.createPlan = async (req, res) => {
       maturityDate,
     });
 
-    
-    const smartVaultsCount = await smartSaveModel.countDocuments({ user: req.user.id });
+    // Count the user's savings plans (smart vaults), not their value
+    const smartVaultsCount = await smartSaveModel.countDocuments({
+      user: req.user.id,
+    });
+
+    // Persist the count on the wallet so other endpoints (e.g. balance fetch)
+    // pick up the correct number instead of an amount
+    wallet.smartVaults = smartVaultsCount;
+    await wallet.save();
 
     await transactionModel.create({
       userId: req.user.id,
