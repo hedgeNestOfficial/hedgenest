@@ -153,7 +153,6 @@ exports.createPlan = async (req, res) => {
         message: "Invalid transaction pin",
       });
     }
-
     const wallet = await walletModel.findOne({ userId: req.user.id });
 
     if (!wallet) {
@@ -171,6 +170,8 @@ exports.createPlan = async (req, res) => {
     }
 
     wallet.availableBalance -= Number(amountPerFrequency);
+    wallet.smartVaults += plan.length
+    await wallet.save();
 
     let interestRate = 10;
     let canBreak = true;
@@ -183,40 +184,47 @@ exports.createPlan = async (req, res) => {
 
     if (normalizedPlanType === "LOCKED") {
       interestRate = getInterestRate(duration);
+
       breakingFeePercentage = 1.5;
+
       maturityDate = new Date();
+
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     if (normalizedPlanType === "STEALTH") {
       canBreak = false;
+
       interestRate = getInterestRate(duration);
+
       maturityDate = new Date();
+
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     const plan = await smartSaveModel.create({
       user: req.user.id,
+
       title,
       targetAmount,
       planType: normalizedPlanType,
+
       currentBalance: amountPerFrequency,
+
       amountPerFrequency,
+
       savingFrequency: normalizedSavingFrequency,
+
       duration,
+
       interestRate,
+
       canBreak,
+
       breakingFeePercentage,
+
       maturityDate,
     });
-
-    
-    const smartVaultsCount = await smartSaveModel.countDocuments({
-      user: req.user.id,
-    });
-
-    wallet.smartVaults = smartVaultsCount;
-    await wallet.save();
 
     await transactionModel.create({
       userId: req.user.id,
@@ -228,7 +236,6 @@ exports.createPlan = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Savings plan created successfully",
-      smartVaultsCount,
       data: plan,
     });
   } catch (error) {
