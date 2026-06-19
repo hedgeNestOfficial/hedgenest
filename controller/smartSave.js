@@ -4,10 +4,6 @@ const transactionModel = require("../model/transaction");
 const walletModel = require("../model/wallet");
 const revenueModel = require("../model/revenue");
 const bcrypt = require("bcrypt");
-const {
-  caculateSavings,
-  getInterestRate,
-} = require("../utils/savingsCaculator");
 
 exports.previewPlan = async (req, res) => {
   try {
@@ -111,6 +107,8 @@ exports.previewPlan = async (req, res) => {
     });
   }
 };
+
+
 exports.createPlan = async (req, res) => {
   try {
     const {
@@ -153,6 +151,7 @@ exports.createPlan = async (req, res) => {
         message: "Invalid transaction pin",
       });
     }
+
     const wallet = await walletModel.findOne({ userId: req.user.id });
 
     if (!wallet) {
@@ -162,13 +161,18 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    if (wallet.availableBalance < Number(amountPerFrequency)) {
+    const debitAmount = Number(amountPerFrequency);
+
+    if (wallet.availableBalance < debitAmount) {
       return res.status(400).json({
         success: false,
         message: "Insufficient wallet balance",
       });
     }
 
+    // Model's pre("save") hook (planCalculators) owns interestRate,
+    // canBreak, breakingFeePercentage, maturityDate, tax, and payback math.
+    // Controller only passes the raw inputs — no duplicate calculation here.
     wallet.availableBalance -= Number(amountPerFrequency);
     wallet.smartVaults += plan.length
     await wallet.save();
@@ -204,38 +208,32 @@ exports.createPlan = async (req, res) => {
 
     const plan = await smartSaveModel.create({
       user: req.user.id,
-
       title,
       targetAmount,
       planType: normalizedPlanType,
-
       currentBalance: amountPerFrequency,
-
       amountPerFrequency,
-
       savingFrequency: normalizedSavingFrequency,
-
       duration,
-
-      interestRate,
-
-      canBreak,
-
-      breakingFeePercentage,
-
-      maturityDate,
     });
+
+    // Only move money once the plan is successfully created
+    wallet.availableBalance -= debitAmount;
+    wallet.smartVaults = (wallet.smartVaults || 0) + debitAmount;
+    await wallet.save();
 
     await transactionModel.create({
       userId: req.user.id,
       transactionType: "savings",
-      amount: Number(amountPerFrequency ?? targetAmount),
+      amount: debitAmount,
       currency: "NGN",
     });
 
     return res.status(201).json({
       success: true,
       message: "Savings plan created successfully",
+      walletBalance: wallet.availableBalance,
+      smartVaultBalance: wallet.smartVaults,
       data: plan,
     });
   } catch (error) {
@@ -245,6 +243,142 @@ exports.createPlan = async (req, res) => {
     });
   }
 };
+
+
+// exports.createPlan = async (req, res) => {
+//   try {
+//     const {
+//       title,
+//       targetAmount,
+//       planType,
+//       duration,
+//       savingFrequency,
+//       amountPerFrequency,
+//       transactionPin,
+//     } = req.body;
+
+//     if (!amountPerFrequency || Number(amountPerFrequency) <= 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Amount per frequency is required for savings",
+//       });
+//     }
+
+//     const normalizedPlanType = planType?.toUpperCase();
+//     const normalizedSavingFrequency = savingFrequency?.toUpperCase();
+
+//     const user = await userModel.findById(req.user.id);
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     const isCorrectPin = await bcrypt.compare(
+//       transactionPin,
+//       user.transactionPin,
+//     );
+
+//     if (!isCorrectPin) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid transaction pin",
+//       });
+//     }
+//     const wallet = await walletModel.findOne({ userId: req.user.id });
+
+//     if (!wallet) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Wallet not found",
+//       });
+//     }
+
+//     if (wallet.availableBalance < Number(amountPerFrequency)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Insufficient wallet balance",
+//       });
+//     }
+
+//     wallet.availableBalance -= Number(amountPerFrequency);
+//     wallet.smartVaults += Number(amountPerFrequency);
+//     await wallet.save();
+
+//     let interestRate = 10;
+//     let canBreak = true;
+//     let breakingFeePercentage = 0;
+//     let maturityDate = null;
+
+//     if (normalizedPlanType === "FLEXIBLE") {
+//       interestRate = 10;
+//     }
+
+//     if (normalizedPlanType === "LOCKED") {
+//       interestRate = getInterestRate(duration);
+
+//       breakingFeePercentage = 1.5;
+
+//       maturityDate = new Date();
+
+//       maturityDate.setDate(maturityDate.getDate() + Number(duration));
+//     }
+
+//     if (normalizedPlanType === "STEALTH") {
+//       canBreak = false;
+
+//       interestRate = getInterestRate(duration);
+
+//       maturityDate = new Date();
+
+//       maturityDate.setDate(maturityDate.getDate() + Number(duration));
+//     }
+
+//     const plan = await smartSaveModel.create({
+//       user: req.user.id,
+
+//       title,
+//       targetAmount,
+//       planType: normalizedPlanType,
+
+//       currentBalance: amountPerFrequency,
+
+//       amountPerFrequency,
+
+//       savingFrequency: normalizedSavingFrequency,
+
+//       duration,
+
+//       interestRate,
+
+//       canBreak,
+
+//       breakingFeePercentage,
+
+//       maturityDate,
+//     });
+
+//     await transactionModel.create({
+//       userId: req.user.id,
+//       transactionType: "savings",
+//       amount: Number(amountPerFrequency ?? targetAmount),
+//       currency: "NGN",
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Savings plan created successfully",
+//       data: plan,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
 
 exports.breakPlan = async (req, res) => {
   try {
