@@ -173,6 +173,39 @@ exports.createPlan = async (req, res) => {
     // Model's pre("save") hook (planCalculators) owns interestRate,
     // canBreak, breakingFeePercentage, maturityDate, tax, and payback math.
     // Controller only passes the raw inputs — no duplicate calculation here.
+    wallet.availableBalance -= Number(amountPerFrequency);
+    wallet.smartVaults += plan.length
+    await wallet.save();
+
+    let interestRate = 10;
+    let canBreak = true;
+    let breakingFeePercentage = 0;
+    let maturityDate = null;
+
+    if (normalizedPlanType === "FLEXIBLE") {
+      interestRate = 10;
+    }
+
+    if (normalizedPlanType === "LOCKED") {
+      interestRate = getInterestRate(duration);
+
+      breakingFeePercentage = 1.5;
+
+      maturityDate = new Date();
+
+      maturityDate.setDate(maturityDate.getDate() + Number(duration));
+    }
+
+    if (normalizedPlanType === "STEALTH") {
+      canBreak = false;
+
+      interestRate = getInterestRate(duration);
+
+      maturityDate = new Date();
+
+      maturityDate.setDate(maturityDate.getDate() + Number(duration));
+    }
+
     const plan = await smartSaveModel.create({
       user: req.user.id,
       title,

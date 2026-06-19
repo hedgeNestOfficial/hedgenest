@@ -45,7 +45,7 @@ exports.initiatePayment = async(req, res) =>{
                 email: user.email,
                 name: `${user.lastName} ${user.firstName}`
             },
-            redirect_url: 'http://localhost:5173/payment-success',
+            redirect_url: 'http://hedge-nest.vercel.app/payment-success',
             notification_url: 'https://hedgenest.onrender.com/api/v1/webhook'
         }
         const response = await axios.post('https://api.korapay.com/merchant/api/v1/charges/initialize', paymentData,{
@@ -200,6 +200,7 @@ exports.verifyWebhook = async (req, res, next) => {
     }
 
 }
+
 // exports.payoutFunds = async (req, res) => {
 //     try {
 //         const { merchantId, amount, bankCode, accountNumber } = req.body;

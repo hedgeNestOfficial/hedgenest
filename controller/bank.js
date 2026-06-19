@@ -15,7 +15,6 @@ exports.linkBank = async (req, res) => {
       })
     };
 
-    
     const bank = await bankModel.create({
       userId: user._id,
       currency: "NGN",
