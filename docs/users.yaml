@@ -381,54 +381,17 @@ paths:
           description: All my transactions gotten
         "400":
           description: something went wrong
-
+          
   /api/v1/get-linked-account:
     get:
-      summary: Get all linked bank accounts for the logged-in user
-      tags: [user]
+      summary: this end point is to get linked bank account of a user
+      tags: [users]
       security:
         - bearerAuth: []
       responses:
-        "200":
-          description: Linked accounts retrieved successfully
-          content:
-            application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                  example: true
-                message:
-                  type: string
-                  example: Linked accounts retrieved successfully
-                totalAccounts:
-                  type: number
-                  example: 2
-                linkedAccounts:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      _id:
-                        type: string
-                        example: 6a348ca7f5446a884ac29067
-                      userId:
-                        type: string
-                        example: 6a2d9b69914a573e752d7830
-                      bankName:
-                        type: string
-                        example: ACCESS BANK
-                      accountName:
-                        type: string
-                        example: JOHN DOE
-                      accountNumber:
-                        type: string
-                        example: "0123456789"
-                      currency:
-                        type: string
-                        example: NGN
-      "404":
-        description: No linked accounts found
-      "500":
-        description: Something went wrong
+        "201":
+          description: My linked bank gotten
+        "400":
+          description: something went wrong
+
+ 
