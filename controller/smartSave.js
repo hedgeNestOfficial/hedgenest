@@ -170,7 +170,7 @@ exports.createPlan = async (req, res) => {
     }
 
     wallet.availableBalance -= Number(amountPerFrequency);
-    wallet.smartVaults += Number(amountPerFrequency)
+    wallet.smartVaults += plan.length
     await wallet.save();
 
     let interestRate = 10;
