@@ -170,7 +170,7 @@ exports.createPlan = async (req, res) => {
     }
 
     wallet.availableBalance -= Number(amountPerFrequency);
-    wallet.smartVaults += Number(amountPerFrequency)
+    wallet.smartVaults += Number(amountPerFrequency);
     await wallet.save();
 
     let interestRate = 10;
@@ -321,8 +321,6 @@ exports.breakPlan = async (req, res) => {
     let breakingFee = 0;
     let statusUpdate = "CANCELLED";
 
-   
-
     if (isMatured) {
       // Any plan type that has matured — full withdrawal, mark as COMPLETED
       amountToCredit = plan.currentBalance;
@@ -361,7 +359,7 @@ exports.breakPlan = async (req, res) => {
             totalBreakingFeeRevenue: breakingFee,
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
 
       // Also create a transaction record for this breaking fee
@@ -387,7 +385,7 @@ exports.breakPlan = async (req, res) => {
 
     wallet.availableBalance += amountToCredit;
     wallet.balanceInNaira += amountToCredit;
-    wallet.smartVaults -= originalBalance;  
+    wallet.smartVaults -= originalBalance;
     await wallet.save();
 
     // Create transaction record
@@ -523,11 +521,11 @@ exports.topUpFlexible = async (req, res) => {
 };
 exports.getAllPlan = async (req, res) => {
   try {
-    const plan = await smartSaveModel.find();
+    const plans = await smartSaveModel.find({ user: req.user.id });
 
     res.status(200).json({
       message: "Found all Plans",
-      plan,
+      plans,
     });
   } catch (error) {
     res.status(500).json({
@@ -553,6 +551,40 @@ exports.getOnePlan = async (req, res) => {
     res.status(500).json({
       message: "Something went wrong",
       error: error.message,
+    });
+  }
+};
+exports.getUserWithPlan = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { planId } = req.params;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    const plan = await smartSaveModel.findOne({ _id: planId, user: userId });
+    if (!plan) {
+      return res.status(404).json({
+        message: "Plan not found for this user",
+      });
+    }
+    const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+    };
+    res.status(200).json({
+      message: "User with plan gotten successfully",
+      data,
+      plan,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
     });
   }
 };

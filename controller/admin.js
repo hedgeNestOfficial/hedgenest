@@ -1,70 +1,78 @@
-const user = require('../model/user')
-const wallet = require('../model/wallet')
-const payment = require('../model/payment')
-const admin = require('../model/admin')
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
-const otpGenerator = require('otp-generator')
-const{sendEmail} = require('../utils/brevo')
-const {emailTemplate, resetPasswordTemplate, resetPasswordSuccessfulTemplate} = require('../email')
-const conversionModel = require('../model/conversion')
-const paymentModel = require('../model/payment')
-const transactionModel = require('../model/transaction')
-const revenueModel = require('../model/revenue')
-const investmentModel = require('../model/investment')
-const smartSaveModel = require('../model/smartSave')
-const walletModel = require('../model/wallet')
+const user = require("../model/user");
+const wallet = require("../model/wallet");
+const payment = require("../model/payment");
+const admin = require("../model/admin");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const otpGenerator = require("otp-generator");
+const { sendEmail } = require("../utils/brevo");
+const {
+  emailTemplate,
+  resetPasswordTemplate,
+  resetPasswordSuccessfulTemplate,
+} = require("../email");
+const conversionModel = require("../model/conversion");
+const paymentModel = require("../model/payment");
+const transactionModel = require("../model/transaction");
+const revenueModel = require("../model/revenue");
+const investmentModel = require("../model/investment");
+const smartSaveModel = require("../model/smartSave");
+const walletModel = require("../model/wallet");
 
-exports.createAdmin = async (req, res)=>{
-    try{
-        const {firstName, lastName, email, phoneNumber, password} = req.body
+exports.createAdmin = async (req, res) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, password } = req.body;
 
-        const existingAdmin = await admin.findOne({email:email.toLowerCase()})
-        if(existingAdmin){
-            return res.status(400).json({
-                message:"Admin with this email already exist"
-            })
-        }
-        const salt = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(password, salt)
-        const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false });
-
-        const newAdmin = await new admin({
-            firstName,
-            lastName,
-            email:email.toLowerCase(),
-            phoneNumber,
-            password:hashPassword,
-            otp,
-            otpExpires: Date.now() + (1000 * 60 * 7)
-        })
-        await newAdmin.save()
-
-        const html = await emailTemplate(
-            `${newAdmin.firstName} ${newAdmin.lastName}`,
-              newAdmin.otp,
-            );
-            await sendEmail(newAdmin.email, "Verify Admin Email", html)
-
-        const data = {
-          firstName: newAdmin.firstName,
-          lastName: newAdmin.lastName,
-          email: newAdmin.email,
-          phoneNumber: newAdmin.phoneNumber
+    const existingAdmin = await admin.findOne({ email: email.toLowerCase() });
+    if (existingAdmin) {
+      return res.status(400).json({
+        message: "Admin with this email already exist",
+      });
     }
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
+    });
 
-            res.status(201).json({
-            message:"Admin created successfully, otp has been sent to email",
-            data,
-        })
-    }catch(error){
-        console.log(error)
-        res.status(500).json({
-            message:"Something went Wrong",
-            error: error.message
-        })
-    }
-}
+    const newAdmin = await new admin({
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      phoneNumber,
+      password: hashPassword,
+      otp,
+      otpExpires: Date.now() + 1000 * 60 * 7,
+    });
+    await newAdmin.save();
+
+    const html = await emailTemplate(
+      `${newAdmin.firstName} ${newAdmin.lastName}`,
+      newAdmin.otp,
+    );
+    await sendEmail(newAdmin.email, "Verify Admin Email", html);
+
+    const data = {
+      firstName: newAdmin.firstName,
+      lastName: newAdmin.lastName,
+      email: newAdmin.email,
+      phoneNumber: newAdmin.phoneNumber,
+    };
+
+    res.status(201).json({
+      message: "Admin created successfully, otp has been sent to email",
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went Wrong",
+      error: error.message,
+    });
+  }
+};
 exports.verifyAdminEmail = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -87,12 +95,12 @@ exports.verifyAdminEmail = async (req, res) => {
         message: "Invalid OTP credentials",
       });
     }
-    existingAdmin.isVerified = true
+    existingAdmin.isVerified = true;
 
-    await existingAdmin.save()
+    await existingAdmin.save();
     res.status(200).json({
-        message:'OTP Verified successfully'
-      })
+      message: "OTP Verified successfully",
+    });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
@@ -106,7 +114,7 @@ exports.adminLogin = async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "Email and password are required"
+        message: "Email and password are required",
       });
     }
 
@@ -124,7 +132,10 @@ exports.adminLogin = async (req, res) => {
       });
     }
 
-    const correctPassword = await bcrypt.compare(password, existingAdmin.password);
+    const correctPassword = await bcrypt.compare(
+      password,
+      existingAdmin.password,
+    );
 
     if (!correctPassword) {
       return res.status(400).json({
@@ -144,11 +155,11 @@ exports.adminLogin = async (req, res) => {
       { expiresIn: "1d" },
     );
     const data = {
-          firstName: existingAdmin.firstName,
-          lastName: existingAdmin.lastName,
-          email: existingAdmin.email,
-          phoneNumber: existingAdmin.phoneNumber
-    }
+      firstName: existingAdmin.firstName,
+      lastName: existingAdmin.lastName,
+      email: existingAdmin.email,
+      phoneNumber: existingAdmin.phoneNumber,
+    };
 
     return res.status(200).json({
       message: "Login Successful",
@@ -163,39 +174,45 @@ exports.adminLogin = async (req, res) => {
   }
 };
 exports.adminforgotPassowrd = async (req, res) => {
-  try{
-    const {email} = req.body
-    if(!email){
+  try {
+    const { email } = req.body;
+    if (!email) {
       return res.status(400).json({
-        message:"Email is required"
-      })
+        message: "Email is required",
+      });
     }
-    const existingAdmin = await admin.findOne({email:email.trim().toLowerCase()})
-    if(!existingAdmin){
+    const existingAdmin = await admin.findOne({
+      email: email.trim().toLowerCase(),
+    });
+    if (!existingAdmin) {
       return res.status(400).json({
-        message:"Admin not found"
-      })
+        message: "Admin not found",
+      });
     }
-    const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false });
-    existingAdmin.otp = otp
-    existingAdmin.otpExpires = Date.now() + (1000 * 60 * 7)
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
+    });
+    existingAdmin.otp = otp;
+    existingAdmin.otpExpires = Date.now() + 1000 * 60 * 7;
 
-    await existingAdmin.save()
+    await existingAdmin.save();
     const html = await resetPasswordTemplate(
       `${existingAdmin.firstName} ${existingAdmin.lastName}`,
-        otp,
-      );
-      await sendEmail(existingAdmin.email, "Reset Passowrd OTP", html)
-      res.status(200).json({
-        message:"OTP sent to email"
-      })
-  }catch(error){
-    console.log(error)
+      otp,
+    );
+    await sendEmail(existingAdmin.email, "Reset Passowrd OTP", html);
+    res.status(200).json({
+      message: "OTP sent to email",
+    });
+  } catch (error) {
+    console.log(error);
     res.status(500).json({
-      message:"Something went wrong"
-    })
+      message: "Something went wrong",
+    });
   }
-}
+};
 exports.resetAdminPassword = async (req, res) => {
   try {
     const { email, newPassword, otp } = req.body;
@@ -263,7 +280,10 @@ exports.changeAdminPassword = async (req, res) => {
         message: "Admin not found",
       });
     }
-    const correctPassword = await bcrypt.compare(oldPassword, existingAdmin.password);
+    const correctPassword = await bcrypt.compare(
+      oldPassword,
+      existingAdmin.password,
+    );
 
     if (!correctPassword) {
       return res.status(400).json({
@@ -275,7 +295,7 @@ exports.changeAdminPassword = async (req, res) => {
     const hashPassword = await bcrypt.hash(newPassword, salt);
     existingAdmin.password = hashPassword;
     await existingAdmin.save();
-    
+
     res.status(200).json({
       message: "Password changed successfully",
     });
@@ -286,143 +306,143 @@ exports.changeAdminPassword = async (req, res) => {
     });
   }
 };
-exports.getOneUser = async (req, res) =>{
-    try{
-        const id = req.params.id
-        const existingUser = await userModel.findById(id)
-
-        if(!existingUser){
-            return res.status(404).json({
-                message:"User not found"
-            })
-        }
-        const wallet = await walletModel.findOne({userId: existingUser._id});
-               if (!wallet) {
-              return res.status(404).json({
-                message: "Wallet not found",
-              });
-            }
-            const data = {
-              firstName: existingUser.firstName,
-              lastName: existingUser.lastName,
-              email: existingUser.email,
-              phoneNumber: existingUser.phoneNumber
-            }
-        res.status(200).json({
-            message:"User found successfully",
-            data,
-            wallet
-        })
-    }catch(error){
-        res.status(500).json({
-            message:"Something went wrong",
-            error: error.message
-        })
-    }
-}
-exports.getAlluser = async (req, res) =>{
+exports.getOneUser = async (req, res) => {
   try {
-    const users = await userModel.find().select('-password')
+    const id = req.params.id;
+    const existingUser = await userModel.findById(id);
 
+    if (!existingUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    const wallet = await walletModel.findOne({ userId: existingUser._id });
+    if (!wallet) {
+      return res.status(404).json({
+        message: "Wallet not found",
+      });
+    }
+    const data = {
+      firstName: existingUser.firstName,
+      lastName: existingUser.lastName,
+      email: existingUser.email,
+      phoneNumber: existingUser.phoneNumber,
+    };
     res.status(200).json({
-      message:'Found all users',
-      count:user.length,
-      users
-    })
+      message: "User found successfully",
+      data,
+      wallet,
+    });
   } catch (error) {
     res.status(500).json({
-      message:error.message
-    })
+      message: "Something went wrong",
+      error: error.message,
+    });
   }
-}
+};
+exports.getAlluser = async (req, res) => {
+  try {
+    const users = await userModel.find().select("-password");
+
+    res.status(200).json({
+      message: "Found all users",
+      count: user.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 exports.getAllPayment = async (req, res) => {
   try {
-    const payments = await paymentModel.find()
+    const payments = await paymentModel.find();
 
     res.status(200).json({
-      message:'All Payment Gotten Succesfully',
+      message: "All Payment Gotten Succesfully",
       count: payment.length,
-      payments
-    })
+      payments,
+    });
   } catch (error) {
     res.status(500).json({
-      message: error.message
-    })
+      message: error.message,
+    });
   }
-}
+};
 exports.getAllSavings = async (req, res) => {
   try {
-    const savings = await smartSaveModel.find()
+    const savings = await smartSaveModel.find();
 
     res.status(200).json({
-      message:'All savings Gotten Succesfully',
+      message: "All savings Gotten Succesfully",
       count: savings.length,
-      savings
-    })
+      savings,
+    });
   } catch (error) {
     res.status(500).json({
-      message: error.message
-    })
+      message: error.message,
+    });
   }
-}
-exports.getAllTransactions = async (req, res) =>{
+};
+exports.getAllTransactions = async (req, res) => {
   try {
-    const transaction = await transactionModel.find()
+    const transaction = await transactionModel.find();
 
     res.status(200).json({
-      message:'All Transactions Found',
+      message: "All Transactions Found",
       count: transaction.length,
       transaction,
-    })
+    });
   } catch (error) {
     res.status(500).json({
-      message: error.message
-    })
+      message: error.message,
+    });
   }
-}
-exports.getAllRevenue = async (req, res) =>{
+};
+exports.getAllRevenue = async (req, res) => {
   try {
-    const transaction = await revenueModel.find()
+    const transaction = await revenueModel.find();
 
     res.status(200).json({
-      message:'All transactions Found',
+      message: "All transactions Found",
       count: transaction.length,
       transaction,
-    })
+    });
   } catch (error) {
     res.status(500).json({
-      message: error.message
-    })
+      message: error.message,
+    });
   }
-}
+};
 
-exports.getAllInvestment = async (req, res) =>{
+exports.getAllInvestment = async (req, res) => {
   try {
-    const investment = await investmentModel.find()
+    const investment = await investmentModel.find();
 
     res.status(200).json({
-      message:'All investments Found',
+      message: "All investments Found",
       count: investment.length,
       investment,
-    })
+    });
   } catch (error) {
     res.status(500).json({
-      message: error.message
-    })
+      message: error.message,
+    });
   }
-}
-exports.getAllConversion = async (req, res)=>{
+};
+exports.getAllConversion = async (req, res) => {
   try {
-    const conversion = await conversionModel.find()
+    const conversion = await conversionModel.find();
 
     res.status(200).json({
-      message:'All Conversion Found',
-      count:conversion.length,
+      message: "All Conversion Found",
+      count: conversion.length,
       conversion,
-    })
+    });
   } catch (error) {
     res.status(500).json({
-      message:error.message
-    })
+      message: error.message,
+    });
   }
-}
+};

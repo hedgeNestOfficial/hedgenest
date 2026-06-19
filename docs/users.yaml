@@ -321,23 +321,4 @@ paths:
         "500":
           description: internal server error
   
-  
-/api/v1/entered-pin/{userId}:
-  post:
-    summary: This endpoint is used to confirm a user's transaction PIN
-    tags: [users]
-    security:
-      - bearerAuth: []
-    parameters:
-      - in: path
-        name: userId
-        required: true
-        schema:
-          type: string
-    responses:
-      "200":
-        description: Transaction PIN confirmed successfully
-      "400":
-        description: Invalid transaction PIN
-      "500":
-        description: Internal server error
+ 
