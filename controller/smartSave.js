@@ -108,7 +108,6 @@ exports.previewPlan = async (req, res) => {
   }
 };
 
-
 exports.createPlan = async (req, res) => {
   try {
     const {
@@ -174,37 +173,7 @@ exports.createPlan = async (req, res) => {
     // canBreak, breakingFeePercentage, maturityDate, tax, and payback math.
     // Controller only passes the raw inputs — no duplicate calculation here.
     wallet.availableBalance -= Number(amountPerFrequency);
-    wallet.smartVaults += plan.length
     await wallet.save();
-
-    let interestRate = 10;
-    let canBreak = true;
-    let breakingFeePercentage = 0;
-    let maturityDate = null;
-
-    if (normalizedPlanType === "FLEXIBLE") {
-      interestRate = 10;
-    }
-
-    if (normalizedPlanType === "LOCKED") {
-      interestRate = getInterestRate(duration);
-
-      breakingFeePercentage = 1.5;
-
-      maturityDate = new Date();
-
-      maturityDate.setDate(maturityDate.getDate() + Number(duration));
-    }
-
-    if (normalizedPlanType === "STEALTH") {
-      canBreak = false;
-
-      interestRate = getInterestRate(duration);
-
-      maturityDate = new Date();
-
-      maturityDate.setDate(maturityDate.getDate() + Number(duration));
-    }
 
     const plan = await smartSaveModel.create({
       user: req.user.id,
@@ -237,13 +206,13 @@ exports.createPlan = async (req, res) => {
       data: plan,
     });
   } catch (error) {
+    console.log("error:", error);
     return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
-
 
 // exports.createPlan = async (req, res) => {
 //   try {
@@ -455,8 +424,6 @@ exports.breakPlan = async (req, res) => {
     let breakingFee = 0;
     let statusUpdate = "CANCELLED";
 
-   
-
     if (isMatured) {
       // Any plan type that has matured — full withdrawal, mark as COMPLETED
       amountToCredit = plan.currentBalance;
@@ -495,7 +462,7 @@ exports.breakPlan = async (req, res) => {
             totalBreakingFeeRevenue: breakingFee,
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
 
       // Also create a transaction record for this breaking fee
@@ -521,7 +488,7 @@ exports.breakPlan = async (req, res) => {
 
     wallet.availableBalance += amountToCredit;
     wallet.balanceInNaira += amountToCredit;
-    wallet.smartVaults -= originalBalance;  
+    wallet.smartVaults -= originalBalance;
     await wallet.save();
 
     // Create transaction record
@@ -693,34 +660,34 @@ exports.getOnePlan = async (req, res) => {
 exports.getUserWithPlan = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { planId }= req.params;
+    const { planId } = req.params;
 
     const user = await userModel.findById(userId);
     if (!user) {
-      return res.status(404).json({ 
-        message: "User not found" 
+      return res.status(404).json({
+        message: "User not found",
       });
     }
     const plan = await smartSaveModel.findOne({ _id: planId, user: userId });
     if (!plan) {
-      return res.status(404).json({ 
-        message: "Plan not found for this user" 
+      return res.status(404).json({
+        message: "Plan not found for this user",
       });
     }
-     const data = {
+    const data = {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      phoneNumber: user.phoneNumber
-    }
+      phoneNumber: user.phoneNumber,
+    };
     res.status(200).json({
       message: "User with plan gotten successfully",
       data,
       plan,
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: error.message 
+    res.status(500).json({
+      message: error.message,
     });
   }
 };
