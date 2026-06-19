@@ -52,19 +52,20 @@ exports.createInvestment = async (req, res) => {
         const maturityDate = new Date(startDate);
         maturityDate.setDate(maturityDate.getDate() + term);
 
-        wallet.availableBalance -= Number(amount);
-        wallet.investments += investment.length
-
-        await wallet.save()
         const investment = await investmentModel.create({
             userId,
             investmentPlanId,
             amount,
             startDate,
             maturityDate,
-            expectedReturn,
+            expectedReturn: Number(expectedReturn.toFixed(2)),
             status: 'active'
         });
+
+        wallet.availableBalance -= Number(amount);
+        wallet.investments = investment.length
+
+        await wallet.save()
 
         const transaction = await transactionModel.create({
             userId: user._id,
@@ -323,7 +324,7 @@ exports.breakInvestment = async (req, res) => {
         return res.status(200).json({
             message: "Investment terminated successfully, withdrawals will be available in 26 hours",
             amount,
-            expectedReturn,
+            expectedReturn: Number(expectedReturn.toFixed(2)),
             daysInvested
         });
 
@@ -333,4 +334,3 @@ exports.breakInvestment = async (req, res) => {
         });
     }
 };
-
