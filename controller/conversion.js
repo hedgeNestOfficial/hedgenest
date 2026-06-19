@@ -108,9 +108,9 @@ exports.conversion = async (req, res) => {
             conversionAmount = Number(amount) / rate;
             
             console.log(totalDebit)
-            wallet.availableBalance -= totalDebit;
-            wallet.balanceInNaira += Number(amount);
-            wallet.balanceInUSDT += conversionAmount;
+            wallet.availableBalance -= Number(totalDebit.toFixed(2));
+            wallet.balanceInNaira += Number(amount)
+            wallet.balanceInUSDT += Number(conversionAmount.toFixed(2));
         
 
         } else if (from.toUpperCase() === 'USDT') {
@@ -122,7 +122,7 @@ exports.conversion = async (req, res) => {
             rate = Number(data.data.ticker.buy);conversionAmount = Number(amount) * rate;
             
             wallet.balanceInUSDT -= Number(amount);
-            wallet.availableBalance += conversionAmount
+            wallet.availableBalance += Number(conversionAmount.toFixed(2))
         }
         const conversion = new conversionModel({
             userId: user._id,
@@ -134,7 +134,7 @@ exports.conversion = async (req, res) => {
             rate,
             fee: conversionFee,
             conversionAmount: amount,
-            amountNow: conversionAmount
+            amountNow: Number(conversionAmount.toFixed(2))
         });
         let revenue = await revenueModel.findOne({ });
 
@@ -164,7 +164,7 @@ exports.conversion = async (req, res) => {
                 from: from.toUpperCase(),
                 to: to.toUpperCase(),
                 rate,
-                value: conversionAmount,
+                value: Number(conversionAmount.toFixed(2)),
             }
         });
     } catch (error) {

@@ -53,8 +53,8 @@ exports.createInvestment = async (req, res) => {
         maturityDate.setDate(maturityDate.getDate() + term);
 
         wallet.availableBalance -= Number(amount);
-        wallet.investments += Number(amount)
-
+        wallet.investments += investment.length
+        
         await wallet.save()
         const investment = await investmentModel.create({
             userId,
