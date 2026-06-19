@@ -320,5 +320,115 @@ paths:
           description: unauthorized
         "500":
           description: internal server error
-  
- 
+
+  /api/v1/entered-pin/{userId}:
+    post:
+      summary: This endpoint is used to confirm a user's transaction PIN
+      parameters:
+        - in: path
+          name: userId
+      tags: [users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enteredPin
+              properties:
+                enteredPin:
+                  type: string
+                  example: 123456
+      responses:
+        "201":
+          description: Transaction PIN confirmed successfully
+        "400":
+          description: Invalid transaction PIN
+
+  /api/v1/forgotPin:
+    post:
+      summary: this end point is for forgotten pin
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+      responses:
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong
+
+  /api/v1/transaction:
+    get:
+      summary: this end point is to get all transactions of a user
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: All my transactions gotten
+        "400":
+          description: something went wrong
+
+  /api/v1/get-linked-account:
+    get:
+      summary: Get all linked bank accounts for the logged-in user
+      tags: [user]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Linked accounts retrieved successfully
+          content:
+            application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: Linked accounts retrieved successfully
+                totalAccounts:
+                  type: number
+                  example: 2
+                linkedAccounts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: 6a348ca7f5446a884ac29067
+                      userId:
+                        type: string
+                        example: 6a2d9b69914a573e752d7830
+                      bankName:
+                        type: string
+                        example: ACCESS BANK
+                      accountName:
+                        type: string
+                        example: JOHN DOE
+                      accountNumber:
+                        type: string
+                        example: "0123456789"
+                      currency:
+                        type: string
+                        example: NGN
+      "404":
+        description: No linked accounts found
+      "500":
+        description: Something went wrong

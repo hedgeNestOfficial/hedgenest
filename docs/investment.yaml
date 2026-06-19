@@ -32,7 +32,7 @@ paths:
         "400":
           description: something went wrong
    
-  /api/v1/investment/{userId}:
+  /api/v1/investment:
     get:
       summary: this end point is to get all investments of a user 
       tags: [investment]
@@ -44,30 +44,20 @@ paths:
         "400":
           description: something went wrong
    
-  /api/v1/investment/{investmentId}:
+  /api/v1/oneInvestment/{investmentId}:
     get:
       summary: this end point is to get one investment of a user 
       tags: [investment]
+      parameters:
+        - in: path
+          name: investmentId
       security: 
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - userId
-              properties:
-                userId: 
-                  type: string
-                  example: 6843f0c4b7a8d5e2f9c12345
       responses: 
         "201":
           description: One my investment gotten
         "400":
           description: something went wrong
-
           
   /api/v1/compInvestment:
     put:
@@ -122,5 +112,20 @@ paths:
       responses: 
         "201":
           description: This investment has been claimed
+        "400":
+          description: something went wrong
+
+  /api/v1/breakInvestment/{investmentId}:
+    put:
+      summary: this end point is to get one investment of a user 
+      tags: [investment]
+      parameters:
+        - in: path
+          name: investmentId
+      security: 
+        - bearerAuth: []
+      responses: 
+        "201":
+          description: Investment terminated successfully, withdrawals will be available in 2 days
         "400":
           description: something went wrong

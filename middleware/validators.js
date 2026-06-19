@@ -360,27 +360,7 @@ exports.createInvestmentValidator = (req, res, next) => {
 
     next();
 };
-exports.getOneInvestmentValidator = (req, res, next) => {
-    const schema = joi.object({
-        userId: joi.string().hex().length(24).required().messages({
-            "string.base": "user ID must be a string",
-            "string.hex": "Invalid user ID",
-            "string.length": "Invalid user ID",
-            "any.required": "user ID is required"
-        }),
-    });
 
-    const { error } = schema.validate(req.body);
-
-    if (error) {
-        return res.status(400).json({
-            status: false,
-            message: error.details[0].message
-        });
-    }
-
-    next();
-};
 exports.compInvestmentValidator = (req, res, next) => {
     const schema = joi.object({
         userId: joi.string().hex().length(24).required().messages({
@@ -417,6 +397,46 @@ exports.claimInvestmentValidator = (req, res, next) => {
             "string.length": "Invalid user ID",
             "any.required": "user ID is required"
         }),
+        investmentId: joi.string().hex().length(24).required().messages({
+            "string.base": "investment ID must be a string",
+            "string.hex": "Invalid investment ID",
+            "string.length": "Invalid investment ID",
+            "any.required": "investment ID is required"
+        }),
+    });
+
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            status: false,
+            message: error.details[0].message
+        });
+    }
+
+    next();
+};
+
+exports.confirmTransactionPinValidator = (req,res,next)=>{
+    const schema = joi.object({
+        enteredPin:joi.string().pattern(/^\d{6}$/).messages({
+            'any.required': 'Entered pin is required',
+            'string.empty': 'Entered pin cannot be empty',
+            'string.pattern.base': 'Entered Pin must be at least 6 characters and must Include only digits'
+        }),
+    })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}
+
+exports.breakInvestmentValidator = (req, res, next) => {
+    const schema = joi.object({
         investmentId: joi.string().hex().length(24).required().messages({
             "string.base": "investment ID must be a string",
             "string.hex": "Invalid investment ID",

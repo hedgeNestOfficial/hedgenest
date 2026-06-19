@@ -33,6 +33,9 @@ const conversionSchema = new mongoose.Schema({
        fee: {
         type:  Number,
        },
+       amountNow: {
+        type: Number
+       }
 }, { timestamps: true });
 const conversionModel = mongoose.model('conversions', conversionSchema)
 module.exports = conversionModel

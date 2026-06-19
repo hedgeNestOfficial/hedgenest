@@ -1,5 +1,5 @@
 const router = require ('express').Router()
-const {createUser, verifyEmail, login, forgotPassword, resetPassword, changePassword, loginWithGoogle, createTransactionPin, update, changePin, resend, logout, myWallet, confirmTransactionPin} = require('../controller/user')
+const {createUser, verifyEmail, login, forgotPassword, resetPassword, changePassword, loginWithGoogle, createTransactionPin, update, changePin, resend, logout, myWallet, confirmTransactionPin, forgotPin, myTransactions, getLinkedAccounts} = require('../controller/user')
 const {Authentication} = require('../middleware/auth')
 const {profile, loginProfile} = require('../middleware/passport')
 const {resetPasswordValidator, changePasswordValidator,signUpValidator, changeTransactionPinValidator, createTransactionPinValidator, resendOtpValidator, updateValidator} = require('../middleware/validators')
@@ -21,5 +21,8 @@ router.put('/changePin', Authentication, changeTransactionPinValidator, changePi
 router.post('/logout', Authentication, logout)
 router.get('/myWallet', Authentication, myWallet)
 router.post('/entered-pin/:userId', Authentication, confirmTransactionPin)
+router.post('/forgotPin', forgotPin)
+router.get('/transaction', Authentication, myTransactions)
+router.get('/get-linked-account', Authentication, getLinkedAccounts)
 
 module.exports = router

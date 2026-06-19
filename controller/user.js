@@ -6,9 +6,11 @@ const cloudinary = require("../middleware/cloudinary");
 const fs = require("fs");
 const bcrypt = require("bcrypt");
 const { sendEmail } = require("../utils/brevo");
-const {emailTemplate,resetPasswordTemplate,resetPasswordSuccessfulTemplate,transactionPinTemplate,} = require("../email");
+const {emailTemplate,resetPasswordTemplate,resetPasswordSuccessfulTemplate,transactionPinTemplate, resetPinTemplate} = require("../email");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
+const transactionModel = require("../model/transaction");
+const bankModel = require('../model/bank');
 
 exports.createUser = async (req, res) => {
   try {
@@ -549,6 +551,7 @@ exports.myWallet = async(req, res) => {
     });
   }
 }
+
 exports.confirmTransactionPin = async (req, res) => {
   try {
     const { enteredPin } = req.body;
@@ -577,6 +580,106 @@ exports.confirmTransactionPin = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+exports.forgotPin = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(404).json({
+        status: false,
+        message: "Email is required",
+      });
+    }
+    const user = await userModel.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      const user = await adminModel.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res.status(404).json({
+          status: false,
+          message: "User not found",
+        });
+      }
+
+      const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false,specialChars: false,});
+      user.otp = otp
+      admin.otpExpires = Date.now() + (1000 * 60 * 7)
+
+      await user.save();
+      const html = await resetPinTemplate(
+        `${admin.firstName} ${admin.lastName}`,
+        otp,
+      );
+      await sendEmail(user.email, "Reset Password", html);
+      return res.status(200).json({
+        message: "OTP sent to email"
+      });
+    }
+    const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, lowerCaseAlphabets: false,specialChars: false,});
+    user.otp = otp
+    user.otpExpires = Date.now() + (1000 * 60 * 7)
+
+    await user.save();
+    const html = await resetPinTemplate(
+      `${user.firstName} ${user.lastName}`,
+      otp,
+    );
+    await sendEmail(user.email, "Reset Pin", html);
+    res.status(200).json({
+      message: "OTP sent to email"
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error in forgot pin",
+      error: error.message,
+    });
+  }
+};
+
+exports.myTransactions = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const transactions = await transactionModel.find({ userId: userId })
+            .sort({ createdAt: -1 })
+
+        return res.status(200).json({
+            message: "Transactions retrieved successfully",
+            count: transactions.length,
+            data: transactions
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
+    }
+};
+exports.getLinkedAccounts = async (req, res) => {
+  try {
+    const linkedAccounts = await bankModel.find({ userId: req.user.id });
+
+    if (!linkedAccounts || linkedAccounts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No linked accounts found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Linked accounts retrieved successfully",
+      totalAccounts: linkedAccounts.length,
+      linkedAccounts,
+    });
+  } catch (error) {
+    res.status(500).json({
       success: false,
       message: error.message,
     });

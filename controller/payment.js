@@ -96,7 +96,7 @@ exports.verifyPayment = async(req, res) => {
                 Authorization: `Bearer ${process.env.KORA_API_KEY}`
             }
         });
-
+console.log("kora: ",data)
         const payment = await paymentModel.findOne({reference})
         if(!payment){
             return res.status(404).json({
@@ -152,7 +152,6 @@ exports.verifyPayment = async(req, res) => {
 
 exports.verifyWebhook = async (req, res, next) => {
     try {
-        console.log('WEBHOOK RECEIVE')
         const signature = req.headers["x-korapay-signature"];
 
         const { event, data } = req.body;
@@ -162,7 +161,7 @@ exports.verifyWebhook = async (req, res, next) => {
         if (hash !== signature) 
             return next(new appError("Invalid webhook signature", 401));
         
-        const payment = await paymentModel.findOne({ reference: `TCA-hedgeNest-${data.reference}`});
+        const payment = await paymentModel.findOne({ reference: data.reference });
         if (!payment) return res.status(404).json({ message: "Payment record not found" });
         
         const wallet = await walletModel.findOne({ userId: payment.userId });
@@ -171,8 +170,8 @@ exports.verifyWebhook = async (req, res, next) => {
 
 
         if (event === 'charge.success') {
-           if (payment.status !== 'successful') {
-                payment.status = 'successful';
+           if (payment.status !== 'success') {
+                payment.status = 'success';
                 
                 wallet.availableBalance = (wallet.availableBalance || 0) + payment.amount;
             }
@@ -181,7 +180,9 @@ exports.verifyWebhook = async (req, res, next) => {
             payment.status = 'processing';
         } else if (event === 'charge.failed') {
             payment.status = 'failed'
-        };
+        } else if (event === 'charge.abandoned'){
+            payment.status = 'abandoned'
+        }
         
         await wallet.save();
         await payment.save();

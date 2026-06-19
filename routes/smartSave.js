@@ -1,5 +1,5 @@
 const router = require ('express').Router()
-const {previewPlan, createPlan, breakPlan, topUpFlexible, getAllPlan, getOnePlan, getUserWithPlan} = require ('../controller/smartSave')
+const {previewPlan, createPlan, breakPlan, topUpFlexible, getAllPlan, getOnePlan, getUserWithPlan, getUserWithPlans} = require ('../controller/smartSave')
 const {Authentication} = require ('../middleware/auth')
 const{createPlanValidator} = require('../middleware/validators')
 
@@ -11,5 +11,5 @@ router.post('/top-up/:savingId', Authentication, topUpFlexible)
 router.get('/get-all-plan', Authentication, getAllPlan)
 router.get('/get-one-plan/:id',Authentication,  getOnePlan)
 router.get('/get-user-plan/:userId/:planId',Authentication, getUserWithPlan)
-
+router.get('/get-user-with-all-plan', Authentication, getUserWithPlans)
 module.exports = router
