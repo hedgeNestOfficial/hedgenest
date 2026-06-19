@@ -192,3 +192,125 @@ paths:
           description: Plan not found
         "500":
           description: something went wrong
+          
+  /api/v1/get-user-plan/{userId}/{planId}:
+    get:
+      summary: Get a specific user with one specific plan
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          example: 6a2d9b69914a573e752d7830
+        - in: path
+          name: planId
+          required: true
+          schema:
+            type: string
+          example: 6a348ca7f5446a884ac29067
+      responses:
+        "200":
+          description: User with plan gotten successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User with plan gotten successfully
+                  data:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: John
+                      lastName:
+                        type: string
+                        example: Doe
+                      email:
+                        type: string
+                        example: john@example.com
+                      phoneNumber:
+                        type: string
+                        example: "08012345678"
+                  plan:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: 6a348ca7f5446a884ac29067
+                      title:
+                        type: string
+                        example: entertainment
+                      targetAmount:
+                        type: number
+                        example: 80000
+                      amountPerFrequency:
+                        type: number
+                        example: 6500
+        "404":
+          description: User not found / Plan not found for this user
+        "500":
+          description: Something went wrong
+
+  /api/v1/get-user-with-all-plan:
+    get:
+      summary: Get the logged-in user along with all their savings plans
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User with all plans retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User with all plans retrieved successfully
+                  totalPlans:
+                    type: number
+                    example: 3
+                  user:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: 6a2d9b69914a573e752d7830
+                      firstName:
+                        type: string
+                        example: John
+                      lastName:
+                        type: string
+                        example: Doe
+                      email:
+                        type: string
+                        example: john@example.com
+                  plans:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          example: 6a348ca7f5446a884ac29067
+                        title:
+                          type: string
+                          example: entertainment
+                        amountPerFrequency:
+                          type: number
+                          example: 6500
+        "404":
+          description: User not found
+        "500":
+          description: Something went wrong

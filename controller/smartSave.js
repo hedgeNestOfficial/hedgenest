@@ -153,6 +153,7 @@ exports.createPlan = async (req, res) => {
         message: "Invalid transaction pin",
       });
     }
+
     const wallet = await walletModel.findOne({ userId: req.user.id });
 
     if (!wallet) {
@@ -170,7 +171,6 @@ exports.createPlan = async (req, res) => {
     }
 
     wallet.availableBalance -= Number(amountPerFrequency);
-    wallet.smartVaults += Number(amountPerFrequency)
     await wallet.save();
 
     let interestRate = 10;
@@ -184,47 +184,35 @@ exports.createPlan = async (req, res) => {
 
     if (normalizedPlanType === "LOCKED") {
       interestRate = getInterestRate(duration);
-
       breakingFeePercentage = 1.5;
-
       maturityDate = new Date();
-
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     if (normalizedPlanType === "STEALTH") {
       canBreak = false;
-
       interestRate = getInterestRate(duration);
-
       maturityDate = new Date();
-
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     const plan = await smartSaveModel.create({
       user: req.user.id,
-
       title,
       targetAmount,
       planType: normalizedPlanType,
-
       currentBalance: amountPerFrequency,
-
       amountPerFrequency,
-
       savingFrequency: normalizedSavingFrequency,
-
       duration,
-
       interestRate,
-
       canBreak,
-
       breakingFeePercentage,
-
       maturityDate,
     });
+
+    
+    const smartVaultsCount = await smartSaveModel.countDocuments({ user: req.user.id });
 
     await transactionModel.create({
       userId: req.user.id,
@@ -236,6 +224,7 @@ exports.createPlan = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Savings plan created successfully",
+      smartVaultsCount,
       data: plan,
     });
   } catch (error) {
@@ -523,11 +512,11 @@ exports.topUpFlexible = async (req, res) => {
 };
 exports.getAllPlan = async (req, res) => {
   try {
-    const plan = await smartSaveModel.find();
+    const plans = await smartSaveModel.find({ user: req.user.id });
 
     res.status(200).json({
       message: "Found all Plans",
-      plan,
+      plans,
     });
   } catch (error) {
     res.status(500).json({
@@ -553,6 +542,67 @@ exports.getOnePlan = async (req, res) => {
     res.status(500).json({
       message: "Something went wrong",
       error: error.message,
+    });
+  }
+};
+exports.getUserWithPlan = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { planId }= req.params;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found" 
+      });
+    }
+    const plan = await smartSaveModel.findOne({ _id: planId, user: userId });
+    if (!plan) {
+      return res.status(404).json({ 
+        message: "Plan not found for this user" 
+      });
+    }
+     const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber
+    }
+    res.status(200).json({
+      message: "User with plan gotten successfully",
+      data,
+      plan,
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: error.message 
+    });
+  }
+};
+exports.getUserWithPlans = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const plans = await smartSaveModel.find({ user: req.user.id });
+
+    res.status(200).json({
+      success: true,
+      message: "User with all plans retrieved successfully",
+      totalPlans: plans.length,
+      user,
+      plans,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
