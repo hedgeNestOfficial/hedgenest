@@ -110,14 +110,11 @@ const smartSaveSchema = new mongoose.Schema(
 
 // ---- Helper: fetch interest % for a given plan type + duration band ----
 async function getPercentageForDuration(planType, duration) {
-  console.log("Looking up rate for:", { planType, duration });
   const percentDoc = await percentageModel.findOne({
     plan: planType,
     "duration.min": { $lte: duration },
     "duration.max": { $gte: duration },
   });
-
-  console.log("Found doc:", percentDoc);
 
   if (!percentDoc) return 0;
 
