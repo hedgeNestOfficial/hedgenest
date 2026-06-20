@@ -456,3 +456,30 @@ exports.breakInvestmentValidator = (req, res, next) => {
 
     next();
 };
+exports.resetTransactionPinValidator = (req, res, next) => {
+    const schema = joi.object({
+        email: joi.string().email().required().messages({
+            'any.required': 'Email is required',
+            'string.empty': 'Email cannot be empty',
+            'string.email': 'Please provide a valid email address'
+        }),
+        otp: joi.string().pattern(/^\d{6}$/).required().messages({
+            'any.required': 'OTP is required',
+            'string.empty': 'OTP cannot be empty',
+            'string.pattern.base': 'OTP must be 6 digits'
+        }),
+        newPin: joi.string().pattern(/^\d{6}$/).required().messages({
+            'any.required': 'New pin is required',
+            'string.empty': 'New pin cannot be empty',
+            'string.pattern.base': 'New Pin must be exactly 6 digits and must include only digits'
+        }),
+    })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}

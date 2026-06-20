@@ -394,4 +394,32 @@ paths:
         "400":
           description: something went wrong
 
- 
+/api/v1/reset-transaction-pin:
+    post:
+      summary: this end point is for resetting transaction pin
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+                - newPin
+              properties:
+                email:
+                  type: string
+                  example: johndoe@gmail.com
+                otp:
+                  type: string
+                  example: "123456"
+                newPin:
+                  type: string
+                  example: "123456"
+      responses:
+        "201":
+          description: otp verified successfully
+        "400":
+          description: something went wrong 

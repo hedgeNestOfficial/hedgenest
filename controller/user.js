@@ -685,3 +685,61 @@ exports.getLinkedAccounts = async (req, res) => {
     });
   }
 };
+exports.resetTransactionPin = async (req, res) => {
+  try {
+    const { email, newPin, otp } = req.body;
+
+    if (!email || !newPin) {
+      return res.status(400).json({
+        message: "Email and New pin are required",
+      });
+    }
+
+    const user = await userModel.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    if ( Date.now() > user.otpExpires || user.otp !== otp ){
+      return res.status(400).json({
+        message:'Invalid OTP'
+      })
+    }
+
+    if (user.otp !== otp) {
+    return res.status(400).json({
+      message: "Invalid OTP"
+    });
+  }
+  
+  if (user.otpExpires < Date.now()) {
+    return res.status(400).json({
+      message: "OTP has expired"
+    });
+  }
+  user.otp = null;
+  user.otpExpires = null;
+  user.isVerified = true;
+  
+  const salt = await bcrypt.genSalt(10);
+  const hashPin = await bcrypt.hash(newPin, salt);
+  user.pin = hashPin;
+  await user.save();
+  const html = await resetPinTemplate(
+    `${user.firstName} ${user.lastName}`,
+    otp,
+    );
+    await sendEmail(user.email, "Transaction Pin Reset Successfully", html);
+
+    res.status(200).json({
+      message: "Transaction Pin reset successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error in reset Transaction Pin",
+      error: error.message,
+    });
+  }
+};
