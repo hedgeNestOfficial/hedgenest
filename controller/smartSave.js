@@ -73,13 +73,6 @@ exports.previewPlan = async (req, res) => {
 
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
-
-    const savingsCalculations = caculateSavings({
-      amount: targetAmount,
-      duration: duration || 365,
-      interestRate,
-    });
-
     return res.status(200).json({
       success: true,
 
@@ -96,8 +89,6 @@ exports.previewPlan = async (req, res) => {
         breakingFeePercentage,
 
         maturityDate,
-
-        ...savingsCalculations,
       },
     });
   } catch (error) {
@@ -160,33 +151,44 @@ exports.createPlan = async (req, res) => {
       });
     }
 
+    
     const debitAmount = Number(amountPerFrequency);
+    const currentBalance = Number(wallet.availableBalance);
 
-    if (wallet.availableBalance < debitAmount) {
+    if (Number.isNaN(currentBalance)) {
+      return res.status(500).json({
+        success: false,
+        message: "Wallet balance is corrupted, contact support",
+      });
+    }
+
+    if (currentBalance < debitAmount) {
       return res.status(400).json({
         success: false,
         message: "Insufficient wallet balance",
       });
     }
 
-    // Model's pre("save") hook (planCalculators) owns interestRate,
-    // canBreak, breakingFeePercentage, maturityDate, tax, and payback math.
-    // Controller only passes the raw inputs — no duplicate calculation here.
-
     const plan = await smartSaveModel.create({
       user: req.user.id,
       title,
       targetAmount,
       planType: normalizedPlanType,
-      currentBalance: amountPerFrequency,
-      amountPerFrequency,
+      currentBalance: debitAmount,
+      amountPerFrequency: debitAmount,
       savingFrequency: normalizedSavingFrequency,
       duration,
     });
 
    
-    wallet.availableBalance -= debitAmount;
-    wallet.smartVaults = plan.length
+    wallet.availableBalance = currentBalance - debitAmount;
+
+    
+    const smartVaultCount = await smartSaveModel.countDocuments({
+      user: req.user.id,
+    });
+    wallet.smartVaults = smartVaultCount;
+
     await wallet.save();
 
     await transactionModel.create({
@@ -287,13 +289,11 @@ exports.breakPlan = async (req, res) => {
     let statusUpdate = "CANCELLED";
 
     if (isMatured) {
-      // Any plan type that has matured — full withdrawal, mark as COMPLETED
       amountToCredit = plan.currentBalance;
       breakingFee = 0;
       statusUpdate = "COMPLETED";
     } else if (plan.planType === "LOCKED") {
-      // FIX 2: Locked plan broken before maturity — charge breaking fee
-      // Default to 1.5% if breakingFeePercentage is missing or zero in DB
+     
       const feePercentage =
         plan.breakingFeePercentage && plan.breakingFeePercentage > 0
           ? plan.breakingFeePercentage
