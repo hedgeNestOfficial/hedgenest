@@ -18,6 +18,11 @@ const investmentPlanSchema = new mongoose.Schema({
         type: Number,
         trim: true
     },
+    investmentType:{
+        type: String,
+        enum: ['Low', 'Medium' ],
+        trim: true
+    },
     
 }, {timestamps: true})
 

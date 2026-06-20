@@ -1,11 +1,11 @@
 const investmentPlanModel = require('../model/investmentPlan')
 
 exports.createInvestmentPlan = async (req, res) => {
-    const { investmentName, roi, term, minAmount } = req.body
+    const { investmentName, roi, term, minAmount, investmentType  } = req.body
     const existingPlan = await investmentPlanModel.findOne({
       investmentName
     })
-    
+
     if(existingPlan){
       return res.status(400).json({
         status: false,
@@ -17,7 +17,8 @@ exports.createInvestmentPlan = async (req, res) => {
         investmentName,
         roi,
         term,
-        minAmount
+        minAmount,
+        investmentType
     });
 
   res.status(201).json({

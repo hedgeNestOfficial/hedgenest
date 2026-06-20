@@ -22,6 +22,7 @@ paths:
                 - roi
                 - term
                 - minAmount
+                - investmentTYpe
               properties:
                 investmentName: 
                   type: string
@@ -35,6 +36,9 @@ paths:
                 minAmount:
                   type: number
                   example: 5000
+                investmentType: 
+                  type: string
+                  example: Low
       responses: 
         "200":
           description: Conversion successful
