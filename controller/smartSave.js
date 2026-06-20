@@ -172,8 +172,6 @@ exports.createPlan = async (req, res) => {
     // Model's pre("save") hook (planCalculators) owns interestRate,
     // canBreak, breakingFeePercentage, maturityDate, tax, and payback math.
     // Controller only passes the raw inputs — no duplicate calculation here.
-    wallet.availableBalance -= Number(amountPerFrequency);
-    await wallet.save();
 
     const plan = await smartSaveModel.create({
       user: req.user.id,
@@ -188,7 +186,7 @@ exports.createPlan = async (req, res) => {
 
    
     wallet.availableBalance -= debitAmount;
-    wallet.smartVaults = (wallet.smartVaults || 0) + debitAmount;
+    wallet.smartVaults = plan.length
     await wallet.save();
 
     await transactionModel.create({
