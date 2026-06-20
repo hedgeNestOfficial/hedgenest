@@ -34,7 +34,7 @@ exports.conversion = async (req, res) => {
         const { amount, from, to } = req.body
         if (!amount || amount == undefined || amount == null ) {
             return res.status(400).json({
-                message: "Enter a valid conversion amount, the minimum amount to convert is #1,500 0r 1.30USDT"
+                message: "Enter a valid conversion amount, the minimum amount to convert is #1,500 0r 1.40USDT"
             });
         }
     
