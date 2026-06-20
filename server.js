@@ -22,12 +22,15 @@ const adminRouter = require('./routes/admin')
 const investmentPlanRouter = require('./routes/investmentPlan')
 const investmentRouter = require('./routes/investment')
 const smartSaveRouter = require('./routes/smartSave')
+const percentageRouter = require('./routes/percentage')
+const { creditMiddleware } = require('./middleware/credit')
 // const morgan = require('morgan');
 
 
 app.use(express.json());
 app.use(cors())
 // app.use(morgan('dev'));
+app.use(creditMiddleware);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger))
 
@@ -40,6 +43,7 @@ app.use('/api/v1', adminRouter)
 app.use('/api/v1/investmentPlan', investmentPlanRouter)
 app.use('/api/v1', investmentRouter)
 app.use('/api/v1', smartSaveRouter)
+app.use('/api/v1', percentageRouter)
 
 app.use((err, req, res, next) => {
   if (err && (err.type === 'entity.parse.failed' || err instanceof SyntaxError)) {

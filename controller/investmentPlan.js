@@ -2,6 +2,17 @@ const investmentPlanModel = require('../model/investmentPlan')
 
 exports.createInvestmentPlan = async (req, res) => {
     const { investmentName, roi, term, minAmount } = req.body
+    const existingPlan = await investmentPlanModel.findOne({
+      investmentName
+    })
+    
+    if(existingPlan){
+      return res.status(400).json({
+        status: false,
+        message: "Investment plan already exist"
+      })
+    }
+
     const plan = await investmentPlanModel.create({
         investmentName,
         roi,
@@ -22,16 +33,6 @@ exports.getAllinvestmentPlan = async (req, res) => {
         message: 'All investment plans successfully retrieved',
         investmentPlan
       })
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    })
-  }
-}
-
-exports.breakInvestmentPlan = async (req, res) =>{
-  try {
-    
   } catch (error) {
     res.status(500).json({
       message: error.message
