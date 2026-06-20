@@ -73,13 +73,6 @@ exports.previewPlan = async (req, res) => {
 
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
-
-    const savingsCalculations = caculateSavings({
-      amount: targetAmount,
-      duration: duration || 365,
-      interestRate,
-    });
-
     return res.status(200).json({
       success: true,
 
@@ -96,8 +89,6 @@ exports.previewPlan = async (req, res) => {
         breakingFeePercentage,
 
         maturityDate,
-
-        ...savingsCalculations,
       },
     });
   } catch (error) {
@@ -160,33 +151,44 @@ exports.createPlan = async (req, res) => {
       });
     }
 
+    
     const debitAmount = Number(amountPerFrequency);
+    const currentBalance = Number(wallet.availableBalance);
 
-    if (wallet.availableBalance < debitAmount) {
+    if (Number.isNaN(currentBalance)) {
+      return res.status(500).json({
+        success: false,
+        message: "Wallet balance is corrupted, contact support",
+      });
+    }
+
+    if (currentBalance < debitAmount) {
       return res.status(400).json({
         success: false,
         message: "Insufficient wallet balance",
       });
     }
 
-    // Model's pre("save") hook (planCalculators) owns interestRate,
-    // canBreak, breakingFeePercentage, maturityDate, tax, and payback math.
-    // Controller only passes the raw inputs — no duplicate calculation here.
-
     const plan = await smartSaveModel.create({
       user: req.user.id,
       title,
       targetAmount,
       planType: normalizedPlanType,
-      currentBalance: amountPerFrequency,
-      amountPerFrequency,
+      currentBalance: debitAmount,
+      amountPerFrequency: debitAmount,
       savingFrequency: normalizedSavingFrequency,
       duration,
     });
 
-    // Only move money once the plan is successfully created
-    wallet.availableBalance -= debitAmount;
-    wallet.smartVaults = plan.length
+   
+    wallet.availableBalance = currentBalance - debitAmount;
+
+    
+    const smartVaultCount = await smartSaveModel.countDocuments({
+      user: req.user.id,
+    });
+    wallet.smartVaults = smartVaultCount;
+
     await wallet.save();
 
     await transactionModel.create({
@@ -211,142 +213,6 @@ exports.createPlan = async (req, res) => {
     });
   }
 };
-
-// exports.createPlan = async (req, res) => {
-//   try {
-//     const {
-//       title,
-//       targetAmount,
-//       planType,
-//       duration,
-//       savingFrequency,
-//       amountPerFrequency,
-//       transactionPin,
-//     } = req.body;
-
-//     if (!amountPerFrequency || Number(amountPerFrequency) <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Amount per frequency is required for savings",
-//       });
-//     }
-
-//     const normalizedPlanType = planType?.toUpperCase();
-//     const normalizedSavingFrequency = savingFrequency?.toUpperCase();
-
-//     const user = await userModel.findById(req.user.id);
-
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "User not found",
-//       });
-//     }
-
-//     const isCorrectPin = await bcrypt.compare(
-//       transactionPin,
-//       user.transactionPin,
-//     );
-
-//     if (!isCorrectPin) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid transaction pin",
-//       });
-//     }
-//     const wallet = await walletModel.findOne({ userId: req.user.id });
-
-//     if (!wallet) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Wallet not found",
-//       });
-//     }
-
-//     if (wallet.availableBalance < Number(amountPerFrequency)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Insufficient wallet balance",
-//       });
-//     }
-
-//     wallet.availableBalance -= Number(amountPerFrequency);
-//     wallet.smartVaults += Number(amountPerFrequency);
-//     await wallet.save();
-
-//     let interestRate = 10;
-//     let canBreak = true;
-//     let breakingFeePercentage = 0;
-//     let maturityDate = null;
-
-//     if (normalizedPlanType === "FLEXIBLE") {
-//       interestRate = 10;
-//     }
-
-//     if (normalizedPlanType === "LOCKED") {
-//       interestRate = getInterestRate(duration);
-
-//       breakingFeePercentage = 1.5;
-
-//       maturityDate = new Date();
-
-//       maturityDate.setDate(maturityDate.getDate() + Number(duration));
-//     }
-
-//     if (normalizedPlanType === "STEALTH") {
-//       canBreak = false;
-
-//       interestRate = getInterestRate(duration);
-
-//       maturityDate = new Date();
-
-//       maturityDate.setDate(maturityDate.getDate() + Number(duration));
-//     }
-
-//     const plan = await smartSaveModel.create({
-//       user: req.user.id,
-
-//       title,
-//       targetAmount,
-//       planType: normalizedPlanType,
-
-//       currentBalance: amountPerFrequency,
-
-//       amountPerFrequency,
-
-//       savingFrequency: normalizedSavingFrequency,
-
-//       duration,
-
-//       interestRate,
-
-//       canBreak,
-
-//       breakingFeePercentage,
-
-//       maturityDate,
-//     });
-
-//     await transactionModel.create({
-//       userId: req.user.id,
-//       transactionType: "savings",
-//       amount: Number(amountPerFrequency ?? targetAmount),
-//       currency: "NGN",
-//     });
-
-//     return res.status(201).json({
-//       success: true,
-//       message: "Savings plan created successfully",
-//       data: plan,
-//     });
-//   } catch (error) {
-//     return res.status(500).json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// };
-
 exports.breakPlan = async (req, res) => {
   try {
     const { planId } = req.params;
@@ -423,13 +289,11 @@ exports.breakPlan = async (req, res) => {
     let statusUpdate = "CANCELLED";
 
     if (isMatured) {
-      // Any plan type that has matured — full withdrawal, mark as COMPLETED
       amountToCredit = plan.currentBalance;
       breakingFee = 0;
       statusUpdate = "COMPLETED";
     } else if (plan.planType === "LOCKED") {
-      // FIX 2: Locked plan broken before maturity — charge breaking fee
-      // Default to 1.5% if breakingFeePercentage is missing or zero in DB
+     
       const feePercentage =
         plan.breakingFeePercentage && plan.breakingFeePercentage > 0
           ? plan.breakingFeePercentage
