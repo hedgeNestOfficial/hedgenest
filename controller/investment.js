@@ -1,8 +1,9 @@
-const investmentModel = require('../model/investment');
+
 const investmentPlanModel = require('../model/investmentPlan');
 const walletModel = require('../model/wallet');
 const userModel = require('../model/user')
 const transactionModel = require('../model/transaction');
+const investmentModel = require('../model/investment');
 const { date } = require('joi');
 
 exports.createInvestment = async (req, res) => {
@@ -63,7 +64,11 @@ exports.createInvestment = async (req, res) => {
         });
 
         wallet.availableBalance -= Number(amount);
-        wallet.investments = investment.length
+        const investmentCount = await investmentModel.countDocuments({
+              userId: req.user.id,
+            });
+            
+        wallet.investments = investmentCount
 
         await wallet.save()
 

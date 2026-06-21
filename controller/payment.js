@@ -6,6 +6,9 @@ const conversionModel = require('../model/conversion')
 const axios = require('axios')
 const otpGenerator = require('otp-generator')
 const crypto = require('crypto')
+const payoutModel = require('../model/payout')
+const bankModel = require('../model/bank')
+
 
 exports.initiatePayment = async(req, res) =>{
     try {
@@ -201,44 +204,108 @@ exports.verifyWebhook = async (req, res, next) => {
 
 }
 
-// exports.payoutFunds = async (req, res) => {
-//     try {
-//         const { merchantId, amount, bankCode, accountNumber } = req.body;
+exports.payoutFunds = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { amount, bankId } = req.body;
 
-//         const wallet = await WalletModel.findOne({ userId: merchantId });
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
 
-//         if (!wallet) {
-//             return res.status(404).json({ error: "Wallet not found." });
-//         }
-//         if (wallet.availableBalance < Number(amount)) {
-//             return res.status(400).json({ error: "Insufficient funds for this disbursement." });
-//         }
+        const bank = await bankModel.findOne({ _id: bankId, userId });
 
-//         const transferSuccessful = true; 
-//         if (!transferSuccessful) {
-//             return res.status(502).json({ error: "Bank transfer failed. Try again later." });
-//         }
+        if (!bank) {
+            return res.status(404).json({
+                message: "No linked bank account found"
+            });
+        }
 
-//         wallet.availableBalance -= Number(amount);
-//         await wallet.save();
+        const wallet = await walletModel.findOne({ userId });
 
-//         const newTransaction = await TransactionModel.create({
-//             userId: merchantId,
-//             type: 'debit',
-//             purpose: 'disbursement',
-//             amount: Number(amount),
-//             destinationAccount: accountNumber,
-//             status: 'successful'
-//         });
+        if (!wallet) {
+            return res.status(404).json({
+                message: "Wallet not found"
+            });
+        }
+        const bankCode = "044"
 
-//         return res.status(200).json({
-//             message: "Disbursement successful",
-//             data: newTransaction
-//         });
+        const amt = Number(amount);
 
-//     } catch (error) {
-//         console.error("Disbursement Error:", error);
-//         return res.status(500).json({ error: "Internal server error" });
-//     }
-// };
+        if (wallet.availableBalance < amt) {
+            return res.status(400).json({
+                message: "Insufficient funds."
+            });
+        }
+
+        const ref = otpGenerator.generate(12, {
+            specialChars: false,
+            upperCaseAlphabets: false,
+            lowerCaseAlphabets: false
+        });
+
+        const reference = `PAYOUT-hedgeNest-${ref}`;
+
+        const { data } = await axios.post(
+            "https://api.korapay.com/merchant/api/v1/transactions/disburse",
+            {
+                reference,
+                destination: {
+                    type: "bank_account",
+                    amount: amt,
+                    currency: "NGN",
+                    narration: "Investment withdrawal",
+
+                    customer: {
+                        name: bank.accountName,
+                        email: user.email
+                    },
+                    bank_account: {
+                        bank: "033",
+                        account: bank.accountNumber
+                    }
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.KORA_API_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        const payout = new payoutModel({
+            amount: amt,
+            reference,
+            userId,
+            bankId
+        })
+
+        wallet.availableBalance -= amt;
+        await wallet.save();
+
+        const transaction = await transactionModel.create({
+            userId,
+            transactionType: 'withdraw',
+            amount: amt,
+        });
+
+        await payout.save()
+        return res.status(200).json({
+            message: "Payout initiated successfully",
+            data: payout
+        });
+
+    } catch (error) {
+        console.error("Disbursement Error:", error.response?.data || error.message);
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
+
 
