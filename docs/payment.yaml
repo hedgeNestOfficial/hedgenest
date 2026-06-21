@@ -25,7 +25,7 @@ paths:
                   example: 1500
       responses: 
         "200":
-          description: KYC uploaded successfully
+          description: Wallet has been funded successfully
         "400":
           description: something went wrong
 
@@ -45,6 +45,34 @@ paths:
       responses:
         "200":
           description: Payment verified successfully
+        "400":
+          description: something went wrong
+           
+  /api/v1/withdraw:
+    post:
+      summary: this end point is for initiating payment
+      tags: [payment]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - bankId
+              properties:
+                amount: 
+                  type: number
+                  example: 1500
+                bankId: 
+                  type: string
+                  example: 16843f0c4b7a8d5e2f9c12345
+      responses: 
+        "200":
+          description: Withdrawal has been made
         "400":
           description: something went wrong
 

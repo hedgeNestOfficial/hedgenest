@@ -25,6 +25,10 @@ const bankSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    bankCode: {
+      type: Number,
+      default: 0
+    }
   }, { timestamps: true }
 )
 

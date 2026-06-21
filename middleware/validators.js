@@ -483,3 +483,28 @@ exports.resetTransactionPinValidator = (req, res, next) => {
     }
     next();
 }
+
+exports.payoutValidator = (req, res, next) => {
+    const schema = joi.object({
+        amount: joi.number().integer().min(100).required().messages({
+            "number.base": "Amount must be a number",
+            "number.integer": "Amount must be a whole Naira value",
+            "number.min": "Minimum withdrawal amount is ₦100",
+            "any.required": "Amount is required"
+        }),
+        bankId: joi.string().hex().length(24).required().messages({
+            "string.base": "Bank ID must be a string",
+            "string.hex": "Invalid Bank ID",
+            "string.length": "Invalid Bank ID",
+            "any.required": "Bank ID is required"
+        }),
+    })
+    const { error } = schema.validate(req.body);
+
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
+    }
+    next();
+}
