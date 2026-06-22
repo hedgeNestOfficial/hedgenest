@@ -580,3 +580,82 @@ exports.getUserWithPlans = async (req, res) => {
     });
   }
 };
+exports.getPreviewPlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { planId } = req.params;
+
+    // Validate planId
+    if (!planId) {
+      return res.status(400).json({
+        success: false,
+        message: "Plan ID is required",
+      });
+    }
+
+    // Fetch the plan from DB
+    const plan = await smartSaveModel.findOne({
+      _id: planId,
+      user: userId, // ensures user can only access their own plans
+    });
+
+    if (!plan) {
+      return res.status(404).json({
+        success: false,
+        message: "Plan not found or does not belong to this user",
+      });
+    }
+
+    const normalizedPlanType = plan.planType?.toUpperCase();
+
+    // Recompute preview fields based on stored plan data
+    let interestRate = 10;
+    let canBreak = true;
+    let breakingFeePercentage = 0;
+    let maturityDate = null;
+
+    if (normalizedPlanType === "FLEXIBLE") {
+      interestRate = 10;
+    }
+
+    if (normalizedPlanType === "LOCKED") {
+      interestRate = getInterestRate(plan.duration);
+      breakingFeePercentage = 1.5;
+      maturityDate = new Date(plan.createdAt);
+      maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
+    }
+
+    if (normalizedPlanType === "STEALTH") {
+      canBreak = false;
+      interestRate = getInterestRate(plan.duration);
+      maturityDate = new Date(plan.createdAt);
+      maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: plan._id,
+        title: plan.title,
+        targetAmount: plan.targetAmount,
+        planType: normalizedPlanType,
+        duration: plan.duration,
+        savingFrequency: plan.savingFrequency,
+        amountPerFrequency: plan.amountPerFrequency,
+
+        interestRate,
+        canBreak,
+        breakingFeePercentage,
+        maturityDate,
+
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

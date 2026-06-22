@@ -5,7 +5,7 @@ info:
   description: HedgeNest for user authentication and management
 paths: 
   /api/v1/preview-plan:
-    get:
+    post:
       summary: this end point is for previewing a savings plan before creating it
       tags: [smartSave]
       security:
@@ -314,3 +314,77 @@ paths:
           description: User not found
         "500":
           description: Something went wrong
+  /api/v1/get-preview-plan/{planId}:
+    get:
+      summary: This endpoint is to get the preview of a savings plan by a user
+      tags: [smartSave]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: planId
+          required: true
+          schema:
+            type: string
+          description: The ID of the savings plan to preview
+      responses:
+        "200":
+          description: Preview plan gotten successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 6a348ca7f5446a884ac29067
+                      title:
+                        type: string
+                        example: entertainment
+                      targetAmount:
+                        type: number
+                        example: 80000
+                      planType:
+                        type: string
+                        example: LOCKED
+                      duration:
+                        type: number
+                        example: 30
+                      savingFrequency:
+                        type: string
+                        example: DAILY
+                      amountPerFrequency:
+                        type: number
+                        example: 6500
+                      interestRate:
+                        type: number
+                        example: 10
+                      canBreak:
+                        type: boolean
+                        example: true
+                      breakingFeePercentage:
+                        type: number
+                        example: 1.5
+                      maturityDate:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2025-01-15T10:30:00.000Z"
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2025-01-15T10:30:00.000Z"
+        "400":
+          description: Something went wrong
+        "404":
+          description: Plan not found or does not belong to this user
