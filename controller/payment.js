@@ -231,7 +231,7 @@ exports.payoutFunds = async (req, res) => {
                 message: "Wallet not found"
             });
         }
-        const bankCode = "044"
+        const bankCode = "033"
 
         const amt = Number(amount);
 
