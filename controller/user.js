@@ -125,8 +125,12 @@ exports.verifyEmail = async (req, res) => {
     );
     
     await user.save()
+    const data = {
+      isVerified: user.isVerified
+    };
     res.status(200).json({
         message:'OTP Verified successfully',
+        data,
         token,
       })
 
@@ -372,6 +376,8 @@ exports.createTransactionPin = async (req, res) => {
       });
     }
 
+    user.createdAlready = true
+
     const salt = await bcrypt.genSalt(10);
     const hashPin = await bcrypt.hash(transactionPin, salt);
     user.transactionPin = hashPin;
@@ -383,7 +389,8 @@ exports.createTransactionPin = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      phoneNumber: user.phoneNumber
+      phoneNumber: user.phoneNumber,
+      createdAlready: user.createdAlready
     }
     res.status(200).json({
       status: true,
