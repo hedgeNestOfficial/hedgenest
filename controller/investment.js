@@ -222,12 +222,7 @@ exports.claimInvestment = async (req, res) => {
                 messagge: "This investment has not been terminated."
             });
         }
-        // const currentTime = new Date();
-        // if (currentTime < investment.maturityDate) {
-        //     return res.status(400).json({
-        //         message: "Investment has not reached maturity yet."
-        //     });
-        // }
+        
         const newMaturityDate = new Date(investment.maturityDate);
         const withdrawalAllowedAt = new Date(newMaturityDate + 26 * 60 * 60 * 1000);
         

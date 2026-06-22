@@ -235,7 +235,11 @@ exports.payoutFunds = async (req, res) => {
 
         const amt = Number(amount);
 
-        if (wallet.availableBalance < amt) {
+        const withdrawalFee = 50;
+        const totalDebit = amt + withdrawalFee
+
+
+        if (wallet.availableBalance < totalDebit) {
             return res.status(400).json({
                 message: "Insufficient funds."
             });
@@ -281,10 +285,11 @@ exports.payoutFunds = async (req, res) => {
             amount: amt,
             reference,
             userId,
-            bankId
+            bankId,
+            fee: withdrawalFee
         })
 
-        wallet.availableBalance -= amt;
+        wallet.availableBalance -= totalDebit;
         await wallet.save();
 
         const transaction = await transactionModel.create({
