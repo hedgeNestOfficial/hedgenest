@@ -270,12 +270,10 @@ exports.breakPlan = async (req, res) => {
 
     const now = new Date();
 
-    // FIX 1: isMatured now returns false instead of null when maturityDate is not set
     const isMatured = plan.maturityDate
       ? now >= new Date(plan.maturityDate)
       : false;
 
-    // STEALTH: No withdrawal before maturity date
     if (plan.planType === "STEALTH" && !isMatured) {
       return res.status(400).json({
         success: false,
@@ -293,7 +291,6 @@ exports.breakPlan = async (req, res) => {
       breakingFee = 0;
       statusUpdate = "COMPLETED";
     } else if (plan.planType === "LOCKED") {
-     
       const feePercentage =
         plan.breakingFeePercentage && plan.breakingFeePercentage > 0
           ? plan.breakingFeePercentage
@@ -303,19 +300,16 @@ exports.breakPlan = async (req, res) => {
       amountToCredit = plan.currentBalance - breakingFee;
       statusUpdate = "CANCELLED";
     } else if (plan.planType === "FLEXIBLE") {
-      // FLEXIBLE plans — always full withdrawal, no fee
       amountToCredit = plan.currentBalance;
       breakingFee = 0;
       statusUpdate = "CANCELLED";
     }
 
-    // Update plan
     const originalBalance = plan.currentBalance;
     plan.status = statusUpdate;
     plan.currentBalance = 0;
     await plan.save();
 
-    // Record breaking fee to revenue if applicable
     if (breakingFee > 0) {
       await revenueModel.findOneAndUpdate(
         { revenueType: "breaking_fee" },
@@ -327,7 +321,6 @@ exports.breakPlan = async (req, res) => {
         { upsert: true, new: true },
       );
 
-      // Also create a transaction record for this breaking fee
       await revenueModel.create({
         revenueType: "breaking_fee",
         amount: breakingFee,
@@ -335,7 +328,6 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    // Credit user's wallet
     let wallet = await walletModel.findOne({ userId: req.user.id });
     if (!wallet) {
       wallet = await walletModel.create({
@@ -348,19 +340,17 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
+    // ✅ Only credit availableBalance, not balanceInNaira
     wallet.availableBalance += amountToCredit;
-    wallet.balanceInNaira += amountToCredit;
-    wallet.smartVaults -= originalBalance;
+    wallet.smartVaults = Math.max(0, (Number(wallet.smartVaults) || 0) - 1);
     await wallet.save();
 
-    // Create transaction record
     await transactionModel.create({
       userId: req.user.id,
       transactionType: "return",
       amount: amountToCredit,
     });
 
-    // FIX 3: Return originalBalance instead of plan.currentBalance (which is now 0)
     return res.status(200).json({
       success: true,
       message: isMatured

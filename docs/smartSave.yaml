@@ -314,6 +314,7 @@ paths:
           description: User not found
         "500":
           description: Something went wrong
+          
   /api/v1/get-preview-plan/{planId}:
     get:
       summary: This endpoint is to get the preview of a savings plan by a user
