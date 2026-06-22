@@ -95,7 +95,7 @@ exports.myInvestments = async (req, res) => {
         const userId = req.user.id;
         const investments = await investmentModel.find({ userId: userId })
             .sort({ createdAt: -1 })
-            .populate('investmentPlanId', 'investmentName roi term');
+            .populate('investmentPlanId', 'investmentName roi term investmentType');
 
         return res.status(200).json({
             message: "Investments retrieved successfully",
@@ -217,12 +217,17 @@ exports.claimInvestment = async (req, res) => {
                 messagge: "This investment is incomplete."
             });
         }
-        const currentTime = new Date();
-        if (currentTime < investment.maturityDate) {
+        if (investment.status !== 'terminated') {
             return res.status(400).json({
-                message: "Investment has not reached maturity yet."
+                messagge: "This investment has not been terminated."
             });
         }
+        // const currentTime = new Date();
+        // if (currentTime < investment.maturityDate) {
+        //     return res.status(400).json({
+        //         message: "Investment has not reached maturity yet."
+        //     });
+        // }
         const newMaturityDate = new Date(investment.maturityDate);
         const withdrawalAllowedAt = new Date(newMaturityDate + 26 * 60 * 60 * 1000);
         
