@@ -24,7 +24,7 @@ return `
         </div>
         <div class="downer-div">
             <p>If you would like to know more about our services, please also refer to Helpcenter</p>
-            <p>Splita Team</p>
+            <p>Hedgenest Team</p>
         </div>
     </div>
 </body>

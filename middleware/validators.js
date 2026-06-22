@@ -175,10 +175,10 @@ exports.bankDetailsValidator = (req, res, next) => {
             'string.empty': 'Bank name is required',
             'any.required': 'Bank name is required'
        }),
-       bankName: joi.string().pattern(/^[A-Za-z]+$/).required().messages({
-        'string.empty': 'Bank name is required',
-        'any.required': 'Bank name is required',
-        'string.pattern.base': 'Bank name must contain only letters'
+       accountName: joi.string().pattern(/^[A-Za-z]+$/).required().messages({
+        'string.empty': 'Account name is required',
+        'any.required': 'Account name is required',
+        'string.pattern.base': 'Account name must contain only letters'
     }),
   });
     const { error } = schema.validate(req.body);
