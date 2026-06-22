@@ -52,3 +52,4 @@ exports.creditWallet = async () => {
     throw new Error("Smart savings: Error crediting wallet", error);
   }
 };
+

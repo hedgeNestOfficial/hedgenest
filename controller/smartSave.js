@@ -3,7 +3,9 @@ const smartSaveModel = require("../model/smartSave");
 const transactionModel = require("../model/transaction");
 const walletModel = require("../model/wallet");
 const revenueModel = require("../model/revenue");
+const percentageModel = require("../model/savingsPercent");
 const bcrypt = require("bcrypt");
+
 
 exports.previewPlan = async (req, res) => {
   try {
@@ -575,7 +577,6 @@ exports.getPreviewPlan = async (req, res) => {
     const userId = req.user.id;
     const { planId } = req.params;
 
-    // Validate planId
     if (!planId) {
       return res.status(400).json({
         success: false,
@@ -583,10 +584,9 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
-    // Fetch the plan from DB
     const plan = await smartSaveModel.findOne({
       _id: planId,
-      user: userId, // ensures user can only access their own plans
+      user: userId,
     });
 
     if (!plan) {
@@ -596,48 +596,22 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
-    const normalizedPlanType = plan.planType?.toUpperCase();
-
-    // Recompute preview fields based on stored plan data
-    let interestRate = 10;
-    let canBreak = true;
-    let breakingFeePercentage = 0;
-    let maturityDate = null;
-
-    if (normalizedPlanType === "FLEXIBLE") {
-      interestRate = 10;
-    }
-
-    if (normalizedPlanType === "LOCKED") {
-      interestRate = getInterestRate(plan.duration);
-      breakingFeePercentage = 1.5;
-      maturityDate = new Date(plan.createdAt);
-      maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
-    }
-
-    if (normalizedPlanType === "STEALTH") {
-      canBreak = false;
-      interestRate = getInterestRate(plan.duration);
-      maturityDate = new Date(plan.createdAt);
-      maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
-    }
-
     return res.status(200).json({
       success: true,
       data: {
         id: plan._id,
         title: plan.title,
         targetAmount: plan.targetAmount,
-        planType: normalizedPlanType,
+        planType: plan.planType,
         duration: plan.duration,
         savingFrequency: plan.savingFrequency,
         amountPerFrequency: plan.amountPerFrequency,
-
-        interestRate,
-        canBreak,
-        breakingFeePercentage,
-        maturityDate,
-
+        interestRate: plan.interestRate,         
+        canBreak: plan.canBreak,               
+        breakingFeePercentage: plan.breakingFeePercentage, 
+        maturityDate: plan.maturityDate,         
+        status: plan.status,
+        currentBalance: plan.currentBalance,
         createdAt: plan.createdAt,
         updatedAt: plan.updatedAt,
       },
