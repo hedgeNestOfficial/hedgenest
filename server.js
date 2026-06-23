@@ -24,6 +24,7 @@ const investmentRouter = require('./routes/investment')
 const smartSaveRouter = require('./routes/smartSave')
 const percentageRouter = require('./routes/percentage')
 const { creditMiddleware } = require('./middleware/credit')
+const { runFlexibleAutoSave } = require('./utils/autoSaveFlexible')
 // const morgan = require('morgan');
 
 
@@ -59,3 +60,15 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () =>{
     console.log(`Server is running on PORT: ${PORT}`)
 });
+
+const AUTO_SAVE_INTERVAL_MS = 60 * 60 * 1000;
+
+runFlexibleAutoSave().catch((error) => {
+  console.log("Auto-save startup error:", error.message);
+});
+
+setInterval(() => {
+  runFlexibleAutoSave().catch((error) => {
+    console.log("Auto-save interval error:", error.message);
+  });
+}, AUTO_SAVE_INTERVAL_MS);
