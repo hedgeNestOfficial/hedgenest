@@ -3,34 +3,39 @@ const smartSaveModel = require("../model/smartSave");
 const transactionModel = require("../model/transaction");
 const walletModel = require("../model/wallet");
 const revenueModel = require("../model/revenue");
-const percentageModel = require("../model/savingsPercent");
 const bcrypt = require("bcrypt");
 
+const getInterestRate = (duration) => {
+  const days = Number(duration);
+
+  if (days >= 7 && days <= 30) return 10;
+  if (days >= 31 && days <= 90) return 12;
+  if (days >= 91 && days <= 180) return 14;
+  if (days >= 181 && days <= 365) return 16;
+  if (days > 365) return 18;
+
+  return 10; // default fallback
+};
 
 exports.previewPlan = async (req, res) => {
   try {
     const {
       title,
-      targetAmount,
+      amount,
       planType,
       duration,
       savingFrequency,
       amountPerFrequency,
     } = req.body;
+
     const normalizedPlanType = planType?.toUpperCase();
 
     if (!title) {
-      return res.status(400).json({
-        success: false,
-        message: "Title is required",
-      });
+      return res.status(400).json({ success: false, message: "Title is required" });
     }
 
-    if (!targetAmount) {
-      return res.status(400).json({
-        success: false,
-        message: "Target amount is required",
-      });
+    if (!normalizedPlanType || !["FLEXIBLE", "LOCKED", "STEALTH"].includes(normalizedPlanType)) {
+      return res.status(400).json({ success: false, message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)" });
     }
 
     let interestRate = 10;
@@ -40,64 +45,59 @@ exports.previewPlan = async (req, res) => {
 
     if (normalizedPlanType === "FLEXIBLE") {
       interestRate = 10;
+      // canBreak stays true, breakingFeePercentage stays 0, maturityDate stays null
     }
 
     if (normalizedPlanType === "LOCKED") {
       if (!duration) {
-        return res.status(400).json({
-          success: false,
-          message: "Duration is required",
-        });
+        return res.status(400).json({ success: false, message: "Duration is required" });
       }
 
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({
-          success: false,
-          message: "Duration must be between 7 and 1000 days",
-        });
+        return res.status(400).json({ success: false, message: "Duration must be between 7 and 1000 days" });
       }
 
       interestRate = getInterestRate(duration);
-
       breakingFeePercentage = 1.5;
-
       maturityDate = new Date();
-
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
     if (normalizedPlanType === "STEALTH") {
+      // ✅ Added same duration validation as LOCKED
+      if (!duration) {
+        return res.status(400).json({ success: false, message: "Duration is required" });
+      }
+
+      if (duration < 7 || duration > 1000) {
+        return res.status(400).json({ success: false, message: "Duration must be between 7 and 1000 days" });
+      }
+
       canBreak = false;
-
       interestRate = getInterestRate(duration);
-
       maturityDate = new Date();
-
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
+
     return res.status(200).json({
       success: true,
-
       data: {
         title,
-        targetAmount,
+        amount,
         planType: normalizedPlanType,
         duration,
         savingFrequency,
         amountPerFrequency,
-
         interestRate,
         canBreak,
         breakingFeePercentage,
-
         maturityDate,
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message });
   }
 };
 
@@ -105,7 +105,7 @@ exports.createPlan = async (req, res) => {
   try {
     const {
       title,
-      targetAmount,
+      amount,
       planType,
       duration,
       savingFrequency,
@@ -113,15 +113,7 @@ exports.createPlan = async (req, res) => {
       transactionPin,
     } = req.body;
 
-    if (!amountPerFrequency || Number(amountPerFrequency) <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Amount per frequency is required for savings",
-      });
-    }
-
     const normalizedPlanType = planType?.toUpperCase();
-    const normalizedSavingFrequency = savingFrequency?.toUpperCase();
 
     const user = await userModel.findById(req.user.id);
 
@@ -132,10 +124,7 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const isCorrectPin = await bcrypt.compare(
-      transactionPin,
-      user.transactionPin,
-    );
+    const isCorrectPin = await bcrypt.compare(transactionPin, user.transactionPin);
 
     if (!isCorrectPin) {
       return res.status(400).json({
@@ -153,9 +142,19 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    
-    const debitAmount = Number(amountPerFrequency);
+    const requestedAmount = Number(amount);
+    const debitAmount =
+      normalizedPlanType === "FLEXIBLE"
+        ? Number(amountPerFrequency || amount)
+        : requestedAmount;
     const currentBalance = Number(wallet.availableBalance);
+
+    if (Number.isNaN(debitAmount) || debitAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid amount",
+      });
+    }
 
     if (Number.isNaN(currentBalance)) {
       return res.status(500).json({
@@ -168,30 +167,30 @@ exports.createPlan = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Insufficient wallet balance",
+        walletBalance: currentBalance,
+        requiredAmount: debitAmount,
       });
     }
 
-    const plan = await smartSaveModel.create({
-      user: req.user.id,
+    const plan = new smartSaveModel({
+      userId: req.user.id,
       title,
-      targetAmount,
-      planType: normalizedPlanType,
+      amount,
+      targetAmount: requestedAmount,
       currentBalance: debitAmount,
-      amountPerFrequency: debitAmount,
-      savingFrequency: normalizedSavingFrequency,
+      planType: normalizedPlanType,
+      amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? amountPerFrequency : null,
+      savingFrequency: normalizedPlanType === "FLEXIBLE" ? savingFrequency : null,
       duration,
     });
 
-   
-    wallet.availableBalance = currentBalance - debitAmount;
+    wallet.availableBalance -= debitAmount;
 
-    
-    const smartVaultCount = await smartSaveModel.countDocuments({
-      user: req.user.id,
-    });
-    wallet.smartVaults = smartVaultCount;
+    const smartVaultCount = await smartSaveModel.countDocuments({ userId: req.user.id });
+    wallet.smartVaults = smartVaultCount + 1;
 
     await wallet.save();
+    await plan.save(); // pre-save hook runs here with correct targetAmount
 
     await transactionModel.create({
       userId: req.user.id,
@@ -204,7 +203,7 @@ exports.createPlan = async (req, res) => {
       success: true,
       message: "Savings plan created successfully",
       walletBalance: wallet.availableBalance,
-      smartVaultBalance: wallet.smartVaults,
+      smartVaultCount: wallet.smartVaults,
       data: plan,
     });
   } catch (error) {
@@ -233,10 +232,7 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    const isCorrectPin = await bcrypt.compare(
-      transactionPin,
-      user.transactionPin,
-    );
+    const isCorrectPin = await bcrypt.compare(transactionPin, user.transactionPin);
     if (!isCorrectPin) {
       return res.status(400).json({
         message: "Invalid transaction pin",
@@ -250,7 +246,7 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    if (plan.user.toString() !== req.user.id) {
+    if (plan.userId.toString() !== req.user.id) {
       return res.status(403).json({
         message: "Unauthorized: This plan does not belong to you",
       });
@@ -263,18 +259,16 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    if (plan.currentBalance <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Plan has no balance to withdraw",
-      });
-    }
+    const savedBalance = Number(plan.currentBalance);
+    const planBalance =
+      savedBalance > 0
+        ? savedBalance
+        : ["LOCKED", "STEALTH"].includes(plan.planType)
+          ? Number(plan.amount) || 0
+          : 0;
 
     const now = new Date();
-
-    const isMatured = plan.maturityDate
-      ? now >= new Date(plan.maturityDate)
-      : false;
+    const isMatured = plan.maturityDate ? now >= new Date(plan.maturityDate) : false;
 
     if (plan.planType === "STEALTH" && !isMatured) {
       return res.status(400).json({
@@ -284,12 +278,12 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    let amountToCredit = plan.currentBalance;
+    let amountToCredit = planBalance;
     let breakingFee = 0;
     let statusUpdate = "CANCELLED";
 
     if (isMatured) {
-      amountToCredit = plan.currentBalance;
+      amountToCredit = Number(plan.totalPayback) || planBalance;
       breakingFee = 0;
       statusUpdate = "COMPLETED";
     } else if (plan.planType === "LOCKED") {
@@ -297,29 +291,22 @@ exports.breakPlan = async (req, res) => {
         plan.breakingFeePercentage && plan.breakingFeePercentage > 0
           ? plan.breakingFeePercentage
           : 1.5;
-
-      breakingFee = (feePercentage / 100) * plan.currentBalance;
-      amountToCredit = plan.currentBalance - breakingFee;
+      breakingFee = (feePercentage / 100) * planBalance;
+      amountToCredit = planBalance - breakingFee;
       statusUpdate = "CANCELLED";
     } else if (plan.planType === "FLEXIBLE") {
-      amountToCredit = plan.currentBalance;
+      amountToCredit = planBalance;
       breakingFee = 0;
       statusUpdate = "CANCELLED";
     }
 
-    const originalBalance = plan.currentBalance;
-    plan.status = statusUpdate;
-    plan.currentBalance = 0;
-    await plan.save();
+    const originalBalance = planBalance;
 
+    // ✅ Revenue first
     if (breakingFee > 0) {
       await revenueModel.findOneAndUpdate(
         { revenueType: "breaking_fee" },
-        {
-          $inc: {
-            totalBreakingFeeRevenue: breakingFee,
-          },
-        },
+        { $inc: { totalBreakingFeeRevenue: breakingFee } },
         { upsert: true, new: true },
       );
 
@@ -330,6 +317,7 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
+    // ✅ Wallet second
     let wallet = await walletModel.findOne({ userId: req.user.id });
     if (!wallet) {
       wallet = await walletModel.create({
@@ -342,16 +330,21 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    // ✅ Only credit availableBalance, not balanceInNaira
-    wallet.availableBalance += amountToCredit;
+    wallet.availableBalance = (Number(wallet.availableBalance) || 0) + amountToCredit;
     wallet.smartVaults = Math.max(0, (Number(wallet.smartVaults) || 0) - 1);
     await wallet.save();
 
+    // ✅ Transaction third
     await transactionModel.create({
       userId: req.user.id,
       transactionType: "return",
       amount: amountToCredit,
     });
+
+    // ✅ Save plan status LAST so retries don't hit the CANCELLED guard
+    plan.status = statusUpdate;
+    plan.currentBalance = 0;
+    await plan.save();
 
     return res.status(200).json({
       success: true,
@@ -429,7 +422,7 @@ exports.topUpFlexible = async (req, res) => {
       });
     }
 
-    if (savingsPlan.user.toString() !== userId) {
+    if (savingsPlan.userId.toString() !== userId) {
       return res.status(403).json({
         message: "Unauthorized: This plan does not belong to you",
       });
@@ -478,7 +471,7 @@ exports.topUpFlexible = async (req, res) => {
 };
 exports.getAllPlan = async (req, res) => {
   try {
-    const plans = await smartSaveModel.find({ user: req.user.id });
+    const plans = await smartSaveModel.find({ userId: req.user.id });
 
     res.status(200).json({
       message: "Found all Plans",
@@ -522,7 +515,7 @@ exports.getUserWithPlan = async (req, res) => {
         message: "User not found",
       });
     }
-    const plan = await smartSaveModel.findOne({ _id: planId, user: userId });
+    const plan = await smartSaveModel.findOne({ _id: planId, userId });
     if (!plan) {
       return res.status(404).json({
         message: "Plan not found for this user",
@@ -556,7 +549,7 @@ exports.getUserWithPlans = async (req, res) => {
       });
     }
 
-    const plans = await smartSaveModel.find({ user: req.user.id });
+    const plans = await smartSaveModel.find({ userId: req.user.id });
 
     res.status(200).json({
       success: true,
@@ -577,6 +570,7 @@ exports.getPreviewPlan = async (req, res) => {
     const userId = req.user.id;
     const { planId } = req.params;
 
+    // Validate planId
     if (!planId) {
       return res.status(400).json({
         success: false,
@@ -584,9 +578,10 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
+    // Fetch the plan from DB
     const plan = await smartSaveModel.findOne({
       _id: planId,
-      user: userId,
+      userId, // ensures user can only access their own plans
     });
 
     if (!plan) {
@@ -596,22 +591,48 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
+    const normalizedPlanType = plan.planType?.toUpperCase();
+
+    // Recompute preview fields based on stored plan data
+    let interestRate = 10;
+    let canBreak = true;
+    let breakingFeePercentage = 0;
+    let maturityDate = null;
+
+    if (normalizedPlanType === "FLEXIBLE") {
+      interestRate = 10;
+    }
+
+    if (normalizedPlanType === "LOCKED") {
+      interestRate = getInterestRate(plan.duration);
+      breakingFeePercentage = 1.5;
+      maturityDate = new Date(plan.createdAt);
+      maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
+    }
+
+    if (normalizedPlanType === "STEALTH") {
+      canBreak = false;
+      interestRate = getInterestRate(plan.duration);
+      maturityDate = new Date(plan.createdAt);
+      maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
+    }
+
     return res.status(200).json({
       success: true,
       data: {
         id: plan._id,
         title: plan.title,
         targetAmount: plan.targetAmount,
-        planType: plan.planType,
+        planType: normalizedPlanType,
         duration: plan.duration,
         savingFrequency: plan.savingFrequency,
         amountPerFrequency: plan.amountPerFrequency,
-        interestRate: plan.interestRate,         
-        canBreak: plan.canBreak,               
-        breakingFeePercentage: plan.breakingFeePercentage, 
-        maturityDate: plan.maturityDate,         
-        status: plan.status,
-        currentBalance: plan.currentBalance,
+
+        interestRate,
+        canBreak,
+        breakingFeePercentage,
+        maturityDate,
+
         createdAt: plan.createdAt,
         updatedAt: plan.updatedAt,
       },
