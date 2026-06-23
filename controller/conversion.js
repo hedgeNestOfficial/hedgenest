@@ -107,11 +107,22 @@ exports.conversion = async (req, res) => {
             
             conversionAmount = Number(amount) / rate;
             
-            console.log(totalDebit)
             wallet.availableBalance -= Number(totalDebit.toFixed(2));
             wallet.balanceInNaira += Number(amount)
             wallet.balanceInUSDT += Number(conversionAmount.toFixed(2));
-        
+
+            conversion = new conversionModel({
+                userId: user._id,
+                amount,
+                balanceInNaira: wallet.balanceInNaira ,
+                balanceInUSDT: wallet.balanceInUSDT,
+                from,
+                to,
+                rate,
+                fee: conversionFee,
+                conversionAmount: amount,
+                amountNow: Number(conversionAmount.toFixed(2))
+            });   
 
         } else if (from.toUpperCase() === 'USDT') {
             if (Number(amount) > wallet.balanceInUSDT) {
@@ -124,19 +135,21 @@ exports.conversion = async (req, res) => {
             wallet.balanceInUSDT -= Number(amount);
             wallet.balanceInNaira -= Number(conversionAmount.toFixed(2))
             wallet.availableBalance += Number(conversionAmount.toFixed(2))
+
+            conversion = new conversionModel({
+                userId: user._id,
+                amount,
+                balanceInNaira: wallet.balanceInNaira,
+                balanceInUSDT: wallet.balanceInUSDT,
+                from,
+                to,
+                rate,
+                fee: 0,
+                conversionAmount: amount,
+                amountNow: Number(conversionAmount.toFixed(2))
+            });
         }
-        const conversion = new conversionModel({
-            userId: user._id,
-            amount,
-            balanceInNaira: wallet.balanceInNaira ,
-            balanceInUSDT: wallet.balanceInUSDT,
-            from,
-            to,
-            rate,
-            fee: conversionFee,
-            conversionAmount: amount,
-            amountNow: Number(conversionAmount.toFixed(2))
-        });
+
         let revenue = await revenueModel.findOne({ });
 
         if (!revenue) {
