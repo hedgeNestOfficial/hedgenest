@@ -112,7 +112,7 @@ exports.createPlan = async (req, res) => {
   try {
     const {
       title,
-      amount,
+      targetAmount,
       planType,
       duration,
       savingFrequency,
