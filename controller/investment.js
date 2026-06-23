@@ -212,28 +212,28 @@ exports.claimInvestment = async (req, res) => {
                 message: "This investment has been claimed already."
             });
         }
-        if (investment.status !== 'completed') {
+        if (investment.status !== 'completed' && investment.status !== 'terminated') {
             return res.status(400).json({
-                messagge: "This investment is incomplete."
+                message: "Only completed or terminated investments can be claimed."
             });
         }
-        if (investment.status !== 'terminated') {
-            return res.status(400).json({
-                messagge: "This investment has not been terminated."
-            });
+        let baseDate;
+        
+        if (investment.status === 'completed') {
+            baseDate = investment.maturityDate;
+        } else if (investment.status === 'terminated'){
+            baseDate = investment.terminatedAt;
         }
         
-        const newMaturityDate = new Date(investment.maturityDate);
-        const withdrawalAllowedAt = new Date(newMaturityDate + 26 * 60 * 60 * 1000);
+        const withdrawalAllowedAt = new Date(
+            new Date(baseDate).getTime() + (26 * 60 * 60 * 1000)
+        );
         
-        const now = new Date();
-        
-        if (now < withdrawalAllowedAt) {
+        if (new Date() < withdrawalAllowedAt) {
             return res.status(400).json({
-                message: "Withdrawals will be available after 26 hours of completion or maturity date"
+                message: "Withdrawals will be available 26 hours after completion or termination."
             });
         }
-
         const wallet = await walletModel.findOne({ userId });
         if (!wallet) {
             return res.status(404).json({

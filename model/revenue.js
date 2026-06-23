@@ -13,6 +13,10 @@ const revenueSchema = new mongoose.Schema({
         type: String,
         enum: ["conversion", "withdrawal", "savings", "breaking_fee"],
     },
+    totalWithdrawalRevenue: {
+        type: Number,
+        default: 0
+    },
     amount: {
         type: Number,
         default: 0

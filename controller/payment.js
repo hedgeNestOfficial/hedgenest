@@ -8,6 +8,8 @@ const otpGenerator = require('otp-generator')
 const crypto = require('crypto')
 const payoutModel = require('../model/payout')
 const bankModel = require('../model/bank')
+const revenueModel = require('../model/revenue')
+
 
 
 exports.initiatePayment = async(req, res) =>{
@@ -297,6 +299,19 @@ exports.payoutFunds = async (req, res) => {
             transactionType: 'withdraw',
             amount: amt,
         });
+
+        let revenue = await revenueModel.findOne({ });
+        if (!revenue) {
+            revenue = new revenueModel({
+                revenueType: "withdrawal",
+                totalWithdrawalRevenue: withdrawalFee
+            });
+        } else {
+            revenue.revenueType = "withdrawal";
+            revenue.totalWithdrawalRevenue += withdrawalFee;
+        }
+        
+        await revenue.save()
 
         await payout.save()
         return res.status(200).json({
