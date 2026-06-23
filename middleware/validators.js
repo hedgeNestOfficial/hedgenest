@@ -279,10 +279,10 @@ exports.createPlanValidator = (req, res, next) => {
       "any.required": "Title is required",
     }),
 
-    targetAmount: joi.number().min(100).required().messages({
-      "number.base": "Target amount must be a number",
-      "number.min": "Target amount must be greater than 100",
-      "any.required": "Target amount is required",
+    amount: joi.number().min(100).required().messages({
+      "number.base": "Amount must be a number",
+      "number.min": "Amount must be greater than 100",
+      "any.required": "Amount is required",
     }),
 
     planType: joi.string().valid("FLEXIBLE", "LOCKED", "STEALTH").required().messages({
@@ -303,13 +303,13 @@ exports.createPlanValidator = (req, res, next) => {
 
     savingFrequency: joi.when("planType", {
         is: joi.string().valid("FLEXIBLE"),
-        then: joi.string().valid("DAILY", "WEEKLY", "MONTHLY").required().messages({
+        then: joi.string().valid("DAILY", "WEEKLY", "MONTHLY").optional().messages({
                 "string.base": "Saving frequency must be a string",
                 "any.only": "Saving frequency must be one of DAILY, WEEKLY, or MONTHLY",
                 "any.required": "Saving frequency is required for FLEXIBLE plans",
    }),
 }),
-    amountPerFrequency: joi.number().min(100).required().messages({
+    amountPerFrequency: joi.number().min(100).optional().messages({
       "number.base": "Amount per frequency must be a number",
       "number.min": "Amount per frequency must be greater than 100",
       "any.required": "Amount per frequency is required",

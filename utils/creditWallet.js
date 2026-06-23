@@ -18,11 +18,11 @@ exports.creditWallet = async () => {
     }
 
     for (const plan of maturedPlans) {
-      const wallet = await walletModel.findOne({ userId: plan.user });
+      const wallet = await walletModel.findOne({ userId: plan.userId });
 
       if (!wallet) {
         console.log(
-          `Smart savings: Wallet not found for user ${plan.user}, skipping plan ${plan._id}`,
+          `Smart savings: Wallet not found for user ${plan.userId}, skipping plan ${plan._id}`,
         );
         continue;
       }
@@ -32,10 +32,10 @@ exports.creditWallet = async () => {
       // Credit the matured amount (principal + interest) back into the wallet
       wallet.availableBalance += creditAmount;
 
-      // Remove the principal from the smart vault running balance
+      // Remove one completed plan from the smart vault count
       wallet.smartVaults = Math.max(
         0,
-        (wallet.smartVaults || 0) - plan.targetAmount,
+        (wallet.smartVaults || 0) - 1,
       );
 
       await wallet.save();
@@ -45,7 +45,7 @@ exports.creditWallet = async () => {
       await plan.save();
 
       console.log(
-        `Smart savings: Credited ₦${creditAmount} to user ${plan.user}, closed plan ${plan._id}`,
+        `Smart savings: Credited NGN ${creditAmount} to user ${plan.userId}, closed plan ${plan._id}`,
       );
     }
   } catch (error) {

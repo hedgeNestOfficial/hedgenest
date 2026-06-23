@@ -3,9 +3,9 @@ const percentageModel = require("./savingsPercent");
 
 const smartSaveSchema = new mongoose.Schema(
   {
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
       required: true,
     },
 
@@ -22,21 +22,21 @@ const smartSaveSchema = new mongoose.Schema(
       uppercase: true,
     },
 
-    targetAmount: {
+    amount: {
       type: Number,
       required: true,
       min: 100,
     },
 
-    currentBalance: {
+    targetAmount: {
       type: Number,
       default: 0,
     },
 
     amountPerFrequency: {
       type: Number,
-      default: null,
-    },
+      default: null,  
+},
 
     savingFrequency: {
       type: String,
@@ -58,7 +58,7 @@ const smartSaveSchema = new mongoose.Schema(
 
     withholdingTax: {
       type: Number,
-      default: 0,
+      default: 10,
     },
 
     interestBeforeTax: {
@@ -75,15 +75,23 @@ const smartSaveSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
+    currentBalance: {
+      type: Number,
+      default: 0,
+    },
     breakingFeePercentage: {
       type: Number,
       default: 0,
     },
-
     canBreak: {
       type: Boolean,
-      default: true,
+      default: function(){
+        if(this.planType === "STEALTH"){
+          return false
+        }else{
+          return true
+        }
+      },
     },
 
     startDate: {
@@ -149,7 +157,7 @@ const planCalculators = {
 
     plan.interestBeforeTax = interestBeforeTax;
     plan.taxAmount = interestBeforeTax > 0 ? taxAmount : 0;
-    plan.withholdingTax = plan.taxAmount;
+    plan.withholdingTax = 10;
     plan.totalPayback = totalPayback;
   },
 
@@ -166,14 +174,14 @@ const planCalculators = {
 
       const { interestBeforeTax, taxAmount, totalPayback } =
         computeInterestBreakdown({
-          principal: plan.targetAmount,
+          principal: plan.amount,
           percentage,
           duration: plan.duration,
         });
 
       plan.interestBeforeTax = Math.floor(interestBeforeTax);
       plan.taxAmount = Math.floor(taxAmount);
-      plan.withholdingTax = Math.floor(taxAmount);
+      plan.withholdingTax = 10;
       plan.totalPayback = Math.floor(totalPayback);
 
       if (!plan.maturityDate) {
@@ -197,14 +205,14 @@ const planCalculators = {
 
       const { interestBeforeTax, taxAmount, totalPayback } =
         computeInterestBreakdown({
-          principal: plan.targetAmount,
+          principal: plan.amount,
           percentage,
           duration: plan.duration,
         });
 
       plan.interestBeforeTax = Math.floor(interestBeforeTax);
       plan.taxAmount = Math.floor(taxAmount);
-      plan.withholdingTax = Math.floor(taxAmount);
+      plan.withholdingTax = 10;
       plan.totalPayback = Math.floor(totalPayback);
 
       if (!plan.maturityDate) {
