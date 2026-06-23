@@ -88,9 +88,27 @@ exports.previewPlan = async (req, res) => {
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
+    // create a preview smart save record so caller can reference it
+    const previewDoc = await smartSaveModel.create({
+      title,
+      amount: previewAmount,
+      targetAmount: previewAmount,
+      planType: normalizedPlanType,
+      duration,
+      savingFrequency,
+      amountPerFrequency,
+      interestRate,
+      canBreak,
+      breakingFeePercentage,
+      maturityDate,
+      isPreview: true,
+      user: req.user?.id || null,
+    });
+
     return res.status(200).json({
       success: true,
       data: {
+        id: previewDoc._id,
         title,
         amount: previewAmount,
         targetAmount: previewAmount,
@@ -224,7 +242,10 @@ exports.createPlan = async (req, res) => {
       message: "Savings plan created successfully",
       walletBalance: wallet.availableBalance,
       smartVaultCount: wallet.smartVaults,
-      data: plan,
+      data: {
+        ...plan.toObject(),
+        id: plan._id,
+      },
     });
   } catch (error) {
     console.log("error:", error);
@@ -683,3 +704,6 @@ exports.getPreviewPlan = async (req, res) => {
     });
   }
 };
+
+
+

@@ -389,3 +389,4 @@ paths:
           description: Something went wrong
         "404":
           description: Plan not found or does not belong to this user
+
