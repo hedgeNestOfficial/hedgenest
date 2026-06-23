@@ -178,7 +178,7 @@ exports.bankDetailsValidator = (req, res, next) => {
        accountName: joi.string().pattern(/^[A-Za-z]+(\s[A-Za-z]+)*$/).required().messages({
         'string.empty': 'Account name is required',
         'any.required': 'Account name is required',
-        'string.pattern.base': 'Account name must contain only letters and spaces'
+        'string.pattern.base': 'Account name cannot contain numbers, only letters'
     })   
   });
     const { error } = schema.validate(req.body);
