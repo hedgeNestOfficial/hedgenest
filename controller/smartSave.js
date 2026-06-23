@@ -3,6 +3,7 @@ const smartSaveModel = require("../model/smartSave");
 const transactionModel = require("../model/transaction");
 const walletModel = require("../model/wallet");
 const revenueModel = require("../model/revenue");
+const { calculateNextAutoSaveDate } = require("../utils/autoSaveFlexible");
 const bcrypt = require("bcrypt");
 
 const getInterestRate = (duration) => {
@@ -14,7 +15,7 @@ const getInterestRate = (duration) => {
   if (days >= 181 && days <= 365) return 16;
   if (days > 365) return 18;
 
-  return 10; // default fallback
+  return 10; 
 };
 
 exports.previewPlan = async (req, res) => {
@@ -110,10 +111,13 @@ exports.createPlan = async (req, res) => {
       duration,
       savingFrequency,
       amountPerFrequency,
+      autoSave,
       transactionPin,
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
+    const isAutoSaveEnabled =
+      normalizedPlanType === "FLEXIBLE" && autoSave === true;
 
     const user = await userModel.findById(req.user.id);
 
@@ -181,6 +185,11 @@ exports.createPlan = async (req, res) => {
       planType: normalizedPlanType,
       amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? amountPerFrequency : null,
       savingFrequency: normalizedPlanType === "FLEXIBLE" ? savingFrequency : null,
+      autoSave: isAutoSaveEnabled,
+      nextAutoSaveDate:
+        isAutoSaveEnabled
+          ? calculateNextAutoSaveDate(savingFrequency)
+          : null,
       duration,
     });
 
@@ -214,6 +223,7 @@ exports.createPlan = async (req, res) => {
     });
   }
 };
+
 exports.breakPlan = async (req, res) => {
   try {
     const { planId } = req.params;

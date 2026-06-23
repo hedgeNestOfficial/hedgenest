@@ -45,6 +45,11 @@ const smartSaveSchema = new mongoose.Schema(
       uppercase: true,
     },
 
+    autoSave: {
+      type: Boolean,
+      default: false,
+    },
+
     duration: {
       type: Number,
       default: null,
@@ -100,6 +105,16 @@ const smartSaveSchema = new mongoose.Schema(
     },
 
     maturityDate: {
+      type: Date,
+      default: null,
+    },
+
+    lastAutoSaveDate: {
+      type: Date,
+      default: null,
+    },
+
+    nextAutoSaveDate: {
       type: Date,
       default: null,
     },
