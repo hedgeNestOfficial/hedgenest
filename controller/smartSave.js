@@ -32,11 +32,15 @@ exports.previewPlan = async (req, res) => {
     const normalizedPlanType = planType?.toUpperCase();
 
     if (!title) {
-      return res.status(400).json({ success: false, message: "Title is required" });
+      return res.status(400).json({ 
+        message: "Title is required" 
+      });
     }
 
     if (!normalizedPlanType || !["FLEXIBLE", "LOCKED", "STEALTH"].includes(normalizedPlanType)) {
-      return res.status(400).json({ success: false, message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)" });
+      return res.status(400).json({ 
+        message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)" 
+      });
     }
 
     let interestRate = 10;
@@ -46,16 +50,17 @@ exports.previewPlan = async (req, res) => {
 
     if (normalizedPlanType === "FLEXIBLE") {
       interestRate = 10;
-      // canBreak stays true, breakingFeePercentage stays 0, maturityDate stays null
     }
 
     if (normalizedPlanType === "LOCKED") {
       if (!duration) {
-        return res.status(400).json({ success: false, message: "Duration is required" });
+        return res.status(400).json({ 
+          message: "Duration is required" });
       }
 
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({ success: false, message: "Duration must be between 7 and 1000 days" });
+        return res.status(400).json({ 
+          message: "Duration must be between 7 and 1000 days" });
       }
 
       interestRate = getInterestRate(duration);
@@ -65,13 +70,14 @@ exports.previewPlan = async (req, res) => {
     }
 
     if (normalizedPlanType === "STEALTH") {
-      // ✅ Added same duration validation as LOCKED
       if (!duration) {
-        return res.status(400).json({ success: false, message: "Duration is required" });
+        return res.status(400).json({ 
+          message: "Duration is required" });
       }
 
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({ success: false, message: "Duration must be between 7 and 1000 days" });
+        return res.status(400).json({ 
+          message: "Duration must be between 7 and 1000 days" });
       }
 
       canBreak = false;
@@ -97,8 +103,8 @@ exports.previewPlan = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ 
-      success: false, 
-      message: error.message });
+      message: error.message 
+    });
   }
 };
 
@@ -580,7 +586,6 @@ exports.getPreviewPlan = async (req, res) => {
     const userId = req.user.id;
     const { planId } = req.params;
 
-    // Validate planId
     if (!planId) {
       return res.status(400).json({
         success: false,
@@ -588,10 +593,9 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
-    // Fetch the plan from DB
     const plan = await smartSaveModel.findOne({
       _id: planId,
-      userId, // ensures user can only access their own plans
+      userId,
     });
 
     if (!plan) {
@@ -603,14 +607,18 @@ exports.getPreviewPlan = async (req, res) => {
 
     const normalizedPlanType = plan.planType?.toUpperCase();
 
-    // Recompute preview fields based on stored plan data
     let interestRate = 10;
     let canBreak = true;
     let breakingFeePercentage = 0;
     let maturityDate = null;
+    let interestBeforeTax = 0;
+    let withholdingTax = 0;
+    let taxAmount = 0;
+    let totalPayback = Number(plan.amount) || 0;
 
     if (normalizedPlanType === "FLEXIBLE") {
       interestRate = 10;
+      totalPayback = Number(plan.amount) || 0;
     }
 
     if (normalizedPlanType === "LOCKED") {
@@ -618,6 +626,13 @@ exports.getPreviewPlan = async (req, res) => {
       breakingFeePercentage = 1.5;
       maturityDate = new Date(plan.createdAt);
       maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
+
+      // ✅ Compute interest breakdown
+      const principal = Number(plan.amount);
+      interestBeforeTax = principal * (interestRate / 100) * (Number(plan.duration) / 365);
+      taxAmount = interestBeforeTax * 0.1;
+      withholdingTax = taxAmount;
+      totalPayback = principal + (interestBeforeTax - taxAmount);
     }
 
     if (normalizedPlanType === "STEALTH") {
@@ -625,6 +640,13 @@ exports.getPreviewPlan = async (req, res) => {
       interestRate = getInterestRate(plan.duration);
       maturityDate = new Date(plan.createdAt);
       maturityDate.setDate(maturityDate.getDate() + Number(plan.duration));
+
+      // ✅ Compute interest breakdown
+      const principal = Number(plan.amount);
+      interestBeforeTax = principal * (interestRate / 100) * (Number(plan.duration) / 365);
+      taxAmount = interestBeforeTax * 0.1;
+      withholdingTax = taxAmount;
+      totalPayback = principal + (interestBeforeTax - taxAmount);
     }
 
     return res.status(200).json({
@@ -632,17 +654,19 @@ exports.getPreviewPlan = async (req, res) => {
       data: {
         id: plan._id,
         title: plan.title,
-        targetAmount: plan.targetAmount,
+        amount: plan.amount,
         planType: normalizedPlanType,
         duration: plan.duration,
         savingFrequency: plan.savingFrequency,
         amountPerFrequency: plan.amountPerFrequency,
-
         interestRate,
         canBreak,
         breakingFeePercentage,
         maturityDate,
-
+        interestBeforeTax: parseFloat(interestBeforeTax.toFixed(2)),
+        withholdingTax: parseFloat(withholdingTax.toFixed(2)),
+        taxAmount: parseFloat(taxAmount.toFixed(2)),
+        totalPayback: parseFloat(totalPayback.toFixed(2)),
         createdAt: plan.createdAt,
         updatedAt: plan.updatedAt,
       },
