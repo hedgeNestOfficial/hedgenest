@@ -23,6 +23,7 @@ exports.previewPlan = async (req, res) => {
     const {
       title,
       amount,
+      targetAmount,
       planType,
       duration,
       savingFrequency,
@@ -30,6 +31,7 @@ exports.previewPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
+    const previewAmount = Number(targetAmount ?? amount);
 
     if (!title) {
       return res.status(400).json({ 
@@ -86,11 +88,30 @@ exports.previewPlan = async (req, res) => {
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
     }
 
+    // create a preview smart save record so caller can reference it
+    const previewDoc = await smartSaveModel.create({
+      title,
+      amount: previewAmount,
+      targetAmount: previewAmount,
+      planType: normalizedPlanType,
+      duration,
+      savingFrequency,
+      amountPerFrequency,
+      interestRate,
+      canBreak,
+      breakingFeePercentage,
+      maturityDate,
+      isPreview: true,
+      userId: req.user?.id || null,
+    });
+
     return res.status(200).json({
       success: true,
       data: {
+        id: previewDoc._id,
         title,
-        amount,
+        amount: previewAmount,
+        targetAmount: previewAmount,
         planType: normalizedPlanType,
         duration,
         savingFrequency,
@@ -112,6 +133,7 @@ exports.createPlan = async (req, res) => {
   try {
     const {
       title,
+      amount,
       targetAmount,
       planType,
       duration,
@@ -122,8 +144,38 @@ exports.createPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
+    if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
+      if (targetAmount !== undefined) {
+        return res.status(400).json({
+          success: false,
+          message: "Locked and Stealth plans require amount only, not targetAmount",
+        });
+      }
+
+      if (
+        savingFrequency !== undefined ||
+        amountPerFrequency !== undefined ||
+        autoSave !== undefined
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Locked and Stealth plans do not use savingFrequency, amountPerFrequency, or autoSave",
+        });
+      }
+    }
+
+    const rawTargetAmount =
+      normalizedPlanType === "FLEXIBLE" ? targetAmount ?? amount : amount;
+    const requestedAmount = Number(rawTargetAmount);
     const isAutoSaveEnabled =
       normalizedPlanType === "FLEXIBLE" && autoSave === true;
+
+    if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid amount",
+      });
+    }
 
     const user = await userModel.findById(req.user.id);
 
@@ -152,10 +204,9 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const requestedAmount = Number(amount);
     const debitAmount =
       normalizedPlanType === "FLEXIBLE"
-        ? Number(amountPerFrequency || amount)
+        ? Number(amountPerFrequency || rawTargetAmount)
         : requestedAmount;
     const currentBalance = Number(wallet.availableBalance);
 
@@ -185,8 +236,8 @@ exports.createPlan = async (req, res) => {
     const plan = new smartSaveModel({
       userId: req.user.id,
       title,
-      amount,
-      targetAmount: requestedAmount,
+      amount: requestedAmount,
+      targetAmount: normalizedPlanType === "FLEXIBLE" ? requestedAmount : 0,
       currentBalance: debitAmount,
       planType: normalizedPlanType,
       amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? amountPerFrequency : null,
@@ -214,12 +265,26 @@ exports.createPlan = async (req, res) => {
       currency: "NGN",
     });
 
+    const createdPlan = plan.toObject();
+
+    if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
+      delete createdPlan.targetAmount;
+      delete createdPlan.amountPerFrequency;
+      delete createdPlan.savingFrequency;
+      delete createdPlan.autoSave;
+      delete createdPlan.nextAutoSaveDate;
+      delete createdPlan.lastAutoSaveDate;
+    }
+
     return res.status(201).json({
       success: true,
       message: "Savings plan created successfully",
       walletBalance: wallet.availableBalance,
       smartVaultCount: wallet.smartVaults,
-      data: plan,
+      data: {
+        ...createdPlan,
+        id: plan._id,
+      },
     });
   } catch (error) {
     console.log("error:", error);
@@ -583,7 +648,7 @@ exports.getUserWithPlans = async (req, res) => {
 };
 exports.getPreviewPlan = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.user?._id;
     const { planId } = req.params;
 
     if (!planId) {
@@ -593,15 +658,19 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
-    const plan = await smartSaveModel.findOne({
-      _id: planId,
-      userId,
-    });
+    const plan = await smartSaveModel.findById(planId);
 
     if (!plan) {
       return res.status(404).json({
         success: false,
-        message: "Plan not found or does not belong to this user",
+        message: "Plan not found",
+      });
+    }
+
+    if (!plan.userId || plan.userId.toString() !== userId?.toString?.()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: This plan does not belong to you",
       });
     }
 
@@ -678,3 +747,6 @@ exports.getPreviewPlan = async (req, res) => {
     });
   }
 };
+
+
+

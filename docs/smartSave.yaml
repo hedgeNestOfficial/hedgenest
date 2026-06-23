@@ -61,33 +61,60 @@ paths:
               type: object
               required:
                 - title
-                - targetAmount
                 - planType
-                - savingFrequency
-                - amountPerFrequency
                 - transactionPin
               properties:
                 title:
                   type: string
                   example: "My Savings Plan"
+                amount:
+                  type: number
+                  description: Required for LOCKED and STEALTH plans.
+                  example: 50000
                 targetAmount:
                   type: number
+                  description: Used for FLEXIBLE plans only.
                   example: 50000
                 planType:
                   type: string
                   example: "FLEXIBLE"
                 duration:
                   type: number
+                  description: Required for LOCKED and STEALTH plans.
                   example: 30
                 savingFrequency:
                   type: string
+                  description: Used for FLEXIBLE plans only.
                   example: "DAILY"
                 amountPerFrequency:
                   type: number
+                  description: Used for FLEXIBLE plans only.
                   example: 500
+                autoSave:
+                  type: boolean
+                  description: Used for FLEXIBLE plans only.
+                  example: true
                 transactionPin:
                   type: string
                   example: "123456"
+              oneOf:
+                - required:
+                    - title
+                    - targetAmount
+                    - planType
+                    - transactionPin
+                  properties:
+                    planType:
+                      enum: ["FLEXIBLE"]
+                - required:
+                    - title
+                    - amount
+                    - planType
+                    - duration
+                    - transactionPin
+                  properties:
+                    planType:
+                      enum: ["LOCKED", "STEALTH"]
       responses:
         "201":
           description: Savings plan created successfully
@@ -389,3 +416,4 @@ paths:
           description: Something went wrong
         "404":
           description: Plan not found or does not belong to this user
+
