@@ -152,10 +152,10 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const requestedAmount = Number(amount);
+    const requestedAmount = Number(targetAmount);
     const debitAmount =
       normalizedPlanType === "FLEXIBLE"
-        ? Number(amountPerFrequency || amount)
+        ? Number(amountPerFrequency || targetAmount)
         : requestedAmount;
     const currentBalance = Number(wallet.availableBalance);
 
@@ -185,7 +185,7 @@ exports.createPlan = async (req, res) => {
     const plan = new smartSaveModel({
       userId: req.user.id,
       title,
-      amount,
+      amount: requestedAmount,
       targetAmount: requestedAmount,
       currentBalance: debitAmount,
       planType: normalizedPlanType,
