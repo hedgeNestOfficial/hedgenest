@@ -23,6 +23,7 @@ exports.previewPlan = async (req, res) => {
     const {
       title,
       amount,
+      targetAmount,
       planType,
       duration,
       savingFrequency,
@@ -30,6 +31,7 @@ exports.previewPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
+    const previewAmount = Number(targetAmount ?? amount);
 
     if (!title) {
       return res.status(400).json({ 
@@ -90,7 +92,8 @@ exports.previewPlan = async (req, res) => {
       success: true,
       data: {
         title,
-        amount,
+        amount: previewAmount,
+        targetAmount: previewAmount,
         planType: normalizedPlanType,
         duration,
         savingFrequency,
@@ -112,6 +115,7 @@ exports.createPlan = async (req, res) => {
   try {
     const {
       title,
+      amount,
       targetAmount,
       planType,
       duration,
@@ -122,6 +126,7 @@ exports.createPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
+    const planTargetAmount = targetAmount ?? amount;
     const isAutoSaveEnabled =
       normalizedPlanType === "FLEXIBLE" && autoSave === true;
 
@@ -152,10 +157,10 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const requestedAmount = Number(targetAmount);
+    const requestedAmount = Number(planTargetAmount);
     const debitAmount =
       normalizedPlanType === "FLEXIBLE"
-        ? Number(amountPerFrequency || targetAmount)
+        ? Number(amountPerFrequency || planTargetAmount)
         : requestedAmount;
     const currentBalance = Number(wallet.availableBalance);
 
