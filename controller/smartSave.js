@@ -102,7 +102,7 @@ exports.previewPlan = async (req, res) => {
       breakingFeePercentage,
       maturityDate,
       isPreview: true,
-      user: req.user?.id || null,
+      userId: req.user?.id || null,
     });
 
     return res.status(200).json({
@@ -144,9 +144,38 @@ exports.createPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
-    const planTargetAmount = targetAmount ?? amount;
+    if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
+      if (targetAmount !== undefined) {
+        return res.status(400).json({
+          success: false,
+          message: "Locked and Stealth plans require amount only, not targetAmount",
+        });
+      }
+
+      if (
+        savingFrequency !== undefined ||
+        amountPerFrequency !== undefined ||
+        autoSave !== undefined
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Locked and Stealth plans do not use savingFrequency, amountPerFrequency, or autoSave",
+        });
+      }
+    }
+
+    const rawTargetAmount =
+      normalizedPlanType === "FLEXIBLE" ? targetAmount ?? amount : amount;
+    const requestedAmount = Number(rawTargetAmount);
     const isAutoSaveEnabled =
       normalizedPlanType === "FLEXIBLE" && autoSave === true;
+
+    if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid amount",
+      });
+    }
 
     const user = await userModel.findById(req.user.id);
 
@@ -175,10 +204,9 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const requestedAmount = Number(planTargetAmount);
     const debitAmount =
       normalizedPlanType === "FLEXIBLE"
-        ? Number(amountPerFrequency || planTargetAmount)
+        ? Number(amountPerFrequency || rawTargetAmount)
         : requestedAmount;
     const currentBalance = Number(wallet.availableBalance);
 
@@ -209,7 +237,7 @@ exports.createPlan = async (req, res) => {
       userId: req.user.id,
       title,
       amount: requestedAmount,
-      targetAmount: requestedAmount,
+      targetAmount: normalizedPlanType === "FLEXIBLE" ? requestedAmount : 0,
       currentBalance: debitAmount,
       planType: normalizedPlanType,
       amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? amountPerFrequency : null,
@@ -237,13 +265,24 @@ exports.createPlan = async (req, res) => {
       currency: "NGN",
     });
 
+    const createdPlan = plan.toObject();
+
+    if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
+      delete createdPlan.targetAmount;
+      delete createdPlan.amountPerFrequency;
+      delete createdPlan.savingFrequency;
+      delete createdPlan.autoSave;
+      delete createdPlan.nextAutoSaveDate;
+      delete createdPlan.lastAutoSaveDate;
+    }
+
     return res.status(201).json({
       success: true,
       message: "Savings plan created successfully",
       walletBalance: wallet.availableBalance,
       smartVaultCount: wallet.smartVaults,
       data: {
-        ...plan.toObject(),
+        ...createdPlan,
         id: plan._id,
       },
     });
@@ -609,7 +648,7 @@ exports.getUserWithPlans = async (req, res) => {
 };
 exports.getPreviewPlan = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || req.user?._id;
     const { planId } = req.params;
 
     if (!planId) {
@@ -619,15 +658,19 @@ exports.getPreviewPlan = async (req, res) => {
       });
     }
 
-    const plan = await smartSaveModel.findOne({
-      _id: planId,
-      userId,
-    });
+    const plan = await smartSaveModel.findById(planId);
 
     if (!plan) {
       return res.status(404).json({
         success: false,
-        message: "Plan not found or does not belong to this user",
+        message: "Plan not found",
+      });
+    }
+
+    if (!plan.userId || plan.userId.toString() !== userId?.toString?.()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: This plan does not belong to you",
       });
     }
 

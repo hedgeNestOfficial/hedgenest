@@ -290,7 +290,7 @@ exports.createPlanValidator = (req, res, next) => {
       "number.min": "Amount must be greater than 100",
     }),
 
-    planType: joi.string().valid("FLEXIBLE", "LOCKED", "STEALTH").required().messages({
+    planType: joi.string().uppercase().valid("FLEXIBLE", "LOCKED", "STEALTH").required().messages({
       "string.base": "Plan type must be a string",
       "any.only": "Plan type must be one of FLEXIBLE, LOCKED, or STEALTH",
       "any.required": "Plan type is required",
@@ -340,14 +340,17 @@ exports.createPlanValidator = (req, res, next) => {
       otherwise: joi.optional(),
     }),
 
-    transactionPin:joi.string().pattern(/^\d{6}$/).messages({
-      'any.required': 'New pin is required',
-      'string.empty': 'New Pin cannot be empty',
-      'string.pattern.base': 'New Pin must be at least 6 characters and must Include only digits'
+    transactionPin:joi.string().pattern(/^\d{6}$/).required().messages({
+      'any.required': 'Transaction pin is required',
+      'string.empty': 'Transaction pin cannot be empty',
+      'string.pattern.base': 'Transaction pin must be exactly 6 digits'
     }),
-  }).or("targetAmount", "amount");
+  });
 
-  const { error } = schema.validate(req.body);
+  const { error, value } = schema.validate(req.body, {
+    abortEarly: true,
+    convert: true,
+  });
 
   if (error) {
     return res.status(400).json({
@@ -355,6 +358,44 @@ exports.createPlanValidator = (req, res, next) => {
       message: error.details[0].message,
     });
   }
+
+  const normalizedPlanType = value.planType?.toUpperCase();
+
+  if (normalizedPlanType === "FLEXIBLE" && value.targetAmount === undefined && value.amount === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "targetAmount or amount is required for FLEXIBLE plans",
+    });
+  }
+
+  if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
+    if (value.targetAmount !== undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "LOCKED and STEALTH plans require amount only, not targetAmount",
+      });
+    }
+
+    if (value.amount === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount is required for LOCKED and STEALTH plans",
+      });
+    }
+
+    if (
+      value.savingFrequency !== undefined ||
+      value.amountPerFrequency !== undefined ||
+      value.autoSave !== undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "LOCKED and STEALTH plans do not use savingFrequency, amountPerFrequency, or autoSave",
+      });
+    }
+  }
+
+  req.body = value;
 
   next();
 };
