@@ -9,6 +9,7 @@ const crypto = require('crypto')
 const payoutModel = require('../model/payout')
 const bankModel = require('../model/bank')
 const revenueModel = require('../model/revenue')
+const { type } = require('os')
 
 
 
@@ -64,11 +65,7 @@ exports.initiatePayment = async(req, res) =>{
             userId,
             status: 'processing' 
         })
-        const transaction = await transactionModel.create({
-            userId: user._id,
-            transactionType: type,
-            amount,
-        })
+    
         await payment.save()
         res.status(200).json({
             message: 'Payment initialized successful',
@@ -188,6 +185,14 @@ exports.verifyWebhook = async (req, res, next) => {
         } else if (event === 'charge.abandoned'){
             payment.status = 'abandoned'
         }
+
+        const transaction = await transactionModel.create({
+            userId: payment.userId,
+            transactionType: 'deposit',
+            amount: payment.amount,
+            status: 'success',
+            reference: payment.reference
+        })
         
         await wallet.save();
         await payment.save();
@@ -328,4 +333,29 @@ exports.payoutFunds = async (req, res) => {
     }
 };
 
+// if (event === 'charge.success') {
 
+//     if (payment.status !== 'success') {
+
+//         payment.status = 'success';
+
+//         wallet.availableBalance += payment.amount;
+
+//         await transactionModel.create({
+//             userId: payment.userId,
+//             transactionType: 'deposit',
+//             amount: payment.amount,
+//             reference: payment.reference,
+//             status: 'success'
+//         });
+
+//         await wallet.save();
+//         await payment.save();
+//     }
+// }
+
+   // const transaction = await transactionModel.create({
+        //     userId: user._id,
+        //     transactionType: type,
+        //     amount,
+        // })
