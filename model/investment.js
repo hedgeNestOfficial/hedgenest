@@ -42,6 +42,7 @@ const investmentSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+
     deleteAt: {
         type: Date,
         default: null,
@@ -50,3 +51,5 @@ const investmentSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+module.exports = mongoose.model('Investment', investmentSchema);
