@@ -25,7 +25,6 @@ const smartSaveSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: true,
-      min: 100,
     },
 
     targetAmount: {
