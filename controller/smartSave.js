@@ -3,7 +3,6 @@ const smartSaveModel = require("../model/smartSave");
 const transactionModel = require("../model/transaction");
 const walletModel = require("../model/wallet");
 const revenueModel = require("../model/revenue");
-const { calculateNextAutoSaveDate } = require("../utils/autoSaveFlexible");
 const bcrypt = require("bcrypt");
 
 const getInterestRate = (duration) => {
@@ -50,6 +49,21 @@ exports.previewPlan = async (req, res) => {
     let interestAfterTax = 0;
     let totalPayback = previewAmount;
 
+    if (normalizedPlanType === "FLEXIBLE") {
+      const dailyInterest = parseFloat(((previewAmount * (interestRate / 100)) / 365).toFixed(2));
+
+      const frequencyMap = {
+        DAILY:   dailyInterest,
+        WEEKLY:  parseFloat((dailyInterest * 7).toFixed(2)),
+        MONTHLY: parseFloat((dailyInterest * 30).toFixed(2)),
+      };
+
+      interestBeforeTax = frequencyMap[savingFrequency?.toUpperCase()] ?? frequencyMap["MONTHLY"];
+      withholdingTax    = parseFloat((interestBeforeTax * 0.10).toFixed(2));
+      interestAfterTax  = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
+      totalPayback      = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+    }
+
     if (normalizedPlanType === "LOCKED") {
       if (!duration) {
         return res.status(400).json({ message: "Duration is required" });
@@ -64,9 +78,9 @@ exports.previewPlan = async (req, res) => {
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
 
       interestBeforeTax = parseFloat(((previewAmount * (interestRate / 100) * Number(duration)) / 365).toFixed(2));
-      withholdingTax = parseFloat((interestBeforeTax * 0.10).toFixed(2));
-      interestAfterTax = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
-      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+      withholdingTax    = parseFloat((interestBeforeTax * 0.10).toFixed(2));
+      interestAfterTax  = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
+      totalPayback      = parseFloat((previewAmount + interestAfterTax).toFixed(2));
     }
 
     if (normalizedPlanType === "STEALTH") {
@@ -83,9 +97,9 @@ exports.previewPlan = async (req, res) => {
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
 
       interestBeforeTax = parseFloat(((previewAmount * (interestRate / 100) * Number(duration)) / 365).toFixed(2));
-      withholdingTax = parseFloat((interestBeforeTax * 0.10).toFixed(2));
-      interestAfterTax = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
-      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+      withholdingTax    = parseFloat((interestBeforeTax * 0.10).toFixed(2));
+      interestAfterTax  = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
+      totalPayback      = parseFloat((previewAmount + interestAfterTax).toFixed(2));
     }
 
     return res.status(200).json({
@@ -123,7 +137,6 @@ exports.createPlan = async (req, res) => {
       duration,
       savingFrequency,
       amountPerFrequency,
-      autoSave,
       transactionPin,
     } = req.body;
 
@@ -139,12 +152,11 @@ exports.createPlan = async (req, res) => {
 
       if (
         savingFrequency !== undefined ||
-        amountPerFrequency !== undefined ||
-        autoSave !== undefined
+        amountPerFrequency !== undefined
       ) {
         return res.status(400).json({
           success: false,
-          message: "Locked and Stealth plans do not use savingFrequency, amountPerFrequency, or autoSave",
+          message: "Locked and Stealth plans do not use savingFrequency or amountPerFrequency",
         });
       }
     }
@@ -152,9 +164,6 @@ exports.createPlan = async (req, res) => {
     const rawTargetAmount =
       normalizedPlanType === "FLEXIBLE" ? targetAmount ?? amount : amount;
     const requestedAmount = Number(rawTargetAmount);
-
-    // ✅ Fixed: use strict boolean check
-    const isAutoSaveEnabled = normalizedPlanType === "FLEXIBLE" && autoSave === true;
 
     if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
       return res.status(400).json({
@@ -187,13 +196,8 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    // ✅ Fixed: separate debit logic for autoSave vs manual flexible
-    const debitAmount =
-      normalizedPlanType === "FLEXIBLE"
-        ? isAutoSaveEnabled
-          ? Number(amountPerFrequency) // autoSave: deduct first frequency amount
-          : requestedAmount            // manual: deduct full target amount
-        : requestedAmount;             // LOCKED/STEALTH: deduct full amount
+    // For all plan types, deduct the full requested amount
+    const debitAmount = requestedAmount;
 
     const currentBalance = Number(wallet.availableBalance);
 
@@ -224,13 +228,11 @@ exports.createPlan = async (req, res) => {
       userId: req.user.id,
       title,
       amount: requestedAmount,
-      targetAmount: requestedAmount, // ✅ Fixed: always set targetAmount
+      targetAmount: requestedAmount,
       currentBalance: debitAmount,
       planType: normalizedPlanType,
       amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? Number(amountPerFrequency) : null,
       savingFrequency: normalizedPlanType === "FLEXIBLE" ? savingFrequency : null,
-      autoSave: isAutoSaveEnabled,
-      nextAutoSaveDate: isAutoSaveEnabled ? new Date() : null, // ✅ Fixed: due immediately not tomorrow
       duration,
     });
 
@@ -255,9 +257,6 @@ exports.createPlan = async (req, res) => {
       delete createdPlan.targetAmount;
       delete createdPlan.amountPerFrequency;
       delete createdPlan.savingFrequency;
-      delete createdPlan.autoSave;
-      delete createdPlan.nextAutoSaveDate;
-      delete createdPlan.lastAutoSaveDate;
     }
 
     return res.status(201).json({
@@ -731,6 +730,3 @@ exports.getPreviewPlan = async (req, res) => {
     });
   }
 };
-
-
-
