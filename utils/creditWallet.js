@@ -13,7 +13,7 @@ exports.creditWallet = async () => {
     });
 
     if (maturedPlans.length === 0) {
-      console.log("Smart savings: No matured plans to credit");
+      // console.log("Smart savings: No matured plans to credit");
       return;
     }
 

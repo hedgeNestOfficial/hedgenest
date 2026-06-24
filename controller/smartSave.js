@@ -128,6 +128,7 @@ exports.createPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
+
     if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
       if (targetAmount !== undefined) {
         return res.status(400).json({
@@ -151,8 +152,9 @@ exports.createPlan = async (req, res) => {
     const rawTargetAmount =
       normalizedPlanType === "FLEXIBLE" ? targetAmount ?? amount : amount;
     const requestedAmount = Number(rawTargetAmount);
-    const isAutoSaveEnabled =
-      normalizedPlanType === "FLEXIBLE" && autoSave === true;
+
+    // ✅ Fixed: use strict boolean check
+    const isAutoSaveEnabled = normalizedPlanType === "FLEXIBLE" && autoSave === true;
 
     if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
       return res.status(400).json({
@@ -162,7 +164,6 @@ exports.createPlan = async (req, res) => {
     }
 
     const user = await userModel.findById(req.user.id);
-
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -171,7 +172,6 @@ exports.createPlan = async (req, res) => {
     }
 
     const isCorrectPin = await bcrypt.compare(transactionPin, user.transactionPin);
-
     if (!isCorrectPin) {
       return res.status(400).json({
         success: false,
@@ -180,7 +180,6 @@ exports.createPlan = async (req, res) => {
     }
 
     const wallet = await walletModel.findOne({ userId: req.user.id });
-
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -188,10 +187,14 @@ exports.createPlan = async (req, res) => {
       });
     }
 
+    // ✅ Fixed: separate debit logic for autoSave vs manual flexible
     const debitAmount =
       normalizedPlanType === "FLEXIBLE"
-        ? Number(amountPerFrequency || rawTargetAmount)
-        : requestedAmount;
+        ? isAutoSaveEnabled
+          ? Number(amountPerFrequency) // autoSave: deduct first frequency amount
+          : requestedAmount            // manual: deduct full target amount
+        : requestedAmount;             // LOCKED/STEALTH: deduct full amount
+
     const currentBalance = Number(wallet.availableBalance);
 
     if (Number.isNaN(debitAmount) || debitAmount <= 0) {
@@ -221,16 +224,13 @@ exports.createPlan = async (req, res) => {
       userId: req.user.id,
       title,
       amount: requestedAmount,
-      targetAmount: normalizedPlanType === "FLEXIBLE" ? requestedAmount : 0,
+      targetAmount: requestedAmount, // ✅ Fixed: always set targetAmount
       currentBalance: debitAmount,
       planType: normalizedPlanType,
-      amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? amountPerFrequency : null,
+      amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? Number(amountPerFrequency) : null,
       savingFrequency: normalizedPlanType === "FLEXIBLE" ? savingFrequency : null,
       autoSave: isAutoSaveEnabled,
-      nextAutoSaveDate:
-        isAutoSaveEnabled
-          ? calculateNextAutoSaveDate(savingFrequency)
-          : null,
+      nextAutoSaveDate: isAutoSaveEnabled ? new Date() : null, // ✅ Fixed: due immediately not tomorrow
       duration,
     });
 
@@ -240,7 +240,7 @@ exports.createPlan = async (req, res) => {
     wallet.smartVaults = smartVaultCount + 1;
 
     await wallet.save();
-    await plan.save(); // pre-save hook runs here with correct targetAmount
+    await plan.save();
 
     await transactionModel.create({
       userId: req.user.id,
