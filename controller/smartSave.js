@@ -188,8 +188,8 @@ exports.createPlan = async (req, res) => {
       }
     }
 
-const requestedAmount = Number(amount ?? amountPerFrequency);
-const savingsGoal = Number(targetAmount ?? amount ?? amountPerFrequency);
+    const requestedAmount = Number(amount ?? amountPerFrequency);
+    const savingsGoal = Number(targetAmount ?? amount ?? amountPerFrequency);
 
     // LOCKED/STEALTH: deduct full amount
 
@@ -445,10 +445,8 @@ exports.breakPlan = async (req, res) => {
       amount: amountToCredit,
     });
 
-    // ✅ Save plan status LAST so retries don't hit the CANCELLED guard
-    plan.status = statusUpdate;
-    plan.currentBalance = 0;
-    await plan.save();
+    // ✅ Delete plan LAST so it won't appear in user's plan list
+    await smartSaveModel.findByIdAndDelete(planId);
 
     return res.status(200).json({
       success: true,
