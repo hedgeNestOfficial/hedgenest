@@ -193,12 +193,12 @@ exports.createPlan = async (req, res) => {
 
     // LOCKED/STEALTH: deduct full amount
 
-    if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Enter a valid amount",
-      });
-    }
+    // if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Enter a valid amount",
+    //   });
+    // }
 
     const user = await userModel.findById(req.user.id);
     if (!user) {
