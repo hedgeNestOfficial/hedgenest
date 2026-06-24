@@ -34,81 +34,63 @@ exports.previewPlan = async (req, res) => {
     const previewAmount = Number(targetAmount ?? amount);
 
     if (!title) {
-      return res.status(400).json({ 
-        message: "Title is required" 
-      });
+      return res.status(400).json({ message: "Title is required" });
     }
 
     if (!normalizedPlanType || !["FLEXIBLE", "LOCKED", "STEALTH"].includes(normalizedPlanType)) {
-      return res.status(400).json({ 
-        message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)" 
-      });
+      return res.status(400).json({ message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)" });
     }
 
     let interestRate = 10;
     let canBreak = true;
     let breakingFeePercentage = 0;
     let maturityDate = null;
-
-    if (normalizedPlanType === "FLEXIBLE") {
-      interestRate = 10;
-    }
+    let interestBeforeTax = 0;
+    let withholdingTax = 0;
+    let interestAfterTax = 0;
+    let totalPayback = previewAmount;
 
     if (normalizedPlanType === "LOCKED") {
       if (!duration) {
-        return res.status(400).json({ 
-          message: "Duration is required" });
+        return res.status(400).json({ message: "Duration is required" });
       }
-
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({ 
-          message: "Duration must be between 7 and 1000 days" });
+        return res.status(400).json({ message: "Duration must be between 7 and 1000 days" });
       }
 
       interestRate = getInterestRate(duration);
       breakingFeePercentage = 1.5;
       maturityDate = new Date();
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
+
+      interestBeforeTax = parseFloat(((previewAmount * (interestRate / 100) * Number(duration)) / 365).toFixed(2));
+      withholdingTax = parseFloat((interestBeforeTax * 0.10).toFixed(2));
+      interestAfterTax = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
+      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
     }
 
     if (normalizedPlanType === "STEALTH") {
       if (!duration) {
-        return res.status(400).json({ 
-          message: "Duration is required" });
+        return res.status(400).json({ message: "Duration is required" });
       }
-
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({ 
-          message: "Duration must be between 7 and 1000 days" });
+        return res.status(400).json({ message: "Duration must be between 7 and 1000 days" });
       }
 
       canBreak = false;
       interestRate = getInterestRate(duration);
       maturityDate = new Date();
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
-    }
 
-    // create a preview smart save record so caller can reference it
-    const previewDoc = await smartSaveModel.create({
-      title,
-      amount: previewAmount,
-      targetAmount: previewAmount,
-      planType: normalizedPlanType,
-      duration,
-      savingFrequency,
-      amountPerFrequency,
-      interestRate,
-      canBreak,
-      breakingFeePercentage,
-      maturityDate,
-      isPreview: true,
-      userId: req.user?.id || null,
-    });
+      interestBeforeTax = parseFloat(((previewAmount * (interestRate / 100) * Number(duration)) / 365).toFixed(2));
+      withholdingTax = parseFloat((interestBeforeTax * 0.10).toFixed(2));
+      interestAfterTax = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
+      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+    }
 
     return res.status(200).json({
       success: true,
       data: {
-        id: previewDoc._id,
         title,
         amount: previewAmount,
         targetAmount: previewAmount,
@@ -120,12 +102,14 @@ exports.previewPlan = async (req, res) => {
         canBreak,
         breakingFeePercentage,
         maturityDate,
+        interestBeforeTax,
+        withholdingTax,
+        interestAfterTax,
+        totalPayback,
       },
     });
   } catch (error) {
-    return res.status(500).json({ 
-      message: error.message 
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 
