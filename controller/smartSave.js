@@ -14,7 +14,7 @@ const getInterestRate = (duration) => {
   if (days >= 181 && days <= 365) return 16;
   if (days > 365) return 18;
 
-  return 10; 
+  return 10;
 };
 
 exports.previewPlan = async (req, res) => {
@@ -36,8 +36,13 @@ exports.previewPlan = async (req, res) => {
       return res.status(400).json({ message: "Title is required" });
     }
 
-    if (!normalizedPlanType || !["FLEXIBLE", "LOCKED", "STEALTH"].includes(normalizedPlanType)) {
-      return res.status(400).json({ message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)" });
+    if (
+      !normalizedPlanType ||
+      !["FLEXIBLE", "LOCKED", "STEALTH"].includes(normalizedPlanType)
+    ) {
+      return res.status(400).json({
+        message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)",
+      });
     }
 
     let interestRate = 10;
@@ -50,18 +55,23 @@ exports.previewPlan = async (req, res) => {
     let totalPayback = previewAmount;
 
     if (normalizedPlanType === "FLEXIBLE") {
-      const dailyInterest = parseFloat(((previewAmount * (interestRate / 100)) / 365).toFixed(2));
+      const dailyInterest = parseFloat(
+        ((previewAmount * (interestRate / 100)) / 365).toFixed(2),
+      );
 
       const frequencyMap = {
-        DAILY:   dailyInterest,
-        WEEKLY:  parseFloat((dailyInterest * 7).toFixed(2)),
+        DAILY: dailyInterest,
+        WEEKLY: parseFloat((dailyInterest * 7).toFixed(2)),
         MONTHLY: parseFloat((dailyInterest * 30).toFixed(2)),
       };
 
-      interestBeforeTax = frequencyMap[savingFrequency?.toUpperCase()] ?? frequencyMap["MONTHLY"];
-      withholdingTax    = parseFloat((interestBeforeTax * 0.10).toFixed(2));
-      interestAfterTax  = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
-      totalPayback      = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+      interestBeforeTax =
+        frequencyMap[savingFrequency?.toUpperCase()] ?? frequencyMap["MONTHLY"];
+      withholdingTax = parseFloat((interestBeforeTax * 0.1).toFixed(2));
+      interestAfterTax = parseFloat(
+        (interestBeforeTax - withholdingTax).toFixed(2),
+      );
+      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
     }
 
     if (normalizedPlanType === "LOCKED") {
@@ -69,7 +79,9 @@ exports.previewPlan = async (req, res) => {
         return res.status(400).json({ message: "Duration is required" });
       }
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({ message: "Duration must be between 7 and 1000 days" });
+        return res
+          .status(400)
+          .json({ message: "Duration must be between 7 and 1000 days" });
       }
 
       interestRate = getInterestRate(duration);
@@ -77,10 +89,17 @@ exports.previewPlan = async (req, res) => {
       maturityDate = new Date();
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
 
-      interestBeforeTax = parseFloat(((previewAmount * (interestRate / 100) * Number(duration)) / 365).toFixed(2));
-      withholdingTax    = parseFloat((interestBeforeTax * 0.10).toFixed(2));
-      interestAfterTax  = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
-      totalPayback      = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+      interestBeforeTax = parseFloat(
+        (
+          (previewAmount * (interestRate / 100) * Number(duration)) /
+          365
+        ).toFixed(2),
+      );
+      withholdingTax = parseFloat((interestBeforeTax * 0.1).toFixed(2));
+      interestAfterTax = parseFloat(
+        (interestBeforeTax - withholdingTax).toFixed(2),
+      );
+      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
     }
 
     if (normalizedPlanType === "STEALTH") {
@@ -88,7 +107,9 @@ exports.previewPlan = async (req, res) => {
         return res.status(400).json({ message: "Duration is required" });
       }
       if (duration < 7 || duration > 1000) {
-        return res.status(400).json({ message: "Duration must be between 7 and 1000 days" });
+        return res
+          .status(400)
+          .json({ message: "Duration must be between 7 and 1000 days" });
       }
 
       canBreak = false;
@@ -96,10 +117,17 @@ exports.previewPlan = async (req, res) => {
       maturityDate = new Date();
       maturityDate.setDate(maturityDate.getDate() + Number(duration));
 
-      interestBeforeTax = parseFloat(((previewAmount * (interestRate / 100) * Number(duration)) / 365).toFixed(2));
-      withholdingTax    = parseFloat((interestBeforeTax * 0.10).toFixed(2));
-      interestAfterTax  = parseFloat((interestBeforeTax - withholdingTax).toFixed(2));
-      totalPayback      = parseFloat((previewAmount + interestAfterTax).toFixed(2));
+      interestBeforeTax = parseFloat(
+        (
+          (previewAmount * (interestRate / 100) * Number(duration)) /
+          365
+        ).toFixed(2),
+      );
+      withholdingTax = parseFloat((interestBeforeTax * 0.1).toFixed(2));
+      interestAfterTax = parseFloat(
+        (interestBeforeTax - withholdingTax).toFixed(2),
+      );
+      totalPayback = parseFloat((previewAmount + interestAfterTax).toFixed(2));
     }
 
     return res.status(200).json({
@@ -146,24 +174,24 @@ exports.createPlan = async (req, res) => {
       if (targetAmount !== undefined) {
         return res.status(400).json({
           success: false,
-          message: "Locked and Stealth plans require amount only, not targetAmount",
+          message:
+            "Locked and Stealth plans require amount only, not targetAmount",
         });
       }
 
-      if (
-        savingFrequency !== undefined ||
-        amountPerFrequency !== undefined
-      ) {
+      if (savingFrequency !== undefined || amountPerFrequency !== undefined) {
         return res.status(400).json({
           success: false,
-          message: "Locked and Stealth plans do not use savingFrequency or amountPerFrequency",
+          message:
+            "Locked and Stealth plans do not use savingFrequency or amountPerFrequency",
         });
       }
     }
 
-    const rawTargetAmount =
-      normalizedPlanType === "FLEXIBLE" ? targetAmount ?? amount : amount;
-    const requestedAmount = Number(rawTargetAmount);
+const requestedAmount = Number(amount ?? amountPerFrequency);
+const savingsGoal = Number(targetAmount ?? amount ?? amountPerFrequency);
+
+    // LOCKED/STEALTH: deduct full amount
 
     if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
       return res.status(400).json({
@@ -180,7 +208,10 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const isCorrectPin = await bcrypt.compare(transactionPin, user.transactionPin);
+    const isCorrectPin = await bcrypt.compare(
+      transactionPin,
+      user.transactionPin,
+    );
     if (!isCorrectPin) {
       return res.status(400).json({
         success: false,
@@ -196,7 +227,6 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    // For all plan types, deduct the full requested amount
     const debitAmount = requestedAmount;
 
     const currentBalance = Number(wallet.availableBalance);
@@ -227,18 +257,22 @@ exports.createPlan = async (req, res) => {
     const plan = new smartSaveModel({
       userId: req.user.id,
       title,
-      amount: requestedAmount,
-      targetAmount: requestedAmount,
+      amount: requestedAmount, // ✅ actual deposit
+      targetAmount: savingsGoal,
       currentBalance: debitAmount,
       planType: normalizedPlanType,
-      amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? Number(amountPerFrequency) : null,
-      savingFrequency: normalizedPlanType === "FLEXIBLE" ? savingFrequency : null,
+      amountPerFrequency:
+        normalizedPlanType === "FLEXIBLE" ? Number(amountPerFrequency) : null,
+      savingFrequency:
+        normalizedPlanType === "FLEXIBLE" ? savingFrequency : null,
       duration,
     });
 
     wallet.availableBalance -= debitAmount;
 
-    const smartVaultCount = await smartSaveModel.countDocuments({ userId: req.user.id });
+    const smartVaultCount = await smartSaveModel.countDocuments({
+      userId: req.user.id,
+    });
     wallet.smartVaults = smartVaultCount + 1;
 
     await wallet.save();
@@ -296,7 +330,10 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    const isCorrectPin = await bcrypt.compare(transactionPin, user.transactionPin);
+    const isCorrectPin = await bcrypt.compare(
+      transactionPin,
+      user.transactionPin,
+    );
     if (!isCorrectPin) {
       return res.status(400).json({
         message: "Invalid transaction pin",
@@ -332,7 +369,9 @@ exports.breakPlan = async (req, res) => {
           : 0;
 
     const now = new Date();
-    const isMatured = plan.maturityDate ? now >= new Date(plan.maturityDate) : false;
+    const isMatured = plan.maturityDate
+      ? now >= new Date(plan.maturityDate)
+      : false;
 
     if (plan.planType === "STEALTH" && !isMatured) {
       return res.status(400).json({
@@ -394,7 +433,8 @@ exports.breakPlan = async (req, res) => {
       });
     }
 
-    wallet.availableBalance = (Number(wallet.availableBalance) || 0) + amountToCredit;
+    wallet.availableBalance =
+      (Number(wallet.availableBalance) || 0) + amountToCredit;
     wallet.smartVaults = Math.max(0, (Number(wallet.smartVaults) || 0) - 1);
     await wallet.save();
 
@@ -681,7 +721,8 @@ exports.getPreviewPlan = async (req, res) => {
 
       // ✅ Compute interest breakdown
       const principal = Number(plan.amount);
-      interestBeforeTax = principal * (interestRate / 100) * (Number(plan.duration) / 365);
+      interestBeforeTax =
+        principal * (interestRate / 100) * (Number(plan.duration) / 365);
       taxAmount = interestBeforeTax * 0.1;
       withholdingTax = taxAmount;
       totalPayback = principal + (interestBeforeTax - taxAmount);
@@ -695,7 +736,8 @@ exports.getPreviewPlan = async (req, res) => {
 
       // ✅ Compute interest breakdown
       const principal = Number(plan.amount);
-      interestBeforeTax = principal * (interestRate / 100) * (Number(plan.duration) / 365);
+      interestBeforeTax =
+        principal * (interestRate / 100) * (Number(plan.duration) / 365);
       taxAmount = interestBeforeTax * 0.1;
       withholdingTax = taxAmount;
       totalPayback = principal + (interestBeforeTax - taxAmount);
