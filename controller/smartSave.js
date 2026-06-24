@@ -135,7 +135,8 @@ exports.previewPlan = async (req, res) => {
       data: {
         title,
         amount: previewAmount,
-        targetAmount: previewAmount,
+        targetAmount:
+          normalizedPlanType === "FLEXIBLE" ? previewAmount : undefined,
         planType: normalizedPlanType,
         duration,
         savingFrequency,
@@ -170,12 +171,24 @@ exports.createPlan = async (req, res) => {
 
     const normalizedPlanType = planType?.toUpperCase();
 
+    const normalizedAmount = amount === "" ? undefined : amount;
+    const normalizedTargetAmount = targetAmount === "" ? undefined : targetAmount;
+
     if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
-      if (targetAmount !== undefined) {
+      if (normalizedAmount === undefined && normalizedTargetAmount !== undefined) {
+        req.body.amount = normalizedTargetAmount;
+        req.body.targetAmount = undefined;
+      } else if (
+        normalizedAmount !== undefined &&
+        normalizedTargetAmount !== undefined
+      ) {
+        req.body.targetAmount = undefined;
+      }
+
+      if (req.body.amount === undefined) {
         return res.status(400).json({
           success: false,
-          message:
-            "Locked and Stealth plans require amount only, not targetAmount",
+          message: "Amount is required for LOCKED and STEALTH plans",
         });
       }
 
@@ -188,17 +201,21 @@ exports.createPlan = async (req, res) => {
       }
     }
 
-    const requestedAmount = Number(amount ?? amountPerFrequency);
-    const savingsGoal = Number(targetAmount ?? amount ?? amountPerFrequency);
+    const requestedAmount = Number(
+      req.body.amount ?? req.body.targetAmount ?? amountPerFrequency,
+    );
+    const savingsGoal = Number(
+      req.body.targetAmount ?? req.body.amount ?? amountPerFrequency,
+    );
 
     // LOCKED/STEALTH: deduct full amount
 
-    // if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Enter a valid amount",
-    //   });
-    // }
+    if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid amount",
+      });
+    }
 
     const user = await userModel.findById(req.user.id);
     if (!user) {

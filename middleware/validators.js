@@ -279,15 +279,15 @@ exports.createPlanValidator = (req, res, next) => {
       "any.required": "Title is required",
     }),
 
-    targetAmount: joi.number().optional().messages({
+    targetAmount: joi.number().min(1).optional().messages({
       "number.base": "target Amount must be a number",
-      "number.min": "target Amount must be greater than 100",
-      "any.required": " target Amount is required",
+      "number.min": "target Amount must be greater than 0",
+      "any.required": "target Amount is required",
     }),
 
-    amount: joi.number().optional().messages({
+    amount: joi.number().min(1).optional().messages({
       "number.base": "Amount must be a number",
-      "number.min": "Amount must be greater than 100",
+      "number.min": "Amount must be greater than 0",
     }),
 
     planType: joi.string().uppercase().valid("FLEXIBLE", "LOCKED", "STEALTH").required().messages({
@@ -369,11 +369,9 @@ exports.createPlanValidator = (req, res, next) => {
   }
 
   if (["LOCKED", "STEALTH"].includes(normalizedPlanType)) {
-    if (value.targetAmount !== undefined) {
-      return res.status(400).json({
-        success: false,
-        message: "LOCKED and STEALTH plans require amount only, not targetAmount",
-      });
+    if (value.amount === undefined && value.targetAmount !== undefined) {
+      value.amount = value.targetAmount;
+      delete value.targetAmount;
     }
 
     if (value.amount === undefined) {
