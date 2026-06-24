@@ -279,15 +279,13 @@ exports.createPlanValidator = (req, res, next) => {
       "any.required": "Title is required",
     }),
 
-    targetAmount: joi.number().min(1).optional().messages({
+    targetAmount: joi.number().optional().messages({
       "number.base": "target Amount must be a number",
-      "number.min": "target Amount must be greater than 0",
       "any.required": "target Amount is required",
     }),
 
-    amount: joi.number().min(1).optional().messages({
+    amount: joi.number().optional().messages({
       "number.base": "Amount must be a number",
-      "number.min": "Amount must be greater than 0",
     }),
 
     planType: joi.string().uppercase().valid("FLEXIBLE", "LOCKED", "STEALTH").required().messages({
