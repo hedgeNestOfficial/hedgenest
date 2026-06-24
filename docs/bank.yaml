@@ -18,15 +18,11 @@ paths:
               type: object
               required:
                 - bankName
-                - accountName
                 - accountNumber
               properties:
                 bankName: 
                   type: string
                   example: sterling
-                accountName: 
-                  type: string
-                  example: John Doe
                 accountNumber:
                   type: string
                   example: 9123458632
