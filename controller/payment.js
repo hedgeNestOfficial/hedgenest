@@ -332,30 +332,3 @@ exports.payoutFunds = async (req, res) => {
         });
     }
 };
-
-// if (event === 'charge.success') {
-
-//     if (payment.status !== 'success') {
-
-//         payment.status = 'success';
-
-//         wallet.availableBalance += payment.amount;
-
-//         await transactionModel.create({
-//             userId: payment.userId,
-//             transactionType: 'deposit',
-//             amount: payment.amount,
-//             reference: payment.reference,
-//             status: 'success'
-//         });
-
-//         await wallet.save();
-//         await payment.save();
-//     }
-// }
-
-   // const transaction = await transactionModel.create({
-        //     userId: user._id,
-        //     transactionType: type,
-        //     amount,
-        // })

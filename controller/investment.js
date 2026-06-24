@@ -245,6 +245,11 @@ exports.claimInvestment = async (req, res) => {
 
         investment.status = 'claimed';
 
+        investment.claimedAt = new Date();
+        
+        investment.deleteAt = new Date(Date.now() + (60 * 60 * 1000)
+    );
+
         await wallet.save();
         await investment.save();
 
