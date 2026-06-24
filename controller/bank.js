@@ -19,7 +19,7 @@ exports.linkBank = async (req, res) => {
       userId: user._id,
       currency: "NGN",
       bankName,
-      accountName,
+      // accountName,
       accountNumber
     });
 
