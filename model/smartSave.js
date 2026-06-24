@@ -36,18 +36,13 @@ const smartSaveSchema = new mongoose.Schema(
     amountPerFrequency: {
       type: Number,
       default: null,  
-},
+    },
 
     savingFrequency: {
       type: String,
       enum: ["DAILY", "WEEKLY", "MONTHLY"],
       default: null,
       uppercase: true,
-    },
-
-    autoSave: {
-      type: Boolean,
-      default: false,
     },
 
     duration: {
@@ -72,6 +67,11 @@ const smartSaveSchema = new mongoose.Schema(
     },
 
     taxAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    interestAfterTax: {
       type: Number,
       default: 0,
     },
@@ -109,16 +109,6 @@ const smartSaveSchema = new mongoose.Schema(
       default: null,
     },
 
-    lastAutoSaveDate: {
-      type: Date,
-      default: null,
-    },
-
-    nextAutoSaveDate: {
-      type: Date,
-      default: null,
-    },
-
     status: {
       type: String,
       enum: ["ACTIVE", "COMPLETED", "CANCELLED"],
@@ -144,97 +134,177 @@ async function getPercentageForDuration(planType, duration) {
   return percentDoc.rates;
 }
 
-// ---- Helper: shared interest/tax math, reused by any type that locks funds ----
-function computeInterestBreakdown({ principal, percentage, duration }) {
-  const interestBeforeTax = principal * (percentage / 100) * (duration / 365);
-  const taxAmount = interestBeforeTax * 0.1; // 10% withholding tax
-  const totalPayback = principal + (interestBeforeTax - taxAmount);
+// ---- Shared Interest Calculator ----
+function calculateReturns({
+  principal,
+  interestRate,
+  duration,
+  withholdingTax = 10,
+}) {
+  const interestBeforeTax =
+    (principal * interestRate * duration) /
+    (100 * 365);
 
-  return { interestBeforeTax, taxAmount, totalPayback };
+  const taxAmount =
+    interestBeforeTax * (withholdingTax / 100);
+
+  const interestAfterTax =
+    interestBeforeTax - taxAmount;
+
+  const totalPayback =
+    principal + interestAfterTax;
+
+  return {
+    interestBeforeTax: Number(
+      interestBeforeTax.toFixed(2)
+    ),
+
+    taxAmount: Number(
+      taxAmount.toFixed(2)
+    ),
+
+    interestAfterTax: Number(
+      interestAfterTax.toFixed(2)
+    ),
+
+    totalPayback: Number(
+      totalPayback.toFixed(2)
+    ),
+  };
 }
 
 // ---- Per-plan-type calculators ----
 const planCalculators = {
   async FLEXIBLE(plan) {
-    // No lock-in, no fixed maturity. Flat interest rate, no breaking fee.
-    plan.interestRate = plan.interestRate || 10;
+    plan.interestRate = 10;
     plan.canBreak = true;
     plan.breakingFeePercentage = 0;
     plan.maturityDate = null;
-
-    // Interest accrues on whatever is currently saved, not the target
-    const { interestBeforeTax, taxAmount, totalPayback } =
-      computeInterestBreakdown({
-        principal: plan.currentBalance || 0,
-        percentage: plan.interestRate,
-        duration: plan.duration || 0,
-      });
-
-    plan.interestBeforeTax = interestBeforeTax;
-    plan.taxAmount = interestBeforeTax > 0 ? taxAmount : 0;
     plan.withholdingTax = 10;
-    plan.totalPayback = totalPayback;
+
+    const principal = Number(
+      plan.currentBalance || 0
+    );
+
+    const frequencyDays = {
+      DAILY: 1,
+      WEEKLY: 7,
+      MONTHLY: 30,
+    };
+
+    const duration =
+      frequencyDays[plan.savingFrequency] || 30;
+
+    const result = calculateReturns({
+      principal,
+      interestRate: 10,
+      duration,
+    });
+
+    plan.interestBeforeTax =
+      result.interestBeforeTax;
+
+    plan.taxAmount =
+      result.taxAmount;
+
+    plan.interestAfterTax =
+      result.interestAfterTax;
+
+    plan.totalPayback =
+      result.totalPayback;
   },
 
   async LOCKED(plan) {
     plan.canBreak = true;
     plan.breakingFeePercentage = 1.5;
+    plan.withholdingTax = 10;
 
-    if (plan.duration) {
-      const percentage = await getPercentageForDuration(
+    if (!plan.duration) return;
+
+    const percentage =
+      await getPercentageForDuration(
         plan.planType,
-        plan.duration,
+        plan.duration
       );
-      plan.interestRate = percentage;
 
-      const { interestBeforeTax, taxAmount, totalPayback } =
-        computeInterestBreakdown({
-          principal: plan.amount,
-          percentage,
-          duration: plan.duration,
-        });
+    plan.interestRate = percentage;
 
-      plan.interestBeforeTax = Math.floor(interestBeforeTax);
-      plan.taxAmount = Math.floor(taxAmount);
-      plan.withholdingTax = 10;
-      plan.totalPayback = Math.floor(totalPayback);
+    const result = calculateReturns({
+      principal: Number(plan.amount),
+      interestRate: percentage,
+      duration: Number(plan.duration),
+    });
 
-      if (!plan.maturityDate) {
-        const maturity = new Date(plan.startDate);
-        maturity.setDate(maturity.getDate() + plan.duration);
-        plan.maturityDate = maturity;
-      }
+    plan.interestBeforeTax =
+      result.interestBeforeTax;
+
+    plan.taxAmount =
+      result.taxAmount;
+
+    plan.interestAfterTax =
+      result.interestAfterTax;
+
+    plan.totalPayback =
+      result.totalPayback;
+
+    if (!plan.maturityDate) {
+      const maturity = new Date(
+        plan.startDate
+      );
+
+      maturity.setDate(
+        maturity.getDate() +
+          Number(plan.duration)
+      );
+
+      plan.maturityDate = maturity;
     }
   },
 
   async STEALTH(plan) {
     plan.canBreak = false;
-    plan.breakingFeePercentage = 0; // not applicable, can't break anyway
+    plan.breakingFeePercentage = 0;
+    plan.withholdingTax = 10;
 
-    if (plan.duration) {
-      const percentage = await getPercentageForDuration(
+    if (!plan.duration) return;
+
+    const percentage =
+      await getPercentageForDuration(
         plan.planType,
-        plan.duration,
+        plan.duration
       );
-      plan.interestRate = percentage;
 
-      const { interestBeforeTax, taxAmount, totalPayback } =
-        computeInterestBreakdown({
-          principal: plan.amount,
-          percentage,
-          duration: plan.duration,
-        });
+    plan.interestRate = percentage;
 
-      plan.interestBeforeTax = Math.floor(interestBeforeTax);
-      plan.taxAmount = Math.floor(taxAmount);
-      plan.withholdingTax = 10;
-      plan.totalPayback = Math.floor(totalPayback);
+    const result = calculateReturns({
+      principal: Number(plan.amount),
+      interestRate: percentage,
+      duration: Number(plan.duration),
+    });
 
-      if (!plan.maturityDate) {
-        const maturity = new Date(plan.startDate);
-        maturity.setDate(maturity.getDate() + plan.duration);
-        plan.maturityDate = maturity;
-      }
+    plan.interestBeforeTax =
+      result.interestBeforeTax;
+
+    plan.taxAmount =
+      result.taxAmount;
+
+    plan.interestAfterTax =
+      result.interestAfterTax;
+
+    plan.totalPayback =
+      result.totalPayback;
+
+    if (!plan.maturityDate) {
+      const maturity = new Date(
+        plan.startDate
+      );
+
+      maturity.setDate(
+        maturity.getDate() +
+          Number(plan.duration)
+      );
+
+      plan.maturityDate = maturity;
     }
   },
 };
