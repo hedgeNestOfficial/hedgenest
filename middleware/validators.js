@@ -278,13 +278,13 @@ exports.createPlanValidator = (req, res, next) => {
       "any.required": "Title is required",
     }),
 
-    targetAmount: joi.number().min(100).optional().messages({
+    targetAmount: joi.number().optional().messages({
       "number.base": "target Amount must be a number",
       "number.min": "target Amount must be greater than 100",
       "any.required": " target Amount is required",
     }),
 
-    amount: joi.number().min(100).optional().messages({
+    amount: joi.number().optional().messages({
       "number.base": "Amount must be a number",
       "number.min": "Amount must be greater than 100",
     }),
@@ -326,12 +326,12 @@ exports.createPlanValidator = (req, res, next) => {
       is: joi.string().valid("FLEXIBLE"),
       then: joi.when("autoSave", {
         is: true,
-        then: joi.number().min(100).required().messages({
+        then: joi.number().required().messages({
           "number.base": "Amount per frequency must be a number",
           "number.min": "Amount per frequency must be greater than 100",
           "any.required": "Amount per frequency is required for FLEXIBLE plans",
         }),
-        otherwise: joi.number().min(100).optional().messages({
+        otherwise: joi.number().optional().messages({
           "number.base": "Amount per frequency must be a number",
           "number.min": "Amount per frequency must be greater than 100",
         }),
