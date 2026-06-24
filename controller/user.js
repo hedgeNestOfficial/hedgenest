@@ -434,9 +434,12 @@ exports.update = async (req, res) => {
       fs.unlinkSync(file.path);
     }
     
-    const updateData = {
-      phoneNumber
-    };
+    const updateData = {};
+
+    if (phoneNumber !== undefined && phoneNumber !== null &&
+phoneNumber.trim() !== "") {
+      updateData.phoneNumber = phoneNumber.trim();
+    }
 
     if (uploadResult) {
       updateData.profilePicture = {
@@ -750,3 +753,4 @@ exports.resetTransactionPin = async (req, res) => {
     });
   }
 };
+
