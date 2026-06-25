@@ -176,9 +176,9 @@ exports.login = async (req, res) => {
     if (!user.isVerified) {
       return res.status(400).json({
         message: "Please verify your email",
+        isVerified: user.isVerified
       });
     }
-
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.SECRET_KEY,
@@ -190,7 +190,7 @@ exports.login = async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       phoneNumber: user.phoneNumber,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
     }
 
     return res.status(200).json({
