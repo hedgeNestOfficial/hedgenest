@@ -293,10 +293,6 @@ exports.createPlanValidator = (req, res, next) => {
       "any.required": "Plan type is required",
     }),
 
-    autoSave: joi.boolean().optional().messages({
-      "boolean.base": "Auto save must be true or false",
-    }),
-
     duration: joi.when("planType", {
       is: joi.string().valid("LOCKED", "STEALTH"),
       then: joi.number().min(1).required().messages({
@@ -309,30 +305,17 @@ exports.createPlanValidator = (req, res, next) => {
 
     savingFrequency: joi.when("planType", {
         is: joi.string().valid("FLEXIBLE"),
-        then: joi.when("autoSave", {
-          is: true,
-          then: joi.string().valid("DAILY", "WEEKLY", "MONTHLY").required().messages({
-                "string.base": "Saving frequency must be a string",
-                "any.only": "Saving frequency must be one of DAILY, WEEKLY, or MONTHLY",
-                "any.required": "Saving frequency is required for FLEXIBLE plans",
-          }),
-          otherwise: joi.string().valid("DAILY", "WEEKLY", "MONTHLY").optional(),
+        then: joi.string().valid("DAILY", "WEEKLY", "MONTHLY").optional().messages({
+          "string.base": "Saving frequency must be a string",
+          "any.only": "Saving frequency must be one of DAILY, WEEKLY, or MONTHLY",
         }),
         otherwise: joi.optional(),
 }),
     amountPerFrequency: joi.when("planType", {
       is: joi.string().valid("FLEXIBLE"),
-      then: joi.when("autoSave", {
-        is: true,
-        then: joi.number().required().messages({
-          "number.base": "Amount per frequency must be a number",
-          "number.min": "Amount per frequency must be greater than 100",
-          "any.required": "Amount per frequency is required for FLEXIBLE plans",
-        }),
-        otherwise: joi.number().optional().messages({
-          "number.base": "Amount per frequency must be a number",
-          "number.min": "Amount per frequency must be greater than 100",
-        }),
+      then: joi.number().optional().messages({
+        "number.base": "Amount per frequency must be a number",
+        "number.min": "Amount per frequency must be greater than 100",
       }),
       otherwise: joi.optional(),
     }),
