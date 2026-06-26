@@ -30,7 +30,12 @@ exports.previewPlan = async (req, res) => {
     } = req.body;
 
     const normalizedPlanType = planType?.toUpperCase();
-    const previewAmount = Number(targetAmount ?? amount);
+
+    const previewAmount = Number(
+      normalizedPlanType === "FLEXIBLE"
+        ? targetAmount ?? amount
+        : amount ?? targetAmount,
+    );
 
     if (!title) {
       return res.status(400).json({ message: "Title is required" });
@@ -43,6 +48,19 @@ exports.previewPlan = async (req, res) => {
       return res.status(400).json({
         message: "Valid planType is required (FLEXIBLE, LOCKED, STEALTH)",
       });
+    }
+
+    if (Number.isNaN(previewAmount) || previewAmount <= 0) {
+      return res.status(400).json({ message: "Enter a valid amount" });
+    }
+
+    if (normalizedPlanType === "FLEXIBLE") {
+      if (!amountPerFrequency || Number(amountPerFrequency) <= 0) {
+        return res.status(400).json({ message: "amountPerFrequency is required for FLEXIBLE plans" });
+      }
+      if (!savingFrequency || !["DAILY", "WEEKLY", "MONTHLY"].includes(savingFrequency.toUpperCase())) {
+        return res.status(400).json({ message: "Valid savingFrequency is required for FLEXIBLE plans (DAILY, WEEKLY, MONTHLY)" });
+      }
     }
 
     let interestRate = 10;
@@ -134,13 +152,12 @@ exports.previewPlan = async (req, res) => {
       success: true,
       data: {
         title,
-        amount: previewAmount,
-        targetAmount:
-          normalizedPlanType === "FLEXIBLE" ? previewAmount : undefined,
+        amount: normalizedPlanType === "FLEXIBLE" ? Number(amountPerFrequency) : previewAmount,
+        targetAmount: previewAmount,
         planType: normalizedPlanType,
-        duration,
-        savingFrequency,
-        amountPerFrequency,
+        duration: duration ?? null,
+        savingFrequency: savingFrequency ?? null,
+        amountPerFrequency: normalizedPlanType === "FLEXIBLE" ? Number(amountPerFrequency) : null,
         interestRate,
         canBreak,
         breakingFeePercentage,
@@ -152,8 +169,8 @@ exports.previewPlan = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ 
-      message: error.message 
+    return res.status(500).json({
+      message: error.message,
     });
   }
 };
@@ -203,19 +220,30 @@ exports.createPlan = async (req, res) => {
       }
     }
 
-    const requestedAmount = Number(
-      req.body.amount ?? req.body.targetAmount ?? amountPerFrequency,
+    const debitAmount = Number(
+      normalizedPlanType === "FLEXIBLE"
+        ? amountPerFrequency
+        : req.body.amount ?? req.body.targetAmount,
     );
+
+    // ✅ savingsGoal: full target — used as interest calculation base (matches preview)
     const savingsGoal = Number(
-      req.body.targetAmount ?? req.body.amount ?? amountPerFrequency,
+      normalizedPlanType === "FLEXIBLE"
+        ? req.body.targetAmount ?? req.body.amount
+        : req.body.amount ?? req.body.targetAmount,
     );
 
-    // LOCKED/STEALTH: deduct full amount
-
-    if (Number.isNaN(requestedAmount) || requestedAmount <= 0) {
+    if (Number.isNaN(debitAmount) || debitAmount <= 0) {
       return res.status(400).json({
         success: false,
         message: "Enter a valid amount",
+      });
+    }
+
+    if (Number.isNaN(savingsGoal) || savingsGoal <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid target amount",
       });
     }
 
@@ -246,16 +274,7 @@ exports.createPlan = async (req, res) => {
       });
     }
 
-    const debitAmount = requestedAmount;
-
     const currentBalance = Number(wallet.availableBalance);
-
-    if (Number.isNaN(debitAmount) || debitAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Enter a valid amount",
-      });
-    }
 
     if (Number.isNaN(currentBalance)) {
       return res.status(500).json({
@@ -276,7 +295,7 @@ exports.createPlan = async (req, res) => {
     const plan = new smartSaveModel({
       userId: req.user.id,
       title,
-      amount: requestedAmount, // ✅ actual deposit
+      amount: savingsGoal,
       targetAmount: savingsGoal,
       currentBalance: debitAmount,
       planType: normalizedPlanType,
