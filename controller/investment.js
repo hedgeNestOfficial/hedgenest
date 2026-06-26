@@ -19,12 +19,6 @@ exports.createInvestment = async (req, res) => {
             })
         }
 
-        if (!transactionPin) {
-            return res.status(400).json({
-                message: "Transaction pin is required",
-            });
-        }
-
         const isCorrectPin = await bcrypt.compare(
             transactionPin,
             user.transactionPin,
