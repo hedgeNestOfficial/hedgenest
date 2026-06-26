@@ -42,7 +42,6 @@ const investmentSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
-
     deleteAt: {
         type: Date,
         default: null,

@@ -179,6 +179,12 @@ exports.login = async (req, res) => {
         isVerified: user.isVerified
       });
     }
+    if (!user.createdAlready) {
+      return res.status(400).json({
+        message: "Please create your transaction pin",
+        createdAlready: user.createdAlready
+      });
+    }
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.SECRET_KEY,
@@ -191,6 +197,8 @@ exports.login = async (req, res) => {
       email: user.email,
       phoneNumber: user.phoneNumber,
       profilePicture: user.profilePicture,
+      isVerified: user.isVerified,
+      createdAlready: user.createdAlready
     }
 
     return res.status(200).json({
