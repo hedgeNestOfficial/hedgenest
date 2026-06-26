@@ -363,12 +363,11 @@ exports.createPlanValidator = (req, res, next) => {
 
     if (
       value.savingFrequency !== undefined ||
-      value.amountPerFrequency !== undefined ||
-      value.autoSave !== undefined
+      value.amountPerFrequency !== undefined
     ) {
       return res.status(400).json({
         success: false,
-        message: "LOCKED and STEALTH plans do not use savingFrequency, amountPerFrequency, or autoSave",
+        message: "LOCKED and STEALTH plans do not use savingFrequency or amountPerFrequency",
       });
     }
   }
