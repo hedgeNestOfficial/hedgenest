@@ -24,6 +24,11 @@ exports.initiatePayment = async(req, res) =>{
                 message: "Enter a valid deposit amount, the minimum amount to deposit is 1500"
             });
         }
+        if(amount > 1000000){
+            return res.status(400).json({
+                message: "The maximum to deposit at a time is 1m, kindly initiate another payment to deposit again"
+            });
+        }
         const depositAmount = Number(amount)
 
         const user = await userModel.findById(userId)

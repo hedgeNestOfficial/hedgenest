@@ -23,10 +23,13 @@ const kycSchema = new mongoose.Schema(
       enum: ['nin'],
       lowercase: true,
     },
-    isVerified: {
+    isVerified1: {
       type: Boolean,
       default: false
-
+    },
+    isVerified2: {
+      type: Boolean,
+      default: false
     },
     utilityBill: {
       url: {
