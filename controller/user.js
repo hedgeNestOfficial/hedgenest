@@ -11,6 +11,7 @@ const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const transactionModel = require("../model/transaction");
 const bankModel = require('../model/bank');
+const kycModel = require("../model/kyc");
 
 exports.createUser = async (req, res) => {
   try {
@@ -179,17 +180,13 @@ exports.login = async (req, res) => {
         isVerified: user.isVerified
       });
     }
-    if (!user.createdAlready) {
-      return res.status(400).json({
-        message: "Please create your transaction pin",
-        createdAlready: user.createdAlready
-      });
-    }
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.SECRET_KEY,
       { expiresIn: "1d" },
     );
+
+    const kyc = await kycModel.findOne({ userId: user._id }) || {};
 
     const data = {
       firstName: user.firstName,
@@ -198,7 +195,9 @@ exports.login = async (req, res) => {
       phoneNumber: user.phoneNumber,
       profilePicture: user.profilePicture,
       isVerified: user.isVerified,
-      createdAlready: user.createdAlready
+      createdAlready: user.createdAlready,
+      isVerified1: kyc.isVerified1 || false,
+      isVerified2: kyc.isVerified2 || false,
     }
 
     return res.status(200).json({
@@ -520,6 +519,33 @@ exports.changePin = async (req, res) => {
       return res.status(404).json({
         status: false,
         message: "User not found",
+      });
+    }
+
+    const isOldPinCorrect = await bcrypt.compare(
+      oldTransactionPin,
+      user.transactionPin
+    );
+    if (!isOldPinCorrect) {
+      return res.status(400).json({
+        status: false,
+        message: "Old transaction PIN is incorrect"
+      });
+    }
+    if (newTransactionPin !== confirmTransactionPin) {
+      return res.status(400).json({
+        status: false,
+        message: "New PIN and confirm PIN do not match"
+      });
+    }
+    const isSamePin = await bcrypt.compare(
+      newTransactionPin,
+      user.transactionPin
+    );
+    if (isSamePin) {
+      return res.status(400).json({
+        status: false,
+        message: "New PIN must be different from the current PIN"
       });
     }
 
