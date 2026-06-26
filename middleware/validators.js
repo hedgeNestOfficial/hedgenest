@@ -210,9 +210,7 @@ exports.resendOtpValidator = (req, res, next) => {
 
 exports.updateValidator = (req,res,next)=>{
     const schema = joi.object({
-        phoneNumber: joi.string().pattern(/^\d{11}$/).required().messages({
-			'any required':'Phone number is required',
-			'string.empty':'Phone number cannot be empty',
+        phoneNumber: joi.string().pattern(/^\d{11}$/).messages({
 			'string.pattern.base':'Phone number must contain only 11 digits'
 		}),
     })

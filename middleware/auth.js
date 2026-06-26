@@ -14,7 +14,7 @@ const Authentication = async (req, res, next)=>{
             if(err){
                 console.log(err.message)
                 return res.status(500).json({
-                    message:'Token validation failed'
+                    message:'Session expired: please login to continue'
                 })
             }
             req.user = data
@@ -22,10 +22,8 @@ const Authentication = async (req, res, next)=>{
 
         })
     } catch (error) {
-        console.log(error)
-        res.status(500).json({
-            message: error.message
-        })
+        console.log(error.message)
+        next(error)
     }
 }
 const adminAuth = (req, res,next)=>{

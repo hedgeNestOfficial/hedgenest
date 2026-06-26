@@ -8,7 +8,7 @@ const { date } = require('joi');
 
 exports.createInvestment = async (req, res) => {
     try {
-        const { investmentPlanId, amount } = req.body;
+        const { investmentPlanId, amount, transactionPin } = req.body;
         const userId = req.user.id;
 
         const user = await userModel.findById(userId)
@@ -18,6 +18,23 @@ exports.createInvestment = async (req, res) => {
                 message: 'User not found'
             })
         }
+
+        if (!transactionPin) {
+            return res.status(400).json({
+                message: "Transaction pin is required",
+            });
+        }
+
+        const isCorrectPin = await bcrypt.compare(
+            transactionPin,
+            user.transactionPin,
+        );
+        if (!isCorrectPin) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid transaction pin",
+              });
+            }
 
         const wallet = await walletModel.findOne({ userId: user._id })
         if (!wallet) {
