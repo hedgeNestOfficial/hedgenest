@@ -19,17 +19,6 @@ exports.createInvestment = async (req, res) => {
             })
         }
 
-        const isCorrectPin = await bcrypt.compare(
-            transactionPin,
-            user.transactionPin,
-        );
-        if (!isCorrectPin) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid transaction pin",
-              });
-            }
-
         const wallet = await walletModel.findOne({ userId: user._id })
         if (!wallet) {
             return res.status(404).json({
