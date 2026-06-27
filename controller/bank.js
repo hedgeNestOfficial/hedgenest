@@ -5,7 +5,7 @@ const bankModel = require('../model/bank');
 exports.linkBank = async (req, res) => {
   try {
     const { id } = req.user
-    const { bankName, accountName, accountNumber } = req.body;
+    const { bankName, accountNumber } = req.body;
     const user = await userModel.findById(id)
 
     if (!user) {
@@ -19,7 +19,7 @@ exports.linkBank = async (req, res) => {
       userId: user._id,
       currency: "NGN",
       bankName,
-      accountName,
+      // accountName,
       accountNumber
     });
 

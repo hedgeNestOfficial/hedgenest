@@ -9,6 +9,7 @@ const crypto = require('crypto')
 const payoutModel = require('../model/payout')
 const bankModel = require('../model/bank')
 const revenueModel = require('../model/revenue')
+const { type } = require('os')
 
 
 
@@ -21,6 +22,11 @@ exports.initiatePayment = async(req, res) =>{
         if(!amount || Number(amount) <= 1499 || amount == undefined || amount == null){
             return res.status(400).json({
                 message: "Enter a valid deposit amount, the minimum amount to deposit is 1500"
+            });
+        }
+        if(amount > 1000000){
+            return res.status(400).json({
+                message: "The maximum to deposit at a time is 1m, kindly initiate another payment to deposit again"
             });
         }
         const depositAmount = Number(amount)
@@ -64,11 +70,7 @@ exports.initiatePayment = async(req, res) =>{
             userId,
             status: 'processing' 
         })
-        const transaction = await transactionModel.create({
-            userId: user._id,
-            transactionType: type,
-            amount,
-        })
+    
         await payment.save()
         res.status(200).json({
             message: 'Payment initialized successful',
@@ -188,6 +190,14 @@ exports.verifyWebhook = async (req, res, next) => {
         } else if (event === 'charge.abandoned'){
             payment.status = 'abandoned'
         }
+
+        const transaction = await transactionModel.create({
+            userId: payment.userId,
+            transactionType: 'deposit',
+            amount: payment.amount,
+            status: 'success',
+            reference: payment.reference
+        })
         
         await wallet.save();
         await payment.save();
@@ -327,5 +337,3 @@ exports.payoutFunds = async (req, res) => {
         });
     }
 };
-
-

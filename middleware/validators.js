@@ -175,12 +175,7 @@ exports.bankDetailsValidator = (req, res, next) => {
             'string.empty': 'Bank name is required',
             'any.required': 'Bank name is required'
        }),
-       accountName: joi.string().pattern(/^[A-Za-z]+$/).required().messages({
-        'string.empty': 'Account name is required',
-        'any.required': 'Account name is required',
-        'string.pattern.base': 'Account name must contain only letters'
-    }),
-  });
+    });
     const { error } = schema.validate(req.body);
 
     if (error) {
@@ -193,7 +188,11 @@ exports.bankDetailsValidator = (req, res, next) => {
 exports.resendOtpValidator = (req, res, next) => {
     const schema = joi.object({
         email: joi.string().email() .required().messages({
-            'string.email': 'Please enter a valid email address',
+            'string.email': 'Please enter a valid email address',accountName: joi.string().pattern(/^[A-Za-z]+$/).required().messages({
+        'string.empty': 'Account name is required',
+        'any.required': 'Account name is required',
+        'string.pattern.base': 'Account name must contain only letters'
+    }),
             'string.empty': 'Email cannot be empty',
             'any.required': 'Email is required'
        }) 
@@ -211,9 +210,7 @@ exports.resendOtpValidator = (req, res, next) => {
 
 exports.updateValidator = (req,res,next)=>{
     const schema = joi.object({
-        phoneNumber: joi.string().pattern(/^\d{11}$/).required().messages({
-			'any required':'Phone number is required',
-			'string.empty':'Phone number cannot be empty',
+        phoneNumber: joi.string().pattern(/^\d{11}$/).messages({
 			'string.pattern.base':'Phone number must contain only 11 digits'
 		}),
     })

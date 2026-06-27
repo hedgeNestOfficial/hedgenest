@@ -11,11 +11,14 @@ exports.liveRate = async(req, res) =>{
         const { data } = await axios.get(
             "https://app.quidax.io/api/v1/markets/tickers/usdtngn"
         );
+
+        usdtRate = Number(data.data.ticker.buy)
         rate = Number(data.data.ticker.buy) + 50;
 
         res.status(200).json({
             success: true,
-            rate
+            rate,
+            usdtRate
         });
     } catch (error) {
         console.error(error)
