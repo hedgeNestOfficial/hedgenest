@@ -19,7 +19,7 @@ return `
             </div>
             <div class="upper-div-3">
                 <p>If you are having any issues with your account, please don't hesitate to contact us.</p>
-                <p>Enjoy the fastest & most secure way to buy Airtime, Mobile Data & to pay Bills.</p>
+                <p>Enjoy the smartest way to protect your money from inflation, save consistently and access beginner-friendly investments; all in one place!</p>
             </div>
         </div>
         <div class="downer-div">
