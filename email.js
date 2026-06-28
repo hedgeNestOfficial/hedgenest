@@ -171,7 +171,7 @@ exports.resetPasswordSuccessfulTemplate = (name)=> {
                         <tr>
                             <td class="content" style="padding: 40px; text-align: center; color: #333333;">
                                 <!-- Success Icon (Simple Circle Check) -->
-                                <div style="margin-bottom: 20px; font-size: 50px; color: #077b24;">✓</div>
+                                <div style="margin-bottom: 20px; font-size: 50px; color: #dde400;">✓</div>
                                 
                                 <h2 style="margin: 0 0 15px; font-size: 22px; font-weight: 700; color: #1a1a1a;">Password Reset Successful</h2>
                                 <p style="font-size: 16px; line-height: 1.5; margin: 0 0 30px; color: #666666;">
