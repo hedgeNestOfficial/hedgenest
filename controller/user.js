@@ -11,6 +11,7 @@ const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const transactionModel = require("../model/transaction");
 const bankModel = require('../model/bank');
+const kycModel = require("../model/kyc");
 
 exports.createUser = async (req, res) => {
   try {
@@ -185,12 +186,18 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" },
     );
 
+    const kyc = await kycModel.findOne({ userId: user._id }) || {};
+
     const data = {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       phoneNumber: user.phoneNumber,
       profilePicture: user.profilePicture,
+      isVerified: user.isVerified,
+      createdAlready: user.createdAlready,
+      isVerified1: kyc.isVerified1 || false,
+      isVerified2: kyc.isVerified2 || false,
     }
 
     return res.status(200).json({
@@ -434,9 +441,12 @@ exports.update = async (req, res) => {
       fs.unlinkSync(file.path);
     }
     
-    const updateData = {
-      phoneNumber
-    };
+    const updateData = {};
+
+    if (phoneNumber !== undefined && phoneNumber !== null &&
+phoneNumber.trim() !== "") {
+      updateData.phoneNumber = phoneNumber.trim();
+    }
 
     if (uploadResult) {
       updateData.profilePicture = {
@@ -509,6 +519,33 @@ exports.changePin = async (req, res) => {
       return res.status(404).json({
         status: false,
         message: "User not found",
+      });
+    }
+
+    const isOldPinCorrect = await bcrypt.compare(
+      oldTransactionPin,
+      user.transactionPin
+    );
+    if (!isOldPinCorrect) {
+      return res.status(400).json({
+        status: false,
+        message: "Old transaction PIN is incorrect"
+      });
+    }
+    if (newTransactionPin !== confirmTransactionPin) {
+      return res.status(400).json({
+        status: false,
+        message: "New PIN and confirm PIN do not match"
+      });
+    }
+    const isSamePin = await bcrypt.compare(
+      newTransactionPin,
+      user.transactionPin
+    );
+    if (isSamePin) {
+      return res.status(400).json({
+        status: false,
+        message: "New PIN must be different from the current PIN"
       });
     }
 
@@ -750,3 +787,4 @@ exports.resetTransactionPin = async (req, res) => {
     });
   }
 };
+

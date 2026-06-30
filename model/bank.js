@@ -16,11 +16,6 @@ const bankSchema = new mongoose.Schema(
       required: true,
       uppercase: true
     },
-    accountName: {
-      type: String,
-      required: true,
-      uppercase: true
-    },
     accountNumber: {
       type: String,
       required: true

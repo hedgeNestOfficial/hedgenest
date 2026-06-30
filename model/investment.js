@@ -37,6 +37,15 @@ const investmentSchema = new mongoose.Schema({
     terminatedAt: {
         type: Date,
         default: null
+    },
+    claimedAt:  {
+        type: Date,
+        default: null
+    },
+    deleteAt: {
+        type: Date,
+        default: null,
+        index: { expires: 0 }
     }
 }, {
     timestamps: true

@@ -8,7 +8,7 @@ const { date } = require('joi');
 
 exports.createInvestment = async (req, res) => {
     try {
-        const { investmentPlanId, amount } = req.body;
+        const { investmentPlanId, amount, transactionPin } = req.body;
         const userId = req.user.id;
 
         const user = await userModel.findById(userId)
@@ -244,6 +244,11 @@ exports.claimInvestment = async (req, res) => {
         wallet.availableBalance += investment.expectedReturn;
 
         investment.status = 'claimed';
+
+        investment.claimedAt = new Date();
+        
+        investment.deleteAt = new Date(Date.now() + (60 * 60 * 1000)
+    );
 
         await wallet.save();
         await investment.save();

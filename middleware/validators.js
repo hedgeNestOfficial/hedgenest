@@ -271,14 +271,15 @@ exports.bankDetailsValidator = (req, res, next) => {
   next();
 };
 exports.resendOtpValidator = (req, res, next) => {
-  const schema = joi.object({
-    email: joi.string().email().required().messages({
-      "string.email": "Please enter a valid email address",
-      "string.empty": "Email cannot be empty",
-      "any.required": "Email is required",
-    }),
-  });
-  const { error } = schema.validate(req.body);
+    const schema = joi.object({
+        email: joi.string().email() .required().messages({
+            'string.email': 'Please enter a valid email address',
+            'string.empty': 'Email cannot be empty',
+            'any.required': 'Email is required'
+       }) 
+    
+   })
+    const { error } = schema.validate(req.body);
 
   if (error) {
     return res.status(400).json({
@@ -288,19 +289,15 @@ exports.resendOtpValidator = (req, res, next) => {
   next();
 };
 
-exports.updateValidator = (req, res, next) => {
-  const schema = joi.object({
-    phoneNumber: joi
-      .string()
-      .pattern(/^\d{11}$/)
-      .required()
-      .messages({
-        "any required": "Phone number is required",
-        "string.empty": "Phone number cannot be empty",
-        "string.pattern.base": "Phone number must contain only 11 digits",
-      }),
-  });
-  const { error } = schema.validate(req.body);
+exports.updateValidator = (req,res,next)=>{
+    const schema = joi.object({
+        phoneNumber: joi.string().pattern(/^\d{11}$/).required().messages({
+			'any required':'Phone number is required',
+			'string.empty':'Phone number cannot be empty',
+			'string.pattern.base':'Phone number must contain only 11 digits'
+		}),
+    })
+    const { error } = schema.validate(req.body);
 
   if (error) {
     return res.status(400).json({
@@ -599,7 +596,7 @@ exports.breakInvestmentValidator = (req, res, next) => {
     }),
   });
 
-  const { error } = schema.validate(req.body);
+  const { error } = schema.validate(req.params);
 
   if (error) {
     return res.status(400).json({

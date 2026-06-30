@@ -34,7 +34,7 @@ exports.kyc1Verification = async (req, res) => {
 
   const existingKyc = await kycModel.findOne({
     userId: user._id,
-    isVerified: true
+    isVerified1: true
   });
   
   if (existingKyc) {
@@ -82,14 +82,17 @@ exports.kyc1Verification = async (req, res) => {
             });
           }
           
-          kyc.isVerified = true;
+          kyc.isVerified1 = true;
           user.tier = 1
           await user.save();
           await kyc.save()
           res.status(200).json({
             success: true,
             message: data.message,
-            data: data.data
+            data: { 
+              ...data.data.data,
+              isVerified1: kyc.isVerified1
+            }
           });
         }
       } catch (error) {
@@ -151,6 +154,7 @@ exports.uploadUtility = async (req, res) => {
     };
 
     kyc.utilityBill = utilityBill;
+    kyc.isVerified2 = true
     user.tier = 2;
 
     await kyc.save();
@@ -160,7 +164,9 @@ exports.uploadUtility = async (req, res) => {
       status: true,
       message: 'Utility bill uploaded successfully',
       utilityBill: kyc.utilityBill,
-      tier: user.tier
+      tier: user.tier,
+      isVerified2: kyc.isVerified2
+
     })
   } catch (error) {
     deleteTempFile(file);
