@@ -8,18 +8,17 @@ exports.renderWaitlistSuccessPage = ({
   totalWaitlistCount,
   referralCode,
   referralLink,
-  signupBonus = 5000,
-  referralReward = 2000,
+  signupBonus = 0,
+  referralReward = "1 USDT",
 }) => {
-  const formattedBonus = Number(signupBonus).toLocaleString();
-  const formattedReward = Number(referralReward).toLocaleString();
+  const rewardDisplay = typeof referralReward === "number" ? `${referralReward} USDT` : referralReward;
   const formattedTotal = Number(totalWaitlistCount).toLocaleString();
 
   const tweetText = encodeURIComponent(
-    `I just secured spot #${waitlistPosition} on the @HedgeNest waitlist! Join with my link to get a ₦${formattedBonus} bonus: ${referralLink}`
+    `I just secured spot #${waitlistPosition} on the @HedgeNest waitlist! Join with my link for a chance to win 1 USDT: ${referralLink}`
   );
   const whatsappText = encodeURIComponent(
-    `Hey! I just secured spot #${waitlistPosition} on the HedgeNest waitlist. Join with my link to claim your ₦${formattedBonus} bonus: ${referralLink}`
+    `Hey! I just secured spot #${waitlistPosition} on the HedgeNest waitlist. Join with my link for a chance to win 1 USDT: ${referralLink}`
   );
   const telegramText = encodeURIComponent(
     `I secured spot #${waitlistPosition} on the HedgeNest waitlist! Join here: ${referralLink}`
@@ -515,9 +514,9 @@ exports.renderWaitlistSuccessPage = ({
 
       <!-- Share Box -->
       <div class="share-box">
-        <div class="share-title">🚀 Want to move up the waitlist?</div>
+        <div class="share-title">🚀 Want to win 1 USDT & move up the waitlist?</div>
         <p class="share-desc">
-          Share your referral link with friends. For every friend who signs up, you will climb higher on the list and earn <strong>₦${formattedReward}</strong>!
+          Share your referral link with friends. For every friend who signs up using your link, you get an extra raffle entry to win <strong>1 USDT</strong>!
         </p>
 
         <div class="copy-group">

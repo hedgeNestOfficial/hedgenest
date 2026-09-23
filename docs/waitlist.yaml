@@ -32,6 +32,10 @@ paths:
                 amountRange:
                   type: string
                   example: 5000-100000-annually
+                referralCode:
+                  type: string
+                  example: HN-4F8B2C
+                  description: Optional referral code of the user who referred this applicant
       responses:
         "201":
           description: Successfully joined the waitlist and verification email sent
@@ -55,9 +59,6 @@ paths:
                       email:
                         type: string
                         example: adaeze@gmail.com
-                      signupBonus:
-                        type: number
-                        example: 5000
                       referralCode:
                         type: string
                         example: HN-8F2A1C
@@ -66,10 +67,18 @@ paths:
                         example: https://hedge-nest.vercel.app/waitlist?ref=HN-8F2A1C
                       verifyUrl:
                         type: string
-                        example: http://localhost:3333/api/v1/waitlist/verify?token=5b4776d1e4b46277...
+                        example: http://localhost:5173/?token=5b4776d1e4b46277...&email=adaeze%40gmail.com
                       referralReward:
-                        type: number
-                        example: 2000
+                        type: string
+                        example: 1 USDT
+                      referredBy:
+                        type: string
+                        nullable: true
+                        example: 66d892ef51b9e02a1b9134ac
+                      referredByCode:
+                        type: string
+                        nullable: true
+                        example: HN-4F8B2C
                       isVerified:
                         type: boolean
                         example: false
@@ -162,9 +171,6 @@ paths:
                       waitlistPosition:
                         type: number
                         example: 42
-                      signupBonus:
-                        type: number
-                        example: 5000
                       referralCode:
                         type: string
                         example: HN-8F2A1C
@@ -172,8 +178,11 @@ paths:
                         type: string
                         example: https://hedge-nest.vercel.app/waitlist?ref=HN-8F2A1C
                       referralReward:
+                        type: string
+                        example: 1 USDT
+                      referralCount:
                         type: number
-                        example: 2000
+                        example: 0
                       isVerified:
                         type: boolean
                         example: true

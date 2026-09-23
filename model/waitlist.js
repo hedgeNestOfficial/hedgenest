@@ -44,6 +44,16 @@ const waitlistSchema = new mongoose.Schema(
       enum: ALLOWED_AMOUNT_RANGES,
       trim: true,
     },
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "waitlist",
+      default: null,
+    },
+    referredByCode: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     referralCode: {
       type: String,
       required: true,
@@ -52,11 +62,12 @@ const waitlistSchema = new mongoose.Schema(
     },
     signupBonus: {
       type: Number,
-      default: 5000,
+      default: 0,
     },
     referralReward: {
-      type: Number,
-      default: 2000,
+      type: String,
+      default: "1 USDT",
+      trim: true,
     },
     referralCount: {
       type: Number,

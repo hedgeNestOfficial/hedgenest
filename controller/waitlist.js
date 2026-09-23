@@ -24,7 +24,27 @@ const getFrontendUrl = () => {
     process.env.CLIENT_URL ||
     process.env.FRONTEND_URL ||
     "https://hedge-nest.vercel.app"
-  );
+  ).replace(/\/+$/, "");
+};
+
+const getFrontendReferralLink = (referralCode) => {
+  const base = getFrontendUrl();
+  const waitlistPath = base.endsWith("/waitlist") ? base : `${base}/waitlist`;
+  return `${waitlistPath}?ref=${referralCode}`;
+};
+
+const getFrontendVerifyUrl = (token, email) => {
+  const baseUrl = (
+    process.env.FRONTEND_VERIFY_URL ||
+    process.env.FRONTEND_URL ||
+    process.env.CLIENT_URL ||
+    "http://localhost:5173/"
+  ).trim();
+
+  const cleanBase = baseUrl.replace(/\/+$/, "");
+  const urlPath = cleanBase.split("/").length > 3 ? cleanBase : `${cleanBase}/`;
+  const separator = urlPath.includes("?") ? "&" : "?";
+  return `${urlPath}${separator}token=${token}&email=${encodeURIComponent(email)}`;
 };
 
 const generateReferralCode = async () => {
@@ -43,7 +63,7 @@ const generateReferralCode = async () => {
 
 exports.joinWaitlist = async (req, res) => {
   try {
-    const { firstName, lastName, email, amountRange } = req.body;
+    const { firstName, lastName, email, amountRange, referralCode } = req.body;
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -67,9 +87,22 @@ exports.joinWaitlist = async (req, res) => {
       });
     }
 
-    const referralCode = await generateReferralCode();
-    const signupBonus = 5000;
-    const referralReward = 2000;
+    // Connect to referring user if a valid referral code was provided
+    let referredBy = null;
+    let referredByCode = null;
+
+    if (referralCode && typeof referralCode === "string" && referralCode.trim()) {
+      const cleanRefCode = referralCode.trim();
+      const referrer = await waitlistModel.findOne({ referralCode: cleanRefCode });
+      if (referrer) {
+        referredBy = referrer._id;
+        referredByCode = referrer.referralCode;
+      }
+      // If code doesn't match any user, succeeds with null
+    }
+
+    const userReferralCode = await generateReferralCode();
+    const referralReward = "1 USDT";
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -83,8 +116,10 @@ exports.joinWaitlist = async (req, res) => {
       lastName: formattedLastName,
       email: normalizedEmail,
       amountRange,
-      referralCode,
-      signupBonus,
+      referredBy,
+      referredByCode,
+      referralCode: userReferralCode,
+      signupBonus: 0,
       referralReward,
       referralCount: 0,
       status: "pending",
@@ -95,16 +130,10 @@ exports.joinWaitlist = async (req, res) => {
 
     await waitlistUser.save();
 
-    const frontendUrl = getFrontendUrl();
-    const backendUrl = getBackendUrl(req);
+    const referralLink = getFrontendReferralLink(userReferralCode);
+    const verifyUrl = getFrontendVerifyUrl(verificationToken, normalizedEmail);
 
-    // Referral link takes referred users to the frontend waitlist page
-    const referralLink = `${frontendUrl}/waitlist?ref=${referralCode}`;
-
-    // Verification link takes the user directly to this backend landing page with confetti animation
-    const verifyUrl = `${backendUrl}/api/v1/waitlist/verify?token=${verificationToken}`;
-
-    // Send Email 1: Verification Email
+    // Send Email 1: Verification Email with frontend verify URL
     try {
       const emailHtml = waitlistVerificationTemplate({
         name: waitlistUser.firstName,
@@ -129,11 +158,12 @@ exports.joinWaitlist = async (req, res) => {
       data: {
         firstName: waitlistUser.firstName,
         email: waitlistUser.email,
-        signupBonus: waitlistUser.signupBonus,
         referralCode: waitlistUser.referralCode,
         referralLink,
         verifyUrl,
         referralReward: waitlistUser.referralReward,
+        referredBy: waitlistUser.referredBy,
+        referredByCode: waitlistUser.referredByCode,
         isVerified: false,
         verificationToken,
       },
@@ -183,8 +213,7 @@ exports.verifyWaitlistEmail = async (req, res) => {
     if (!waitlistUser && email) {
       const userByEmail = await waitlistModel.findOne({ email });
       if (userByEmail && userByEmail.isVerified) {
-        const frontendUrl = getFrontendUrl();
-        const referralLink = `${frontendUrl}/waitlist?ref=${userByEmail.referralCode}`;
+        const referralLink = getFrontendReferralLink(userByEmail.referralCode);
         const totalCount = await waitlistModel.countDocuments();
 
         if (isHtmlRequest) {
@@ -195,8 +224,8 @@ exports.verifyWaitlistEmail = async (req, res) => {
               totalWaitlistCount: totalCount,
               referralCode: userByEmail.referralCode,
               referralLink,
-              signupBonus: userByEmail.signupBonus,
-              referralReward: userByEmail.referralReward,
+              signupBonus: 0,
+              referralReward: userByEmail.referralReward || "1 USDT",
             })
           );
         }
@@ -208,10 +237,11 @@ exports.verifyWaitlistEmail = async (req, res) => {
             firstName: userByEmail.firstName,
             email: userByEmail.email,
             waitlistPosition: userByEmail.waitlistPosition,
-            signupBonus: userByEmail.signupBonus,
+            totalWaitlistCount: totalCount,
             referralCode: userByEmail.referralCode,
             referralLink,
-            referralReward: userByEmail.referralReward,
+            referralReward: userByEmail.referralReward || "1 USDT",
+            referralCount: userByEmail.referralCount || 0,
             isVerified: true,
           },
         });
@@ -263,19 +293,22 @@ exports.verifyWaitlistEmail = async (req, res) => {
     const priorVerifiedCount = await waitlistModel.countDocuments({
       _id: { $ne: waitlistUser._id },
       isVerified: true,
-      $or: [
-        { verifiedAt: { $lte: waitlistUser.verifiedAt } },
-        { createdAt: { $lte: waitlistUser.createdAt } },
-      ],
+      verifiedAt: { $lte: waitlistUser.verifiedAt },
     });
     const position = priorVerifiedCount + 1;
 
     waitlistUser.waitlistPosition = position;
     await waitlistUser.save();
 
+    // Option B: Increment referrer's referralCount upon email verification
+    if (waitlistUser.referredBy) {
+      await waitlistModel.findByIdAndUpdate(waitlistUser.referredBy, {
+        $inc: { referralCount: 1 },
+      });
+    }
+
     const totalWaitlistCount = await waitlistModel.countDocuments();
-    const frontendUrl = getFrontendUrl();
-    const referralLink = `${frontendUrl}/waitlist?ref=${waitlistUser.referralCode}`;
+    const referralLink = getFrontendReferralLink(waitlistUser.referralCode);
 
     // Send Email 2: Congratulations & Waitlist Spot Email
     try {
@@ -285,8 +318,8 @@ exports.verifyWaitlistEmail = async (req, res) => {
         totalWaitlistCount,
         referralCode: waitlistUser.referralCode,
         referralLink,
-        signupBonus: waitlistUser.signupBonus,
-        referralReward: waitlistUser.referralReward,
+        signupBonus: 0,
+        referralReward: waitlistUser.referralReward || "1 USDT",
       });
 
       await sendEmail(
@@ -309,8 +342,8 @@ exports.verifyWaitlistEmail = async (req, res) => {
         totalWaitlistCount,
         referralCode: waitlistUser.referralCode,
         referralLink,
-        signupBonus: waitlistUser.signupBonus,
-        referralReward: waitlistUser.referralReward,
+        signupBonus: 0,
+        referralReward: waitlistUser.referralReward || "1 USDT",
       });
       return res.status(200).send(successHtml);
     }
@@ -324,10 +357,10 @@ exports.verifyWaitlistEmail = async (req, res) => {
         email: waitlistUser.email,
         waitlistPosition: position,
         totalWaitlistCount,
-        signupBonus: waitlistUser.signupBonus,
         referralCode: waitlistUser.referralCode,
         referralLink,
-        referralReward: waitlistUser.referralReward,
+        referralReward: waitlistUser.referralReward || "1 USDT",
+        referralCount: waitlistUser.referralCount || 0,
         isVerified: true,
       },
     });
@@ -374,9 +407,7 @@ exports.resendVerificationEmail = async (req, res) => {
     waitlistUser.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await waitlistUser.save();
 
-    const backendUrl = getBackendUrl(req);
-    const verifyUrl = `${backendUrl}/api/v1/waitlist/verify?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
-
+    const verifyUrl = getFrontendVerifyUrl(verificationToken, normalizedEmail);
 
     try {
       const emailHtml = waitlistVerificationTemplate({

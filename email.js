@@ -378,8 +378,9 @@ exports.waitlistVerificationTemplate = ({ name, verifyUrl }) => {
 </html>`;
 };
 
-exports.waitlistWelcomeTemplate = ({ name, waitlistPosition, totalWaitlistCount, referralCode, referralLink, signupBonus = 5000, referralReward = 2000 }) => {
+exports.waitlistWelcomeTemplate = ({ name, waitlistPosition, totalWaitlistCount, referralCode, referralLink, signupBonus = 0, referralReward = "1 USDT" }) => {
   const formattedTotal = totalWaitlistCount ? Number(totalWaitlistCount).toLocaleString() : waitlistPosition;
+  const rewardDisplay = typeof referralReward === "number" ? `${referralReward} USDT` : referralReward;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -433,17 +434,12 @@ exports.waitlistWelcomeTemplate = ({ name, waitlistPosition, totalWaitlistCount,
                                     </p>
                                 </div>
 
-                                <!-- Bonuses Table -->
+                                <!-- Referral Reward Card -->
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
                                     <tr>
-                                        <td class="stats-col" width="48%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center;">
-                                            <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Signup Bonus</p>
-                                            <h3 style="margin: 6px 0 0; font-size: 20px; color: #0f172a; font-weight: 800;">₦${signupBonus.toLocaleString()}</h3>
-                                        </td>
-                                        <td width="4%"></td>
-                                        <td class="stats-col" width="48%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center;">
+                                        <td class="stats-col" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; text-align: center;">
                                             <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Referral Reward</p>
-                                            <h3 style="margin: 6px 0 0; font-size: 20px; color: #ca8a04; font-weight: 800;">₦${referralReward.toLocaleString()} <span style="font-size: 12px; color: #64748b; font-weight: 400;">/ friend</span></h3>
+                                            <h3 style="margin: 6px 0 0; font-size: 22px; color: #ca8a04; font-weight: 800;">${rewardDisplay} <span style="font-size: 13px; color: #64748b; font-weight: 400;">Raffle Entry / Friend</span></h3>
                                         </td>
                                     </tr>
                                 </table>
@@ -451,10 +447,10 @@ exports.waitlistWelcomeTemplate = ({ name, waitlistPosition, totalWaitlistCount,
                                 <!-- Move Up Section -->
                                 <div style="background-color: #fffbeb; border: 1.5px dashed #fde68a; border-radius: 14px; padding: 24px; text-align: left; margin-bottom: 28px;">
                                     <h3 style="margin: 0 0 8px; font-size: 16px; color: #92400e; font-weight: 700;">
-                                        🚀 Want to move up the waitlist?
+                                        🚀 Want to win 1 USDT & move up the waitlist?
                                     </h3>
                                     <p style="margin: 0 0 16px; font-size: 13px; color: #78350f; line-height: 1.5;">
-                                        Share your personal referral link with friends. Every person who signs up using your link boosts your rank and earns you an extra <strong>₦${referralReward.toLocaleString()}</strong>!
+                                        Share your personal referral link with friends. For every friend who joins using your link, you get an extra entry into our exclusive <strong>1 USDT</strong> raffle draw. The more friends you refer, the higher your chances of winning!
                                     </p>
                                     
                                     <p style="margin: 0 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #92400e;">Your Referral Code:</p>

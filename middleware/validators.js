@@ -715,6 +715,14 @@ exports.waitlistValidator = (req, res, next) => {
         "string.empty": "Amount range cannot be empty",
         "any.only": "Invalid amount range selection",
       }),
+    referralCode: joi
+      .string()
+      .trim()
+      .allow(null, "")
+      .optional()
+      .messages({
+        "string.base": "Referral code must be a string",
+      }),
   });
 
   const { error, value } = schema.validate(req.body);

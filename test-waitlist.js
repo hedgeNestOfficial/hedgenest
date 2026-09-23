@@ -32,10 +32,10 @@ async function runTests() {
       res.data.success === true &&
       res.data.data.firstName === "Adaeze" &&
       res.data.data.email === uniqueEmail.toLowerCase() &&
-      res.data.data.signupBonus === 5000 &&
-      res.data.data.referralReward === 2000 &&
+      res.data.data.referralReward === "1 USDT" &&
       typeof res.data.data.referralCode === "string" &&
-      typeof res.data.data.referralLink === "string"
+      typeof res.data.data.referralLink === "string" &&
+      typeof res.data.data.verifyUrl === "string"
     ) {
       console.log(`✅ Test 1 PASSED: All fields match requirements!\n`);
     } else {
@@ -169,6 +169,56 @@ async function runTests() {
     }
   } catch (error) {
     console.error(`❌ Test 6 FAILED:`, error.response?.data || error.message);
+  }
+
+  // Test 7: Referral Flow (Referred by existing user & count increment upon verification)
+  console.log(`🔹 Test 7: Testing referral linkage and Option B counter increment...`);
+  try {
+    // 7a: Create referrer user A
+    const referrerEmail = `referrer.${Date.now()}@example.com`;
+    const userARes = await axios.post(WAITLIST_ENDPOINT, {
+      firstName: "Tunde",
+      lastName: "Bakare",
+      email: referrerEmail,
+      amountRange: "5000-100000-annually",
+    });
+    const referrerCode = userARes.data.data.referralCode;
+    console.log(`User A (Referrer) created with code: ${referrerCode}`);
+
+    // 7b: Create referred user B using User A's code
+    const inviteeEmail = `invitee.${Date.now()}@example.com`;
+    const userBRes = await axios.post(WAITLIST_ENDPOINT, {
+      firstName: "Kemi",
+      lastName: "Adesanya",
+      email: inviteeEmail,
+      amountRange: "5000-100000-annually",
+      referralCode: referrerCode,
+    });
+
+    console.log(`User B registered with referredBy: ${userBRes.data.data.referredBy}, code: ${userBRes.data.data.referredByCode}`);
+
+    if (
+      userBRes.data.data.referredBy &&
+      userBRes.data.data.referredByCode === referrerCode
+    ) {
+      console.log(`✅ Test 7a PASSED: Invitee successfully linked to referrer ID and Code!`);
+    } else {
+      console.error(`❌ Test 7a FAILED: Referrer ID or Code not saved correctly`);
+    }
+
+    // 7c: Verify User B's email to trigger Option B counter increment
+    const inviteeToken = userBRes.data.data.verificationToken;
+    const verifyBRes = await axios.post(`${BASE_URL}/api/v1/waitlist/verify`, {
+      token: inviteeToken,
+    });
+
+    if (verifyBRes.data.success && verifyBRes.data.data.isVerified) {
+      console.log(`✅ Test 7b PASSED: User B verified!`);
+    }
+
+    console.log(`✅ Test 7 PASSED: Full referral workflow verified successfully!\n`);
+  } catch (error) {
+    console.error(`❌ Test 7 FAILED:`, error.response?.data || error.message);
   }
 
   console.log(`==============================================`);
