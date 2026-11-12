@@ -59,6 +59,30 @@ const generateReferralCode = async () => {
 };
 
 const VERIFICATION_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
+const DEFAULT_TOTAL_PEOPLE = 2000;
+
+/**
+ * The waitlist is presented as a 2,000-person waitlist, so `totalPeople`
+ * reflects at least the configured campaign target. If the real waitlist
+ * grows past that target, the real count is returned instead.
+ */
+const getTotalPeople = (totalWaitlistCount) => {
+  const configuredTotal = Number(process.env.WAITLIST_TOTAL_PEOPLE);
+  const target =
+    Number.isFinite(configuredTotal) && configuredTotal > 0
+      ? Math.floor(configuredTotal)
+      : DEFAULT_TOTAL_PEOPLE;
+
+  return Math.max(Number(totalWaitlistCount) || 0, target);
+};
+
+const normalizeUserType = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const trimmed = String(value).trim();
+  return trimmed || null;
+};
 
 const sendVerificationEmailHelper = async (waitlistUser) => {
   const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -91,8 +115,16 @@ const sendVerificationEmailHelper = async (waitlistUser) => {
 
 exports.joinWaitlist = async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, gender, userType, amountRange, referralCode } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      gender,
+      userType,
+      amountRange,
+      referralCode,
+    } = req.body;
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -104,6 +136,12 @@ exports.joinWaitlist = async (req, res) => {
     if (existingWaitlistUser) {
       if (!existingWaitlistUser.isVerified) {
         // User already registered on waitlist but not verified yet.
+        // Capture the optional profile answer if they supplied it this time.
+        const normalizedUserType = normalizeUserType(userType);
+        if (normalizedUserType !== undefined) {
+          existingWaitlistUser.userType = normalizedUserType;
+        }
+
         // Automatically re-send verification email with a fresh 15-minute token.
         const { verificationToken, verifyUrl, referralLink } =
           await sendVerificationEmailHelper(existingWaitlistUser);
@@ -121,6 +159,7 @@ exports.joinWaitlist = async (req, res) => {
             referralReward: existingWaitlistUser.referralReward,
             referredBy: existingWaitlistUser.referredBy,
             referredByCode: existingWaitlistUser.referredByCode,
+            userType: existingWaitlistUser.userType || null,
             isVerified: false,
             verificationToken,
           },
@@ -173,7 +212,7 @@ exports.joinWaitlist = async (req, res) => {
       email: normalizedEmail,
       phoneNumber: normalizedPhone,
       gender,
-      userType,
+      userType: normalizeUserType(userType) ?? null,
       amountRange,
       referredBy,
       referredByCode,
@@ -223,6 +262,7 @@ exports.joinWaitlist = async (req, res) => {
         referralReward: waitlistUser.referralReward,
         referredBy: waitlistUser.referredBy,
         referredByCode: waitlistUser.referredByCode,
+        userType: waitlistUser.userType || null,
         isVerified: false,
         verificationToken,
       },
@@ -274,6 +314,7 @@ exports.verifyWaitlistEmail = async (req, res) => {
       if (userByEmail && userByEmail.isVerified) {
         const referralLink = getFrontendReferralLink(userByEmail.referralCode);
         const totalCount = await waitlistModel.countDocuments();
+        const totalPeople = getTotalPeople(totalCount);
 
         if (isHtmlRequest) {
           return res.status(200).send(
@@ -297,10 +338,12 @@ exports.verifyWaitlistEmail = async (req, res) => {
             email: userByEmail.email,
             waitlistPosition: userByEmail.waitlistPosition,
             totalWaitlistCount: totalCount,
+            totalPeople,
             referralCode: userByEmail.referralCode,
             referralLink,
             referralReward: userByEmail.referralReward || "1 USDT",
             referralCount: userByEmail.referralCount || 0,
+            userType: userByEmail.userType || null,
             isVerified: true,
           },
         });
@@ -367,6 +410,7 @@ exports.verifyWaitlistEmail = async (req, res) => {
     }
 
     const totalWaitlistCount = await waitlistModel.countDocuments();
+    const totalPeople = getTotalPeople(totalWaitlistCount);
     const referralLink = getFrontendReferralLink(waitlistUser.referralCode);
 
     // Send Email 2: Congratulations & Waitlist Spot Email
@@ -416,10 +460,12 @@ exports.verifyWaitlistEmail = async (req, res) => {
         email: waitlistUser.email,
         waitlistPosition: position,
         totalWaitlistCount,
+        totalPeople,
         referralCode: waitlistUser.referralCode,
         referralLink,
         referralReward: waitlistUser.referralReward || "1 USDT",
         referralCount: waitlistUser.referralCount || 0,
+        userType: waitlistUser.userType || null,
         isVerified: true,
       },
     });

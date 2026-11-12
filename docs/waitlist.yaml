@@ -20,7 +20,6 @@ paths:
                 - email
                 - phoneNumber
                 - gender
-                - userType
                 - amountRange
               properties:
                 firstName:
@@ -40,11 +39,6 @@ paths:
                   type: string
                   enum: [male, female, other]
                   example: female
-                userType:
-                  type: string
-                  enum: [student, salaried, freelancer, entrepreneur]
-                  example: freelancer
-                  description: "What best describes you? student = Student, salaried = Salaried Work/Paid Employment, freelancer = Freelance/Remote Work, entrepreneur = Entrepreneur/Business Owner"
                 amountRange:
                   type: string
                   example: 5000-100000-annually
@@ -52,6 +46,11 @@ paths:
                   type: string
                   example: HN-4F8B2C
                   description: Optional referral code of the user who referred this applicant
+                userType:
+                  type: string
+                  nullable: true
+                  example: Investor
+                  description: Optional answer to "What best describes you?". Free-form so the frontend can send any option; the backend stores it as-is. Not required.
       responses:
         "201":
           description: Successfully joined the waitlist and verification email sent
@@ -95,6 +94,10 @@ paths:
                         type: string
                         nullable: true
                         example: HN-4F8B2C
+                      userType:
+                        type: string
+                        nullable: true
+                        example: Investor
                       isVerified:
                         type: boolean
                         example: false
@@ -187,6 +190,14 @@ paths:
                       waitlistPosition:
                         type: number
                         example: 42
+                      totalWaitlistCount:
+                        type: number
+                        example: 1287
+                        description: Actual number of people currently on the waitlist.
+                      totalPeople:
+                        type: number
+                        example: 2000
+                        description: Total waitlist size shown to the frontend. Defaults to the 2,000-person campaign target (or the real count if it is larger).
                       referralCode:
                         type: string
                         example: HN-8F2A1C
@@ -199,6 +210,10 @@ paths:
                       referralCount:
                         type: number
                         example: 0
+                      userType:
+                        type: string
+                        nullable: true
+                        example: Investor
                       isVerified:
                         type: boolean
                         example: true

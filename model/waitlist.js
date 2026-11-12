@@ -19,13 +19,6 @@ const ALLOWED_AMOUNT_RANGES = [
   "below-5000",
 ];
 
-const ALLOWED_USER_TYPES = [
-  "student",
-  "salaried",
-  "freelancer",
-  "entrepreneur",
-];
-
 const ALLOWED_GENDERS = ["male", "female", "other"];
 
 // Normalizes Nigerian numbers (0803..., 234803..., +234803...) to +234XXXXXXXXXX.
@@ -68,11 +61,12 @@ const waitlistSchema = new mongoose.Schema(
       lowercase: true,
       default: undefined,
     },
+    // Optional answer to "What best describes you?".
+    // Kept free-form so the frontend can send any option it wants.
     userType: {
       type: String,
-      enum: ALLOWED_USER_TYPES,
       trim: true,
-      default: undefined,
+      default: null,
     },
     amountRange: {
       type: String,
@@ -150,7 +144,6 @@ const waitlistModel = mongoose.model("waitlist", waitlistSchema);
 module.exports = {
   waitlistModel,
   ALLOWED_AMOUNT_RANGES,
-  ALLOWED_USER_TYPES,
   ALLOWED_GENDERS,
   normalizeNigerianPhone,
 };
