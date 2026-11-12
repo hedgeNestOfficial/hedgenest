@@ -51,6 +51,11 @@ paths:
                   nullable: true
                   example: Investor
                   description: Optional answer to "What best describes you?". Free-form so the frontend can send any option; the backend stores it as-is. Not required.
+                nextSavingGoal:
+                  type: string
+                  nullable: true
+                  example: "Save ₦1,000,000 for a car"
+                  description: Optional answer to "What is your next saving goal?". Free-form so the frontend can send an amount, label, or text; the backend stores it as-is. Not required.
       responses:
         "201":
           description: Successfully joined the waitlist and verification email sent
@@ -98,6 +103,10 @@ paths:
                         type: string
                         nullable: true
                         example: Investor
+                      nextSavingGoal:
+                        type: string
+                        nullable: true
+                        example: "Save ₦1,000,000 for a car"
                       isVerified:
                         type: boolean
                         example: false
@@ -214,6 +223,10 @@ paths:
                         type: string
                         nullable: true
                         example: Investor
+                      nextSavingGoal:
+                        type: string
+                        nullable: true
+                        example: "Save ₦1,000,000 for a car"
                       isVerified:
                         type: boolean
                         example: true

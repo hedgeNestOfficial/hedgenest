@@ -743,6 +743,16 @@ exports.waitlistValidator = (req, res, next) => {
       .messages({
         "string.base": "userType must be a string",
       }),
+    // Optional "What is your next saving goal?" answer. Free-form on purpose:
+    // the backend stores whatever the frontend sends.
+    nextSavingGoal: joi
+      .string()
+      .trim()
+      .allow(null, "")
+      .optional()
+      .messages({
+        "string.base": "nextSavingGoal must be a string",
+      }),
     amountRange: joi
       .string()
       .trim()

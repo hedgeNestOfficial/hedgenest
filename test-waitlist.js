@@ -23,6 +23,7 @@ async function runTests() {
       phoneNumber: `080${Math.floor(10000000 + Math.random() * 89999999)}`,
       gender: "female",
       userType: "Investor",
+      nextSavingGoal: "Save ₦1,000,000 for a car",
       amountRange: "5000-100000-annually",
     };
 
@@ -37,6 +38,7 @@ async function runTests() {
       res.data.data.email === uniqueEmail.toLowerCase() &&
       res.data.data.referralReward === "1 USDT" &&
       res.data.data.userType === "Investor" &&
+      res.data.data.nextSavingGoal === "Save ₦1,000,000 for a car" &&
       typeof res.data.data.referralCode === "string" &&
       typeof res.data.data.referralLink === "string" &&
       typeof res.data.data.verifyUrl === "string"

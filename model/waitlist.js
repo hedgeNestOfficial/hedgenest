@@ -68,6 +68,13 @@ const waitlistSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    // Optional answer to "What is your next saving goal?".
+    // Free-form so the frontend can send an amount, a label, or any text.
+    nextSavingGoal: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     amountRange: {
       type: String,
       required: true,

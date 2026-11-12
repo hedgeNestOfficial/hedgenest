@@ -76,7 +76,7 @@ const getTotalPeople = (totalWaitlistCount) => {
   return Math.max(Number(totalWaitlistCount) || 0, target);
 };
 
-const normalizeUserType = (value) => {
+const normalizeOptionalText = (value) => {
   if (value === undefined) return undefined;
   if (value === null) return null;
 
@@ -122,6 +122,7 @@ exports.joinWaitlist = async (req, res) => {
       phoneNumber,
       gender,
       userType,
+      nextSavingGoal,
       amountRange,
       referralCode,
     } = req.body;
@@ -136,10 +137,16 @@ exports.joinWaitlist = async (req, res) => {
     if (existingWaitlistUser) {
       if (!existingWaitlistUser.isVerified) {
         // User already registered on waitlist but not verified yet.
-        // Capture the optional profile answer if they supplied it this time.
-        const normalizedUserType = normalizeUserType(userType);
+        // Capture the optional profile answers if they supplied them this time.
+        const normalizedUserType = normalizeOptionalText(userType);
         if (normalizedUserType !== undefined) {
           existingWaitlistUser.userType = normalizedUserType;
+        }
+
+        const normalizedNextSavingGoal =
+          normalizeOptionalText(nextSavingGoal);
+        if (normalizedNextSavingGoal !== undefined) {
+          existingWaitlistUser.nextSavingGoal = normalizedNextSavingGoal;
         }
 
         // Automatically re-send verification email with a fresh 15-minute token.
@@ -160,6 +167,7 @@ exports.joinWaitlist = async (req, res) => {
             referredBy: existingWaitlistUser.referredBy,
             referredByCode: existingWaitlistUser.referredByCode,
             userType: existingWaitlistUser.userType || null,
+            nextSavingGoal: existingWaitlistUser.nextSavingGoal || null,
             isVerified: false,
             verificationToken,
           },
@@ -212,7 +220,8 @@ exports.joinWaitlist = async (req, res) => {
       email: normalizedEmail,
       phoneNumber: normalizedPhone,
       gender,
-      userType: normalizeUserType(userType) ?? null,
+      userType: normalizeOptionalText(userType) ?? null,
+      nextSavingGoal: normalizeOptionalText(nextSavingGoal) ?? null,
       amountRange,
       referredBy,
       referredByCode,
@@ -263,6 +272,7 @@ exports.joinWaitlist = async (req, res) => {
         referredBy: waitlistUser.referredBy,
         referredByCode: waitlistUser.referredByCode,
         userType: waitlistUser.userType || null,
+        nextSavingGoal: waitlistUser.nextSavingGoal || null,
         isVerified: false,
         verificationToken,
       },
@@ -344,6 +354,7 @@ exports.verifyWaitlistEmail = async (req, res) => {
             referralReward: userByEmail.referralReward || "1 USDT",
             referralCount: userByEmail.referralCount || 0,
             userType: userByEmail.userType || null,
+            nextSavingGoal: userByEmail.nextSavingGoal || null,
             isVerified: true,
           },
         });
@@ -466,6 +477,7 @@ exports.verifyWaitlistEmail = async (req, res) => {
         referralReward: waitlistUser.referralReward || "1 USDT",
         referralCount: waitlistUser.referralCount || 0,
         userType: waitlistUser.userType || null,
+        nextSavingGoal: waitlistUser.nextSavingGoal || null,
         isVerified: true,
       },
     });
