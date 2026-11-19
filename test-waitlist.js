@@ -22,8 +22,9 @@ async function runTests() {
       email: uniqueEmail,
       phoneNumber: `080${Math.floor(10000000 + Math.random() * 89999999)}`,
       gender: "female",
-      userType: "freelancer",
-      amountRange: "5000-100000-annually"
+      userType: "Investor",
+      nextSavingGoal: "Save ₦1,000,000 for a car",
+      amountRange: "5000-100000-annually",
     };
 
     const res = await axios.post(WAITLIST_ENDPOINT, payload);
@@ -36,6 +37,8 @@ async function runTests() {
       res.data.data.firstName === "Adaeze" &&
       res.data.data.email === uniqueEmail.toLowerCase() &&
       res.data.data.referralReward === "1 USDT" &&
+      res.data.data.userType === "Investor" &&
+      res.data.data.nextSavingGoal === "Save ₦1,000,000 for a car" &&
       typeof res.data.data.referralCode === "string" &&
       typeof res.data.data.referralLink === "string" &&
       typeof res.data.data.verifyUrl === "string"
@@ -186,10 +189,12 @@ async function runTests() {
     if (
       verifyRes.data.success === true &&
       verifyRes.data.data.isVerified === true &&
-      typeof verifyRes.data.data.waitlistPosition === "number"
+      typeof verifyRes.data.data.waitlistPosition === "number" &&
+      typeof verifyRes.data.data.totalPeople === "number" &&
+      verifyRes.data.data.totalPeople >= 2000
     ) {
       console.log(
-        `✅ Test 5 PASSED: Email successfully verified! Waitlist Position: #${verifyRes.data.data.waitlistPosition}\n`
+        `✅ Test 5 PASSED: Email successfully verified! Waitlist Position: #${verifyRes.data.data.waitlistPosition} (totalPeople: ${verifyRes.data.data.totalPeople})\n`
       );
     } else {
       console.error(`❌ Test 5 FAILED: Expected verified status and waitlistPosition\n`);

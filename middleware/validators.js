@@ -671,7 +671,6 @@ exports.payoutValidator = (req, res, next) => {
 
 const {
   ALLOWED_AMOUNT_RANGES,
-  ALLOWED_USER_TYPES,
   ALLOWED_GENDERS,
   normalizeNigerianPhone,
 } = require("../model/waitlist");
@@ -734,15 +733,25 @@ exports.waitlistValidator = (req, res, next) => {
         "string.empty": "Gender is required",
         "any.only": `Gender must be one of: ${ALLOWED_GENDERS.join(", ")}`,
       }),
+    // Optional "What best describes you?" answer. Free-form on purpose:
+    // the backend stores whatever option the frontend sends.
     userType: joi
       .string()
       .trim()
-      .valid(...ALLOWED_USER_TYPES)
-      .required()
+      .allow(null, "")
+      .optional()
       .messages({
-        "any.required": "Please tell us what best describes you",
-        "string.empty": "Please tell us what best describes you",
-        "any.only": `User type must be one of: ${ALLOWED_USER_TYPES.join(", ")}`,
+        "string.base": "userType must be a string",
+      }),
+    // Optional "What is your next saving goal?" answer. Free-form on purpose:
+    // the backend stores whatever the frontend sends.
+    nextSavingGoal: joi
+      .string()
+      .trim()
+      .allow(null, "")
+      .optional()
+      .messages({
+        "string.base": "nextSavingGoal must be a string",
       }),
     amountRange: joi
       .string()
